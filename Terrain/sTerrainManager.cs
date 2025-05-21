@@ -34,9 +34,9 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //make a terrain grid for each heightmap.
-        for (int z = 0; z < 16; z++)
+        for (int z = 0; z < 1; z++) //demo at 1
         {
-            for (int x = 0; x < 16; x++)
+            for (int x = 0; x < 1; x++) //demo at 1
             {
                 GameObject gO = GameObject.Instantiate(terrainGridPrefab, new Vector3(x,0,z) * CHUNK_WIDTH_LESS_ONE, Quaternion.Euler(Vector3.zero), transform);
                 gridSquares[x,z] = gO;
@@ -55,7 +55,7 @@ public class sTerrainManager : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawCube(new Vector3(1,0,1) * fullLevelTexture.width / 2, new Vector3(1 * fullLevelTexture.width, -1, fullLevelTexture.height));
+        Gizmos.DrawWireCube(new Vector3(1,0,1) * fullLevelTexture.width / 2, new Vector3(1 * fullLevelTexture.width, -1, fullLevelTexture.height));
     }
 
     private float[,] GetHeightArrayFromImage(int startX, int startZ)
@@ -81,8 +81,8 @@ public class sTerrainManager : MonoBehaviour
         int gridX = (int)hitPoint.x / 64;
         int gridZ = (int)hitPoint.z / 64;
 
-        Debug.Log("poly:" + hitX +","+ hitZ);
-        Debug.Log("gridtile:" + gridX + ","+ gridZ);
+        //Debug.Log("poly:" + hitX +","+ hitZ);
+        //Debug.Log("gridtile:" + gridX + ","+ gridZ);
 
         gridSquares[gridX, gridZ].GetComponent<sTerrainGrid>().Pock(hitX % 64, hitZ % 64);
     }

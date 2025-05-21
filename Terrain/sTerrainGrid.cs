@@ -9,11 +9,11 @@ public class sTerrainGrid : MonoBehaviour
     private MeshCollider mCollider;
 
     private float[,] heights;
-    private float[,] targetHeights;
 
     private List<Vector3> vertices;
-    private List<Color> colors;
+    private List<Vector2> uvs;
     private List<int> triangles;
+    private List<Color> colors;
 
     [SerializeField] private bool active = false;
     [SerializeField] private float lowestHeight;
@@ -31,7 +31,7 @@ public class sTerrainGrid : MonoBehaviour
     void DrawTerrain()
     {
         //refill arrays
-        FillArraysSmooth();
+        FillArrays();
 
         //set mesh to arrays
         mesh = new Mesh();
@@ -40,6 +40,7 @@ public class sTerrainGrid : MonoBehaviour
 
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
         mesh.colors = colors.ToArray();
 
         //recalc
@@ -51,11 +52,12 @@ public class sTerrainGrid : MonoBehaviour
         mCollider.sharedMesh = mesh;
     }
 
-    void FillArraysSmooth()
+    void FillArrays()
     {
         vertices = new List<Vector3>();
         colors = new List<Color>();
         triangles = new List<int>();
+        uvs = new List<Vector2>();
 
         int sideRezX = heights.GetLength(0);
         int sideRezZ = heights.GetLength(1);
@@ -66,7 +68,7 @@ public class sTerrainGrid : MonoBehaviour
             {
                 vertices.Add(new Vector3(x, heights[x, z], z));
                 colors.Add(Color.Lerp(Color.blue, Color.green, heights[x, z]));
-                //change to gradient evaluation!
+                uvs.Add(new Vector2(0,1));
             }
         }
 
@@ -91,15 +93,26 @@ public class sTerrainGrid : MonoBehaviour
         DrawTerrain();
     }
 
-    public void Pock(int x, int z, int SIZE = 3)
+    public void Pock(int x, int z, int size = 3)
     {
-        for (int i = -SIZE; i <= SIZE; i++)
+        StartCoroutine(AnimateTerrain(x, z));
+    }
+
+    private  IEnumerator AnimateTerrain(int x, int z, int size = 3)
+    {
+        float time = 0f;
+        while (time < 1)
         {
-            for (int j = -SIZE; j <= SIZE; j++)
+            time += Time.deltaTime;
+            for (int i = -size; i <= size; i++)
             {
-                heights[x + i, z + j] = 0f;
+                for (int j = -size; j <= size; j++)
+                {
+                    heights[x + i, z + j] = heights[x + i, z + j] - (1f * Time.deltaTime);
+                }
             }
+            DrawTerrain();
+            yield return null;
         }
-        DrawTerrain();
     }
 }
