@@ -7,7 +7,6 @@ public class sPlayerMovement : MonoBehaviour
 
     [SerializeField] private float heightOverSand; 
 
-    private Rigidbody rBody;
     private Camera playerCamera;
 
     [SerializeField] private float moveSpeed;
@@ -16,18 +15,19 @@ public class sPlayerMovement : MonoBehaviour
 
     private Vector3 playerFacing;
     private Vector3 cameraFacing;
+    private Vector3 playerMoving;
     private bool freelookFrozen;
 
     private RaycastHit rayDown;
+    private CharacterController cC;
     [SerializeField] private LayerMask terrainMask;     
     
     private RaycastHit rayFwd;
 
     void Start()
     {
-        rBody = GetComponent<Rigidbody>();
         playerCamera = GetComponentInChildren<Camera>();
-
+        cC = GetComponent<CharacterController>();
         freelookFrozen = false;
     }
 
@@ -79,24 +79,16 @@ public class sPlayerMovement : MonoBehaviour
             transform.position = new Vector3(transform.position.x, rayDown.point.y + heightOverSand, transform.position.z);
         }
 
-        if (Input.GetKey(KeyCode.W))
-        {
-            rBody.AddForce(transform.forward * moveSpeed, ForceMode.Acceleration);
-        }
+        Vector3 horizontalMovement = new Vector3(playerMoving.x, 0, playerMoving.z);
+        float yComponentOfInputMovement = playerMoving.y;
+        Vector3 inputVector = new Vector3(
+            Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
+            0, //Y inputs are handled by Jump
+            Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
+        ).normalized * Time.deltaTime;
 
-        if (Input.GetKey(KeyCode.S))
-        {
-            rBody.AddForce(-transform.forward * moveSpeed, ForceMode.Acceleration);
-        }
+        playerMoving = Vector3.ClampMagnitude(horizontalMovement + transform.TransformDirection(inputVector), 50 * Time.deltaTime) + new Vector3(0, yComponentOfInputMovement, 0);
 
-        if (Input.GetKey(KeyCode.D))
-        {
-            rBody.AddForce(transform.right * moveSpeed, ForceMode.Acceleration);
-        }
-
-        if (Input.GetKey(KeyCode.A))
-        {
-            rBody.AddForce(-transform.right * moveSpeed, ForceMode.Acceleration);
-        }
+        cC.Move(playerMoving);
     }
 }

@@ -4,22 +4,37 @@ using UnityEngine;
 
 public class sTerrainManager : MonoBehaviour
 {
+    public static sTerrainManager instance;
+
     public Texture2D fullLevelTexture;
     public GameObject terrainGridPrefab;
     public GameObject[,] gridSquares;
 
     [SerializeField] private float heightMultiplyer = 30f;
 
-    private int CHUNK_WIDTH = 65;
-    private int CHUNK_WIDTH_LESS_ONE = 64;
+    private const int CHUNK_WIDTH = 65;
+    private const int CHUNK_WIDTH_LESS_ONE = 64;
 
     //256 65 x 65 tiles
     public List<float[,]> heightMaps;
 
-    // Start is called before the first frame update
+    private void Awake()
+    {
+        //SINGLETON
+        if (instance != null)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+
     void Start()
     {
-        gridSquares = new GameObject[16,16];
+        gridSquares = new GameObject[32,32];
 
         //divide the full level tex into chunks
         heightMaps = new List<float[,]>();
@@ -34,22 +49,16 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //make a terrain grid for each heightmap.
-        for (int z = 0; z < 1; z++) //demo at 1
+        for (int z = 0; z < 32; z++) //demo at 1
         {
-            for (int x = 0; x < 1; x++) //demo at 1
+            for (int x = 0; x < 32; x++) //demo at 1
             {
                 GameObject gO = GameObject.Instantiate(terrainGridPrefab, new Vector3(x,0,z) * CHUNK_WIDTH_LESS_ONE, Quaternion.Euler(Vector3.zero), transform);
                 gridSquares[x,z] = gO;
-                sTerrainGrid script = gO.GetComponent<sTerrainGrid>();
+                sTerrainChunk script = gO.GetComponent<sTerrainChunk>();
                 script.ReceiveHeightArrayAndDraw(heightMaps[x + (z*16)]);
             }
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private void OnDrawGizmos()
@@ -78,12 +87,12 @@ public class sTerrainManager : MonoBehaviour
         int hitX = Mathf.RoundToInt(hitPoint.x);
         int hitZ = Mathf.RoundToInt(hitPoint.z);
 
-        int gridX = (int)hitPoint.x / 64;
-        int gridZ = (int)hitPoint.z / 64;
+        int gridX = (int)hitPoint.x / 32;
+        int gridZ = (int)hitPoint.z / 32;
 
-        //Debug.Log("poly:" + hitX +","+ hitZ);
-        //Debug.Log("gridtile:" + gridX + ","+ gridZ);
+        Debug.Log("poly:" + hitX +","+ hitZ);
+        Debug.Log("gridtile:" + gridX + ","+ gridZ);
 
-        gridSquares[gridX, gridZ].GetComponent<sTerrainGrid>().Pock(hitX % 64, hitZ % 64);
+        gridSquares[gridX, gridZ].GetComponent<sTerrainChunk>().Pock(hitX % 64, hitZ % 64);
     }
 }

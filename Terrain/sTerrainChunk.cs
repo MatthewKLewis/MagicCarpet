@@ -2,30 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sTerrainGrid : MonoBehaviour
+public class sTerrainChunk : MonoBehaviour
 {
+    private sTerrainManager tM;
+
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
 
     private float[,] heights;
+    private int originX;
+    private int originZ;
 
     private List<Vector3> vertices;
     private List<Vector2> uvs;
     private List<int> triangles;
     private List<Color> colors;
 
-    [SerializeField] private bool active = false;
+    //[SerializeField] private bool active = false;
     [SerializeField] private float lowestHeight;
 
-    void Start()
+    private void Awake()
     {
-
-    }
-
-    void Update()
-    {
-        
+        tM = sTerrainManager.instance;
     }
 
     void DrawTerrain()
