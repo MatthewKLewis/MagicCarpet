@@ -2,21 +2,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * The Terrain Manager is the singleton manager for terrain generation.
+ * It creates 32 x 32 Terrain chunks, and delegates terrain alteration
+ * operations to them.
+ * 
+ * 32x32 Chunks of 32x32 squares (of 2 triangles) makes...
+ * 1024 Chunks and 1024 Tiles per chunk
+ * 
+ */
+
 public class sTerrainManager : MonoBehaviour
 {
     public static sTerrainManager instance;
 
     public Texture2D fullLevelTexture;
     public GameObject terrainGridPrefab;
-    public GameObject[,] gridSquares;
 
-    [SerializeField] private float heightMultiplyer = 30f;
-
-    private const int CHUNK_WIDTH = 65;
-    private const int CHUNK_WIDTH_LESS_ONE = 64;
 
     //256 65 x 65 tiles
-    public List<float[,]> heightMaps;
+    public int CHUNK_WIDTH = 32;
+    public int MAX_HEIGHT = 32;
+    public float HEIGHT_MULTIPLIER = 10f;
+
+    public Vector3[,] heightMap;
+    public GameObject[,] chunks;
 
     private void Awake()
     {
@@ -34,65 +44,87 @@ public class sTerrainManager : MonoBehaviour
 
     void Start()
     {
-        gridSquares = new GameObject[32,32];
+        transform.position = Vector3.zero;
 
-        //divide the full level tex into chunks
-        heightMaps = new List<float[,]>();
+        heightMap = new Vector3[1025, 1025];
+        chunks = new GameObject[32,32];
 
         //fill the heightmaps list
-        for (int i = 0; i < 1024; i += 64)
+        for (int z = 0; z < 1025; z++)
         {
-            for (int j = 0; j < 1024; j += 64)
+            for (int x = 0; x < 1025; x++)
             {
-                heightMaps.Add(GetHeightArrayFromImage(i,j));
+                heightMap[x, z] = new Vector3(x, fullLevelTexture.GetPixel(x, z).r * MAX_HEIGHT, z);
             }
         }
 
         //make a terrain grid for each heightmap.
-        for (int z = 0; z < 32; z++) //demo at 1
+        for (int z = 0; z < CHUNK_WIDTH; z ++) //demo at 1
         {
-            for (int x = 0; x < 32; x++) //demo at 1
+            for (int x = 0; x < CHUNK_WIDTH; x++) //demo at 1
             {
-                GameObject gO = GameObject.Instantiate(terrainGridPrefab, new Vector3(x,0,z) * CHUNK_WIDTH_LESS_ONE, Quaternion.Euler(Vector3.zero), transform);
-                gridSquares[x,z] = gO;
+                Vector3Int chunkPos = new Vector3Int(x, 0, z) * (CHUNK_WIDTH-1);
+                GameObject gO = GameObject.Instantiate(
+                    terrainGridPrefab, 
+                    Vector3.zero,
+                    Quaternion.Euler(Vector3.zero), 
+                    transform
+                );
+                chunks[x, z] = gO;
                 sTerrainChunk script = gO.GetComponent<sTerrainChunk>();
-                script.ReceiveHeightArrayAndDraw(heightMaps[x + (z*16)]);
+                script.SetOrigin(chunkPos.x, chunkPos.z);
             }
         }
     }
+
+    public void AlterTerrain(Vector3 hitPoint)
+    {
+        int hitX = Mathf.FloorToInt(hitPoint.x);
+        int hitZ = Mathf.FloorToInt(hitPoint.z);
+
+        print("Hitpoint: " + hitPoint + ": " + hitX + "," + hitZ);
+
+
+        //Introduce Blast Sizes and Castles
+        for (int i = -3; i <= 3; i++)
+        {
+            for (int j = -3; j <= 3; j++)
+            {
+                heightMap[hitX + i, hitZ + j].y = heightMap[hitX + i, hitZ + j].y - 1; //MODULO AROUND 1025?
+            }
+        }
+
+        //Redraw the correct chunks PLURAL!
+        int gridX = (int)hitPoint.x / CHUNK_WIDTH;
+        int gridZ = (int)hitPoint.z / CHUNK_WIDTH;
+
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                //chunks[gridX + i, gridZ + j].GetComponent<sTerrainChunk>().RedrawChunk(); //MODULO AROUND 32?
+            }
+        }
+    }
+
+    //private IEnumerator AnimateTerrain()
+    //{
+    //    float time = 0f;
+    //    while (time < 1)
+    //    {
+    //        time += Time.deltaTime;
+    //        DrawTerrain();
+    //        yield return null;
+    //    }
+    //    FinalizeTerrain();
+    //}
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(new Vector3(1,0,1) * fullLevelTexture.width / 2, new Vector3(1 * fullLevelTexture.width, -1, fullLevelTexture.height));
-    }
-
-    private float[,] GetHeightArrayFromImage(int startX, int startZ)
-    {
-        float[,] array = new float[CHUNK_WIDTH, CHUNK_WIDTH]; //textures are +1 pixel per side compared to the quads
-        for (int x = 0; x < CHUNK_WIDTH; x++)
-        {
-            for (int z = 0; z < CHUNK_WIDTH; z++)
-            {
-                array[z, x] = fullLevelTexture.GetPixel(x + startX, z + startZ).r * heightMultiplyer;
-            }
-        }
-        return array;
-    }
-
-    public void Flatten(Vector3 hitPoint)
-    {
-        hitPoint -= transform.position;
-
-        int hitX = Mathf.RoundToInt(hitPoint.x);
-        int hitZ = Mathf.RoundToInt(hitPoint.z);
-
-        int gridX = (int)hitPoint.x / 32;
-        int gridZ = (int)hitPoint.z / 32;
-
-        Debug.Log("poly:" + hitX +","+ hitZ);
-        Debug.Log("gridtile:" + gridX + ","+ gridZ);
-
-        gridSquares[gridX, gridZ].GetComponent<sTerrainChunk>().Pock(hitX % 64, hitZ % 64);
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireCube(
+            new Vector3(1, 0, 1) * fullLevelTexture.width / 2,
+            new Vector3(1 * fullLevelTexture.width, -1, fullLevelTexture.height)
+        );
     }
 }

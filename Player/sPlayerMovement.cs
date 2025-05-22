@@ -4,19 +4,19 @@ using UnityEngine;
 
 public class sPlayerMovement : MonoBehaviour
 {
-
-    [SerializeField] private float heightOverSand; 
+    private sTerrainManager tM;
 
     private Camera playerCamera;
 
-    [SerializeField] private float moveSpeed;
-    [SerializeField] private float lookSpeed;
-    [SerializeField] private float viewLimits;
+    private float lookSpeed = 4;
+    private float viewLimits = 85;
+    private float heightOverSand = 5; 
 
     private Vector3 playerFacing;
     private Vector3 cameraFacing;
     private Vector3 playerMoving;
     private bool freelookFrozen;
+
 
     private RaycastHit rayDown;
     private CharacterController cC;
@@ -26,6 +26,8 @@ public class sPlayerMovement : MonoBehaviour
 
     void Start()
     {
+        tM = sTerrainManager.instance;
+
         playerCamera = GetComponentInChildren<Camera>();
         cC = GetComponent<CharacterController>();
         freelookFrozen = false;
@@ -51,6 +53,7 @@ public class sPlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            print("Shooting ray!");
             if (Physics.Raycast(transform.position, playerCamera.transform.forward, out rayFwd, Mathf.Infinity, terrainMask))
             {
                 Debug.DrawRay(transform.position, playerCamera.transform.forward * rayFwd.distance, Color.red, 1f);
@@ -61,7 +64,7 @@ public class sPlayerMovement : MonoBehaviour
                     case 2:
                         break;                    
                     case 3:
-                        rayFwd.collider.gameObject.GetComponentInParent<sTerrainManager>().Flatten(rayFwd.point);
+                        tM.AlterTerrain(rayFwd.point);
                         break;
                     default:
                         break;
@@ -75,7 +78,7 @@ public class sPlayerMovement : MonoBehaviour
 
         if (Physics.Raycast(transform.position, -transform.up, out rayDown, Mathf.Infinity, terrainMask))
         {
-            Debug.DrawRay(transform.position, -transform.up * rayDown.distance, Color.black);
+            Debug.DrawRay(transform.position, -transform.up * rayDown.distance, Color.red);
             transform.position = new Vector3(transform.position.x, rayDown.point.y + heightOverSand, transform.position.z);
         }
 
@@ -87,7 +90,7 @@ public class sPlayerMovement : MonoBehaviour
             Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
         ).normalized * Time.deltaTime;
 
-        playerMoving = Vector3.ClampMagnitude(horizontalMovement + transform.TransformDirection(inputVector), 50 * Time.deltaTime) + new Vector3(0, yComponentOfInputMovement, 0);
+        playerMoving = Vector3.ClampMagnitude(horizontalMovement + transform.TransformDirection(inputVector), 5) + new Vector3(0, yComponentOfInputMovement, 0);
 
         cC.Move(playerMoving);
     }

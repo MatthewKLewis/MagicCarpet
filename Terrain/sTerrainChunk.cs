@@ -4,114 +4,119 @@ using UnityEngine;
 
 public class sTerrainChunk : MonoBehaviour
 {
+    [SerializeField] private Gradient vextexColorGradient;
+
     private sTerrainManager tM;
 
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
 
-    private float[,] heights;
-    private int originX;
-    private int originZ;
+    private int xOrigin;
+    private int zOrigin;
 
     private List<Vector3> vertices;
     private List<Vector2> uvs;
     private List<int> triangles;
     private List<Color> colors;
 
-    //[SerializeField] private bool active = false;
-    [SerializeField] private float lowestHeight;
-
     private void Awake()
     {
         tM = sTerrainManager.instance;
-    }
 
-    void DrawTerrain()
-    {
-        //refill arrays
-        FillArrays();
-
-        //set mesh to arrays
-        mesh = new Mesh();
         meshFilter = GetComponent<MeshFilter>();
         mCollider = GetComponent<MeshCollider>();
-
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.uv = uvs.ToArray();
-        mesh.colors = colors.ToArray();
-
-        //recalc
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        mesh.Optimize();
-
-        meshFilter.mesh = mesh;
-        mCollider.sharedMesh = mesh;
     }
 
-    void FillArrays()
+    //This needs to be called before anything else, it sets the X and Z origins of the Chunk
+    public void SetOrigin(int xO, int zO)
     {
+        xOrigin = xO;
+        zOrigin = zO;
+        DrawTerrain();
+        FinalizeTerrain();
+    }
+
+    public void DrawTerrain()
+    {
+        //refill arrays
         vertices = new List<Vector3>();
         colors = new List<Color>();
         triangles = new List<int>();
         uvs = new List<Vector2>();
 
-        int sideRezX = heights.GetLength(0);
-        int sideRezZ = heights.GetLength(1);
-
-        for (int z = 0; z < sideRezZ; z++)
+        //error here
+        for (int z = zOrigin; z < zOrigin+32; z++)
         {
-            for (int x = 0; x < sideRezX; x++)
+            for (int x = xOrigin; x < xOrigin+32; x++)
             {
-                vertices.Add(new Vector3(x, heights[x, z], z));
-                colors.Add(Color.Lerp(Color.blue, Color.green, heights[x, z]));
-                uvs.Add(new Vector2(0,1));
+                vertices.Add(tM.heightMap[x,z]);
+                colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z].y / tM.MAX_HEIGHT));
+                uvs.Add(new Vector2(0, 1));
             }
         }
 
-        for (int i = 0; i < sideRezZ-1; i++) //less quads per row than vertices, by 1
+        for (int i = 0; i < 31; i++) //less quads per row than vertices, by 1
         {
-            for (int j = 0; j < sideRezX-1; j++)
+            for (int j = 0; j < 31; j++)
             {
-                int index = j + (i * sideRezX);
+                int index = j + (i * tM.CHUNK_WIDTH);
                 triangles.Add(index);
-                triangles.Add(index + (sideRezX));
+                triangles.Add(index + (tM.CHUNK_WIDTH));
                 triangles.Add(index + 1);
-                triangles.Add(index + (sideRezX));
-                triangles.Add(index + (sideRezX + 1));
+                triangles.Add(index + (tM.CHUNK_WIDTH));
+                triangles.Add(index + (tM.CHUNK_WIDTH + 1));
                 triangles.Add(index + 1);
             }
         }
     }
-    
-    public void ReceiveHeightArrayAndDraw(float[,] hs)
+
+    public void FinalizeTerrain()
     {
-        heights = hs;
-        DrawTerrain();
+        //set mesh to arrays
+        mesh = new Mesh();
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.colors = colors.ToArray();
+
+        //Automatic stuff
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        mesh.Optimize();
+        meshFilter.mesh = mesh;
+        mCollider.sharedMesh = mesh;
     }
 
-    public void Pock(int x, int z, int size = 3)
-    {
-        StartCoroutine(AnimateTerrain(x, z));
-    }
+    //public void RedrawChunk()
+    //{
+    //    print("Redraw Chunk at (" + xOrigin + ", " + zOrigin + ")");
 
-    private  IEnumerator AnimateTerrain(int x, int z, int size = 3)
+    //    //Instant or Animated:
+    //    //DrawTerrain();
+    //    StartCoroutine(AnimateTerrain());
+
+    //    FinalizeTerrain();
+        
+    //}
+
+    //private IEnumerator AnimateTerrain()
+    //{
+    //    float time = 0f;
+    //    while (time < 1)
+    //    {
+    //        time += Time.deltaTime;
+    //        DrawTerrain();
+    //        yield return null;
+    //    }
+    //    FinalizeTerrain();
+    //}
+
+    private void OnDrawGizmos()
     {
-        float time = 0f;
-        while (time < 1)
-        {
-            time += Time.deltaTime;
-            for (int i = -size; i <= size; i++)
-            {
-                for (int j = -size; j <= size; j++)
-                {
-                    heights[x + i, z + j] = heights[x + i, z + j] - (1f * Time.deltaTime);
-                }
-            }
-            DrawTerrain();
-            yield return null;
-        }
+        //Gizmos.DrawWireCube(
+        //    new Vector3(1, 0, 1) * tM.CHUNK_WIDTH / 2, 
+        //    new Vector3(1 * tM.CHUNK_WIDTH, -1, 1 * tM.CHUNK_WIDTH)
+        //);
     }
 }
