@@ -69,9 +69,9 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //make a terrain grid for each heightmap.
-        for (int z = 0; z < CHUNK_WIDTH; z ++) //demo at 1
+        for (int z = 0; z < CHUNK_WIDTH; z ++) //demo at 1, prod at CHUNK_WIDTH
         {
-            for (int x = 0; x < CHUNK_WIDTH; x++) //demo at 1
+            for (int x = 0; x < CHUNK_WIDTH; x++) //demo at 1, prod at CHUNK_WIDTH
             {
                 GameObject gO = GameObject.Instantiate(
                     terrainGridPrefab, 

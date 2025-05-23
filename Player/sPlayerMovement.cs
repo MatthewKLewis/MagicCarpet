@@ -126,9 +126,9 @@ public class sPlayerMovement : MonoBehaviour
         cC.Move(movement);
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(transform.position, 5f);
-    }
+    //private void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.cyan;
+    //    Gizmos.DrawSphere(transform.position, 1f);
+    //}
 }

@@ -64,10 +64,10 @@ public class sTerrainChunk : MonoBehaviour
         triangles = new List<int>();
         uvs = new List<Vector2>();
 
-        //error here
-        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH; z++)
+        //VERTICES, 32x32 of them.
+        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH; z++) //at 0,0 goes from 0 to 32
         {
-            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH; x++)
+            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH; x++) //at 0,0 goes from 0 to 32
             {
                 vertices.Add(new Vector3(
                     x * tM.TILE_WIDTH, 
@@ -75,12 +75,27 @@ public class sTerrainChunk : MonoBehaviour
                     z * tM.TILE_WIDTH)
                 );
 
-                colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z] / tM.MAX_HEIGHT));
+                //int randomX = Random.Range(0, 8);
+                //int randomZ = Random.Range(0, 8);
 
+                //colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z] / tM.MAX_HEIGHT));
                 //float rValue = tM.levelTextures[0].GetPixel(x, z).r;
                 //colors.Add(new Color(rValue, rValue, rValue));
+                //uv.x = inverse_lerp(0, 1, x)
+                //uv.y = inverse_lerp(0, 1, z)
+            }
+        }
 
-                uvs.Add(new Vector2(0, 1));
+        //UVs
+        for (int i = 0; i < 32; i++)
+        {
+            for (int j = 0; j < 32; j++)
+            {
+                float xUV = j;
+                float zUV = i;
+
+                //0,0  1,0  2,0  3,0  4,0
+                uvs.Add(new Vector2(xUV / 8f, zUV / 8f));
             }
         }
 
@@ -89,9 +104,11 @@ public class sTerrainChunk : MonoBehaviour
             for (int j = 0; j < 31; j++)
             {
                 int index = j + (i * tM.CHUNK_WIDTH);
+
                 triangles.Add(index);
                 triangles.Add(index + (tM.CHUNK_WIDTH));
                 triangles.Add(index + 1);
+
                 triangles.Add(index + (tM.CHUNK_WIDTH));
                 triangles.Add(index + (tM.CHUNK_WIDTH + 1));
                 triangles.Add(index + 1);
