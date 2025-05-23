@@ -125,4 +125,10 @@ public class sPlayerMovement : MonoBehaviour
         //Print!
         cC.Move(movement);
     }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawSphere(transform.position, 5f);
+    }
 }

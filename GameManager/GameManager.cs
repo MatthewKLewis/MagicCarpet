@@ -22,8 +22,10 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Limit framerate to cinematic 24fps.
-        QualitySettings.vSyncCount = 0; // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
-        Application.targetFrameRate = 30;
+        // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
+        QualitySettings.vSyncCount = 0; 
+
+        // Limit framerate
+        Application.targetFrameRate = 90;
     }
 }

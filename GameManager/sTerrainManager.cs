@@ -21,13 +21,18 @@ public class sTerrainManager : MonoBehaviour
 
     //256 65 x 65 tiles
     public int CHUNK_WIDTH = 32;
-    //public int TILE_WIDTH = 2;
+    public int TILE_WIDTH = 3;
 
     public int MAX_HEIGHT = 16;
     public float HEIGHT_MULTIPLIER = 10f;
 
-    public Vector3[,] heightMap;
+    //public Vector3[,] heightMap;
+    public float[,] heightMap;
+
     public sTerrainChunk[,] chunks;
+
+    //Player
+    public GameObject player;
 
     private void Awake()
     {
@@ -47,7 +52,10 @@ public class sTerrainManager : MonoBehaviour
     {
         transform.position = Vector3.zero;
 
-        heightMap = new Vector3[1025, 1025];
+        //heightMap = new Vector3[1025, 1025];
+        heightMap = new float[1025, 1025];
+
+
         chunks = new sTerrainChunk[32,32];
 
         //fill the heightmaps list
@@ -55,7 +63,8 @@ public class sTerrainManager : MonoBehaviour
         {
             for (int x = 0; x < 1025; x++)
             {
-                heightMap[x, z] = new Vector3(x, levelTextures[0].GetPixel(x, z).r * MAX_HEIGHT, z);
+                //heightMap[x, z] = new Vector3(x, levelTextures[0].GetPixel(x, z).r * MAX_HEIGHT, z);
+                heightMap[x, z] = levelTextures[0].GetPixel(x, z).r * MAX_HEIGHT;
             }
         }
 
@@ -75,6 +84,26 @@ public class sTerrainManager : MonoBehaviour
                 chunks[x, z].SetOrigin(x * (CHUNK_WIDTH - 1), z * (CHUNK_WIDTH-1));
             }
         }
+
+        //Find Player
+        player = GameObject.Find("Player");
+        if (!player)
+        {
+            Debug.LogError("No player!");
+        }
+    }
+
+    private void Update()
+    {
+        //Figure out what grid square the player is in
+        //Chunks are 93 by 93 units wide : (CHUNK_WIDTH - 1) * TILE_WIDTH
+        float gridX = player.transform.position.x / (((CHUNK_WIDTH-1) * TILE_WIDTH));
+        float gridZ = player.transform.position.z / (((CHUNK_WIDTH-1) * TILE_WIDTH));
+        int GRIDX = Mathf.FloorToInt(gridX);
+        int GRIDZ = Mathf.FloorToInt(gridZ);
+
+        //print(GRIDX + "," + GRIDZ);
+        chunks[GRIDX, GRIDZ].UpdateChunk();
     }
 
     public void AlterTerrain(Vector3 hitPoint)

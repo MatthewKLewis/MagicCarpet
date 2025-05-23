@@ -47,15 +47,13 @@ public class sTerrainChunk : MonoBehaviour
         DrawTerrain();
     }
 
-    //Draw every frame?
-    private void Update()
+    //This is the Update method for this class it is
+    //uun as often as Update is run on Terrain Manager
+    public void UpdateChunk()
     {
-        //If the distance from the player to the center of the chunk is less than a chunk's width, draw the terrain continuously.
-        if (Vector3.Distance(player.transform.position, new Vector3(xOrigin + (tM.CHUNK_WIDTH / 2), player.transform.position.y, zOrigin + (tM.CHUNK_WIDTH / 2)) * 3) < tM.CHUNK_WIDTH * 3)
-        {
-            //print(this.gameObject.name);
-            DrawTerrain();
-        }
+        //isDeformable = enabled;
+        //print(this.gameObject.name);
+        DrawTerrain();
     }
 
     public void DrawTerrain()
@@ -71,9 +69,13 @@ public class sTerrainChunk : MonoBehaviour
         {
             for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH; x++)
             {
-                vertices.Add(tM.heightMap[x, z] * 3);
+                vertices.Add(new Vector3(
+                    x * tM.TILE_WIDTH, 
+                    tM.heightMap[x, z] * tM.TILE_WIDTH, 
+                    z * tM.TILE_WIDTH)
+                );
 
-                colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z].y / tM.MAX_HEIGHT));
+                colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z] / tM.MAX_HEIGHT));
 
                 //float rValue = tM.levelTextures[0].GetPixel(x, z).r;
                 //colors.Add(new Color(rValue, rValue, rValue));
@@ -103,7 +105,7 @@ public class sTerrainChunk : MonoBehaviour
         mesh.uv = uvs.ToArray();
         mesh.colors = colors.ToArray();
         mesh.RecalculateBounds();
-        //mesh.RecalculateNormals();
+        mesh.RecalculateNormals();
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;
