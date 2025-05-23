@@ -7,6 +7,7 @@ public class sTerrainChunk : MonoBehaviour
     [SerializeField] private Gradient vextexColorGradient;
 
     private sTerrainManager tM;
+    private GameObject player;
 
     private Mesh mesh;
     private MeshFilter meshFilter;
@@ -20,12 +21,22 @@ public class sTerrainChunk : MonoBehaviour
     private List<int> triangles;
     private List<Color> colors;
 
+    private bool isDeformable = false;
+
     private void Awake()
     {
         tM = sTerrainManager.instance;
-
         meshFilter = GetComponent<MeshFilter>();
         mCollider = GetComponent<MeshCollider>();
+    }
+
+    private void Start()
+    {
+        player = GameObject.Find("Player");
+        if (!player)
+        {
+            print("Couldn't get player!");
+        }
     }
 
     //This needs to be called before anything else, it sets the X and Z origins of the Chunk
@@ -34,7 +45,17 @@ public class sTerrainChunk : MonoBehaviour
         xOrigin = xO;
         zOrigin = zO;
         DrawTerrain();
-        FinalizeTerrain();
+    }
+
+    //Draw every frame?
+    private void Update()
+    {
+        //If the distance from the player to the center of the chunk is less than a chunk's width, draw the terrain continuously.
+        if (Vector3.Distance(player.transform.position, new Vector3(xOrigin + (tM.CHUNK_WIDTH / 2), player.transform.position.y, zOrigin + (tM.CHUNK_WIDTH / 2)) * 3) < tM.CHUNK_WIDTH * 3)
+        {
+            //print(this.gameObject.name);
+            DrawTerrain();
+        }
     }
 
     public void DrawTerrain()
@@ -46,12 +67,17 @@ public class sTerrainChunk : MonoBehaviour
         uvs = new List<Vector2>();
 
         //error here
-        for (int z = zOrigin; z < zOrigin+32; z++)
+        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH; z++)
         {
-            for (int x = xOrigin; x < xOrigin+32; x++)
+            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH; x++)
             {
-                vertices.Add(tM.heightMap[x,z]);
+                vertices.Add(tM.heightMap[x, z] * 3);
+
                 colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z].y / tM.MAX_HEIGHT));
+
+                //float rValue = tM.levelTextures[0].GetPixel(x, z).r;
+                //colors.Add(new Color(rValue, rValue, rValue));
+
                 uvs.Add(new Vector2(0, 1));
             }
         }
@@ -69,54 +95,25 @@ public class sTerrainChunk : MonoBehaviour
                 triangles.Add(index + 1);
             }
         }
-    }
 
-    public void FinalizeTerrain()
-    {
         //set mesh to arrays
         mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.uv = uvs.ToArray();
         mesh.colors = colors.ToArray();
-
-        //Automatic stuff
         mesh.RecalculateBounds();
-        mesh.RecalculateNormals();
+        //mesh.RecalculateNormals();
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;
     }
 
-    //public void RedrawChunk()
+    //private void OnDrawGizmos()
     //{
-    //    print("Redraw Chunk at (" + xOrigin + ", " + zOrigin + ")");
-
-    //    //Instant or Animated:
-    //    //DrawTerrain();
-    //    StartCoroutine(AnimateTerrain());
-
-    //    FinalizeTerrain();
-        
+    //    //Gizmos.DrawWireCube(
+    //    //    new Vector3(1, 0, 1) * tM.CHUNK_WIDTH / 2, 
+    //    //    new Vector3(1 * tM.CHUNK_WIDTH, -1, 1 * tM.CHUNK_WIDTH)
+    //    //);
     //}
-
-    //private IEnumerator AnimateTerrain()
-    //{
-    //    float time = 0f;
-    //    while (time < 1)
-    //    {
-    //        time += Time.deltaTime;
-    //        DrawTerrain();
-    //        yield return null;
-    //    }
-    //    FinalizeTerrain();
-    //}
-
-    private void OnDrawGizmos()
-    {
-        //Gizmos.DrawWireCube(
-        //    new Vector3(1, 0, 1) * tM.CHUNK_WIDTH / 2, 
-        //    new Vector3(1 * tM.CHUNK_WIDTH, -1, 1 * tM.CHUNK_WIDTH)
-        //);
-    }
 }

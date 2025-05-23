@@ -4,25 +4,36 @@ using UnityEngine;
 
 public class sPlayerMovement : MonoBehaviour
 {
+    private GameManager gM;
     private sTerrainManager tM;
 
+    //Unity
     private Camera playerCamera;
+    private CharacterController cC;
+    [SerializeField] private LayerMask terrainMask;
+    private RaycastHit rayFwd;
 
-    private float lookSpeed = 4;
-    private float viewLimits = 85;
-    private float heightOverSand = 5; 
-
+    //State
     private Vector3 playerFacing;
-    private Vector3 cameraFacing;
-    private Vector3 playerMoving;
+    private float xComponentOfMovement;
+    private float yComponentOfMovement;
+    private float zComponentOfMovement;
+    private float cameraPitch;
+    private float cameraRoll;
     private bool freelookFrozen;
 
+    //Multipliers
+    private float moveFalloff = 0.98f;
+    private float yawSensitivity = 4;
+    private float pitchSensitivity = 5;
+    private float rollSensitivity = 3;
+    private float rollRecover = 2;
+    private float gravity = -9.8f;
 
-    private RaycastHit rayDown;
-    private CharacterController cC;
-    [SerializeField] private LayerMask terrainMask;     
+    //Clamps 
+    private float viewLimits = 85;
+    private float moveSpeed = 10;
     
-    private RaycastHit rayFwd;
 
     void Start()
     {
@@ -30,6 +41,10 @@ public class sPlayerMovement : MonoBehaviour
 
         playerCamera = GetComponentInChildren<Camera>();
         cC = GetComponent<CharacterController>();
+
+        //Mouse
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         freelookFrozen = false;
     }
 
@@ -39,15 +54,22 @@ public class sPlayerMovement : MonoBehaviour
         if (!freelookFrozen)
         {
             //Gather Inputs
-            Vector3 mouseChange = new Vector3(-Input.GetAxisRaw("Mouse Y"), Input.GetAxisRaw("Mouse X"));
-            playerFacing += mouseChange * lookSpeed;
+            Vector2 mouseChange = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
             //Rotate Player Yaw
-            this.transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
+            playerFacing += new Vector3(0, mouseChange.x, 0) * yawSensitivity;
+            transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
 
-            //Rotate Camera Pitch
-            cameraFacing += mouseChange * lookSpeed;
-            cameraFacing = new Vector3(Mathf.Clamp(cameraFacing.x, -viewLimits, viewLimits), 0, 0);
+            //Rotate Camera Pitch...
+            cameraPitch += -mouseChange.y * pitchSensitivity;
+            cameraPitch = Mathf.Clamp(cameraPitch, -viewLimits, viewLimits);
+
+            //...and Roll
+            cameraRoll += -mouseChange.x * rollSensitivity;
+            cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
+            cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
+
+            Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
             playerCamera.transform.localRotation = Quaternion.Euler(cameraFacing);
         }
 
@@ -75,23 +97,32 @@ public class sPlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        //Falloff
+        xComponentOfMovement *= moveFalloff;
+        zComponentOfMovement *= moveFalloff;
 
-        if (Physics.Raycast(transform.position, -transform.up, out rayDown, Mathf.Infinity, terrainMask))
-        {
-            Debug.DrawRay(transform.position, -transform.up * rayDown.distance, Color.red);
-            transform.position = new Vector3(transform.position.x, rayDown.point.y + heightOverSand, transform.position.z);
-        }
+        //Gravity
+        yComponentOfMovement += (gravity * Time.deltaTime);
 
-        Vector3 horizontalMovement = new Vector3(playerMoving.x, 0, playerMoving.z);
-        float yComponentOfInputMovement = playerMoving.y;
+        //Inputs
         Vector3 inputVector = new Vector3(
             Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
-            0, //Y inputs are handled by Jump
+            0, //NO INPUT FOR Y?
             Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
         ).normalized * Time.deltaTime;
+        Vector3 transformedInputs = transform.TransformDirection(inputVector);
 
-        playerMoving = Vector3.ClampMagnitude(horizontalMovement + transform.TransformDirection(inputVector), 5) + new Vector3(0, yComponentOfInputMovement, 0);
+        //Adding the X and Z inputs
+        xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
+        zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
 
-        cC.Move(playerMoving);
+        //Clamping horizontal movement
+        Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement);
+        movement = Vector3.ClampMagnitude(movement, moveSpeed);
+
+        movement.y = yComponentOfMovement;
+
+        //Print!
+        cC.Move(movement);
     }
 }
