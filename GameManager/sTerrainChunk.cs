@@ -6,22 +6,19 @@ public class sTerrainChunk : MonoBehaviour
 {
     [SerializeField] private Gradient vextexColorGradient;
 
+    int xOrigin;
+    int zOrigin;
+
     private sTerrainManager tM;
-    private GameObject player;
 
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
 
-    private int xOrigin;
-    private int zOrigin;
-
     private List<Vector3> vertices;
     private List<Vector2> uvs;
     private List<int> triangles;
     private List<Color> colors;
-
-    private bool isDeformable = false;
 
     private void Awake()
     {
@@ -30,20 +27,12 @@ public class sTerrainChunk : MonoBehaviour
         mCollider = GetComponent<MeshCollider>();
     }
 
-    private void Start()
-    {
-        player = GameObject.Find("Player");
-        if (!player)
-        {
-            print("Couldn't get player!");
-        }
-    }
-
     //This needs to be called before anything else, it sets the X and Z origins of the Chunk
     public void SetOrigin(int xO, int zO)
     {
         xOrigin = xO;
         zOrigin = zO;
+        transform.position = new Vector3(xOrigin, 0, zOrigin) * tM.TILE_WIDTH;
         DrawTerrain();
     }
 
@@ -51,7 +40,6 @@ public class sTerrainChunk : MonoBehaviour
     //uun as often as Update is run on Terrain Manager
     public void UpdateChunk()
     {
-        //isDeformable = enabled;
         //print(this.gameObject.name);
         DrawTerrain();
     }
@@ -64,54 +52,38 @@ public class sTerrainChunk : MonoBehaviour
         triangles = new List<int>();
         uvs = new List<Vector2>();
 
-        //VERTICES, 32x32 of them.
-        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH; z++) //at 0,0 goes from 0 to 32
+        int index = 0;
+        for (int z = 0; z < 31; z++) //FENCEPOST!
         {
-            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH; x++) //at 0,0 goes from 0 to 32
+            for (int x = 0; x < 31; x++)
             {
-                vertices.Add(new Vector3(
-                    x * tM.TILE_WIDTH, 
-                    tM.heightMap[x, z] * tM.TILE_WIDTH, 
-                    z * tM.TILE_WIDTH)
-                );
+                //get heights
+                float heightVert0 = tM.heightMap[x + xOrigin, z + zOrigin];
+                float heightVert1 = tM.heightMap[x + xOrigin + 1, z + zOrigin];
+                float heightVert2 = tM.heightMap[x + xOrigin, z + zOrigin + 1];
+                float heightVert3 = tM.heightMap[x + xOrigin + 1, z + zOrigin + 1];
 
-                //int randomX = Random.Range(0, 8);
-                //int randomZ = Random.Range(0, 8);
+                //4 vertices and...
+                vertices.Add(new Vector3(x, heightVert0, z) * tM.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, heightVert1, z) * tM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, heightVert2, z + 1) * tM.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, heightVert3, z + 1) * tM.TILE_WIDTH);
 
-                //colors.Add(vextexColorGradient.Evaluate(tM.heightMap[x,z] / tM.MAX_HEIGHT));
-                //float rValue = tM.levelTextures[0].GetPixel(x, z).r;
-                //colors.Add(new Color(rValue, rValue, rValue));
-                //uv.x = inverse_lerp(0, 1, x)
-                //uv.y = inverse_lerp(0, 1, z)
-            }
-        }
+                //4 uvs... (There is an 8 by 8 texture grid)
+                Vector2 uvBasis = DetermineUVIndex(heightVert0, heightVert1, heightVert2, heightVert3) / 8f;
+                uvs.Add(uvBasis);
+                uvs.Add(uvBasis + new Vector2(0.125f, 0));
+                uvs.Add(uvBasis + new Vector2(0, 0.125f));
+                uvs.Add(uvBasis + new Vector2(0.125f, 0.125f));
 
-        //UVs
-        for (int i = 0; i < 32; i++)
-        {
-            for (int j = 0; j < 32; j++)
-            {
-                float xUV = j;
-                float zUV = i;
-
-                //0,0  1,0  2,0  3,0  4,0
-                uvs.Add(new Vector2(xUV / 8f, zUV / 8f));
-            }
-        }
-
-        for (int i = 0; i < 31; i++) //less quads per row than vertices, by 1
-        {
-            for (int j = 0; j < 31; j++)
-            {
-                int index = j + (i * tM.CHUNK_WIDTH);
-
-                triangles.Add(index);
-                triangles.Add(index + (tM.CHUNK_WIDTH));
+                //6 tri-indexes forming 2 triangles
+                triangles.Add(index + 0);
+                triangles.Add(index + 3);
                 triangles.Add(index + 1);
-
-                triangles.Add(index + (tM.CHUNK_WIDTH));
-                triangles.Add(index + (tM.CHUNK_WIDTH + 1));
-                triangles.Add(index + 1);
+                triangles.Add(index + 0);
+                triangles.Add(index + 2);
+                triangles.Add(index + 3);
+                index += 4;
             }
         }
 
@@ -126,6 +98,18 @@ public class sTerrainChunk : MonoBehaviour
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;
+    }
+
+    private Vector2 DetermineUVIndex(float SW, float SE, float NW, float NE)
+    {
+        if (SW < 0.1f)
+        {
+            return new Vector2(0, 0);
+        }
+        else
+        {
+            return new Vector2(1, 0);
+        }
     }
 
     //private void OnDrawGizmos()

@@ -23,9 +23,9 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
-        QualitySettings.vSyncCount = 0; 
+        //QualitySettings.vSyncCount = 0; 
 
         // Limit framerate
-        Application.targetFrameRate = 90;
+        //Application.targetFrameRate = 90;
     }
 }

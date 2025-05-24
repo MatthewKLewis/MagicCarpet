@@ -28,7 +28,7 @@ public class sPlayerMovement : MonoBehaviour
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
     private float rollRecover = 2;
-    private float gravity = -9.8f;
+    private float gravity = -1f;
 
     //Clamps 
     private float viewLimits = 85;
@@ -104,6 +104,11 @@ public class sPlayerMovement : MonoBehaviour
         //Gravity
         yComponentOfMovement += (gravity * Time.deltaTime);
 
+        if (cC.isGrounded)
+        {
+            yComponentOfMovement = 0.0f;
+        }
+
         //Inputs
         Vector3 inputVector = new Vector3(
             Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
@@ -129,6 +134,6 @@ public class sPlayerMovement : MonoBehaviour
     //private void OnDrawGizmos()
     //{
     //    Gizmos.color = Color.cyan;
-    //    Gizmos.DrawSphere(transform.position, 1f);
+    //    Gizmos.DrawSphere(transform.position, 5f);
     //}
 }
