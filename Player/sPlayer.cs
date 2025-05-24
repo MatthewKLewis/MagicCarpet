@@ -2,16 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sPlayerMovement : MonoBehaviour
+public class sPlayer : MonoBehaviour
 {
     private GameManager gM;
     private sTerrainManager tM;
 
     //Unity
-    private Camera playerCamera;
     private CharacterController cC;
-    [SerializeField] private LayerMask terrainMask;
     private RaycastHit rayFwd;
+    public Transform cameraTransform;
+    [SerializeField] private LayerMask terrainMask;
+    [SerializeField] private AudioSource windAudio;
 
     //State
     private Vector3 playerFacing;
@@ -28,28 +29,36 @@ public class sPlayerMovement : MonoBehaviour
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
     private float rollRecover = 2;
-    private float gravity = -1f;
+    private float gravity = -0.5f;
 
     //Clamps 
     private float viewLimits = 85;
-    private float moveSpeed = 10;
+    private float maxMoveSpeed = 10;
     
 
     void Start()
     {
         tM = sTerrainManager.instance;
-
-        playerCamera = GetComponentInChildren<Camera>();
         cC = GetComponent<CharacterController>();
-
-        //Mouse
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         freelookFrozen = false;
+        windAudio.Play();
     }
 
     void Update()
     {
+        //Spell Panel
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            freelookFrozen = true;
+            Actions.OnSpellPanelToggle.Invoke(true);
+        }
+
+        if (Input.GetKeyUp(KeyCode.LeftControl))
+        {
+            freelookFrozen = false;
+            Actions.OnSpellPanelToggle.Invoke(false);
+        }
+
         //Free Look:
         if (!freelookFrozen)
         {
@@ -70,15 +79,21 @@ public class sPlayerMovement : MonoBehaviour
             cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
 
             Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
-            playerCamera.transform.localRotation = Quaternion.Euler(cameraFacing);
+            cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
         }
+
+        //Wind audio (for some reason I can go 50 velocity, despite the clamp)
+        windAudio.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
+
+        //Wind audio panning
+        windAudio.panStereo = -cameraRoll / 45f;
 
         if (Input.GetMouseButtonDown(0))
         {
-            print("Shooting ray!");
-            if (Physics.Raycast(transform.position, playerCamera.transform.forward, out rayFwd, Mathf.Infinity, terrainMask))
+            //print("Shooting ray!");
+            if (Physics.Raycast(transform.position, cameraTransform.forward, out rayFwd, Mathf.Infinity, terrainMask))
             {
-                Debug.DrawRay(transform.position, playerCamera.transform.forward * rayFwd.distance, Color.red, 1f);
+                Debug.DrawRay(transform.position, cameraTransform.forward * rayFwd.distance, Color.red, 1f);
                 switch (rayFwd.collider.gameObject.layer)
                 {
                     case 1:
@@ -93,26 +108,39 @@ public class sPlayerMovement : MonoBehaviour
                 }
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
     }
 
     private void FixedUpdate()
     {
+        //Wrap Player Location. Player bounds centroid is 1488, 1488
+        if (transform.position.x < 0f) { transform.position = new Vector3(2976f, transform.position.y, transform.position.z); return; }
+        if (transform.position.z < 0f) { transform.position = new Vector3(transform.position.x, transform.position.y, 2976f); return; }
+        if (transform.position.x > 2976f) { transform.position = new Vector3(0f, transform.position.y, transform.position.z); return; }
+        if (transform.position.z > 2976f) { transform.position = new Vector3(transform.position.x, transform.position.y, 0f); return; }
+
+        //Probe ground distance
+        RaycastHit groundHit;
+        float distanceToGround = 0;
+        if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
+        {
+            distanceToGround = groundHit.distance;
+            //print(distanceToGround);            
+        }
+
         //Falloff
         xComponentOfMovement *= moveFalloff;
+        yComponentOfMovement = (-distanceToGround * Time.deltaTime); //smooth gravity
         zComponentOfMovement *= moveFalloff;
-
-        //Gravity
-        yComponentOfMovement += (gravity * Time.deltaTime);
-
-        if (cC.isGrounded)
-        {
-            yComponentOfMovement = 0.0f;
-        }
 
         //Inputs
         Vector3 inputVector = new Vector3(
             Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
-            0, //NO INPUT FOR Y?
+            0, //NO INPUT FOR Y
             Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
         ).normalized * Time.deltaTime;
         Vector3 transformedInputs = transform.TransformDirection(inputVector);
@@ -123,17 +151,17 @@ public class sPlayerMovement : MonoBehaviour
 
         //Clamping horizontal movement
         Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement);
-        movement = Vector3.ClampMagnitude(movement, moveSpeed);
+        movement = Vector3.ClampMagnitude(movement, maxMoveSpeed);
 
         movement.y = yComponentOfMovement;
 
-        //Print!
+        //Send it!
         cC.Move(movement);
     }
 
     //private void OnDrawGizmos()
     //{
-    //    Gizmos.color = Color.cyan;
-    //    Gizmos.DrawSphere(transform.position, 5f);
+    //    Gizmos.color = Color.yellow;
+    //    Gizmos.DrawCube(transform.position, new Vector3(.75f, 2, .75f));
     //}
 }

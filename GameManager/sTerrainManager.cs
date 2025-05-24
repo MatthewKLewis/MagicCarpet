@@ -14,7 +14,9 @@ using UnityEngine;
 
 public class sTerrainManager : MonoBehaviour
 {
+
     public static sTerrainManager instance;
+    private GameManager gM;
 
     public List<Texture2D> levelTextures;
     public GameObject terrainGridPrefab;
@@ -23,15 +25,12 @@ public class sTerrainManager : MonoBehaviour
     [HideInInspector] public int CHUNK_WIDTH = 32;
     [HideInInspector] public int TILE_WIDTH = 3;
 
-    private float MAX_HEIGHT = 100f;
+    private float MAX_HEIGHT = 24f;
 
     //public Vector3[,] heightMap;
     public float[,] heightMap;
 
     public sTerrainChunk[,] chunks;
-
-    //Player
-    public GameObject player;
 
     private void Awake()
     {
@@ -49,6 +48,8 @@ public class sTerrainManager : MonoBehaviour
 
     void Start()
     {
+        gM = GameManager.instance;
+
         transform.position = Vector3.zero;
         heightMap = new float[1025, 1025];
         chunks = new sTerrainChunk[32,32];
@@ -78,23 +79,16 @@ public class sTerrainManager : MonoBehaviour
                 chunks[x, z].SetOrigin(x * (CHUNK_WIDTH - 1), z * (CHUNK_WIDTH-1));
             }
         }
-
-        //Find Player
-        player = GameObject.Find("Player");
-        if (!player)
-        {
-            Debug.LogError("No player!");
-        }
     }
 
     private void Update()
     {
-        if (player)
+        if (gM.player)
         {
             //Figure out what grid square the player is in
             //Chunks are 93 by 93 units wide : (CHUNK_WIDTH - 1) * TILE_WIDTH
-            float gridX = player.transform.position.x / (((CHUNK_WIDTH-1) * TILE_WIDTH));
-            float gridZ = player.transform.position.z / (((CHUNK_WIDTH-1) * TILE_WIDTH));
+            float gridX = gM.player.transform.position.x / (((CHUNK_WIDTH-1) * TILE_WIDTH));
+            float gridZ = gM.player.transform.position.z / (((CHUNK_WIDTH-1) * TILE_WIDTH));
             int GRIDX = Mathf.FloorToInt(gridX);
             int GRIDZ = Mathf.FloorToInt(gridZ);
 
@@ -128,12 +122,12 @@ public class sTerrainManager : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.black;
-        Gizmos.DrawWireCube(
-            new Vector3(1, 0, 1) * 2976 / 2,
-            new Vector3(2976, -1, 2976)
-        );
-    }
+    //private void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.black;
+    //    Gizmos.DrawWireCube(
+    //        new Vector3(1, 0, 1) * 2976 / 2,
+    //        new Vector3(2976, -1, 2976)
+    //    );
+    //}
 }

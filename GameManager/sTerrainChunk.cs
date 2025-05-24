@@ -102,13 +102,26 @@ public class sTerrainChunk : MonoBehaviour
 
     private Vector2 DetermineUVIndex(float SW, float SE, float NW, float NE)
     {
-        if (SW < 0.1f)
+        //Get Average height of the 4 corners,
+        //Fork into sections, water and coast, coast and grass, grass and rock, etc.
+        //flat, ridge, high corner, and low corner needed.
+        float avgHeight = (SW + SE + NW + NE) / 4f;
+
+        if (avgHeight < 0.25f)
         {
-            return new Vector2(0, 0);
+            return new Vector2(1, 1);
         }
-        else
+        else if (avgHeight < 3f)
         {
-            return new Vector2(1, 0);
+            return new Vector2(4, 1);
+        }
+        else if (avgHeight < 20f)
+        {
+            return new Vector2(1,4);
+        }
+        else //the rest
+        {
+            return new Vector2(4, 4);
         }
     }
 
