@@ -28,8 +28,11 @@ public class sMagicCamera : MonoBehaviour
 
     private void Update()
     {
-        transform.rotation = target.rotation;
-        transform.position = target.position;
+        if (target)
+        {
+            transform.rotation = target.rotation;
+            transform.position = target.position;
+        }
     }
 
     private void HandlePlayerDeath()

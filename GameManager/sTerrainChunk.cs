@@ -17,6 +17,7 @@ public class sTerrainChunk : MonoBehaviour
 
     private List<Vector3> vertices;
     private List<Vector2> uvs;
+    private List<Vector2> uvTwos;
     private List<int> triangles;
     private List<Color> colors;
 
@@ -51,6 +52,7 @@ public class sTerrainChunk : MonoBehaviour
         colors = new List<Color>();
         triangles = new List<int>();
         uvs = new List<Vector2>();
+        uvTwos = new List<Vector2>();
 
         int index = 0;
         for (int z = 0; z < 31; z++) //FENCEPOST!
@@ -65,9 +67,16 @@ public class sTerrainChunk : MonoBehaviour
 
                 //4 vertices and...
                 vertices.Add(new Vector3(x, heightVert0, z) * tM.TILE_WIDTH);
+                colors.Add(vextexColorGradient.Evaluate(heightVert0 / 24f)); //MAGIC NUMBER
+
                 vertices.Add(new Vector3(x + 1, heightVert1, z) * tM.TILE_WIDTH);
+                colors.Add(vextexColorGradient.Evaluate(heightVert1 / 24f)); //MAGIC NUMBER
+
                 vertices.Add(new Vector3(x, heightVert2, z + 1) * tM.TILE_WIDTH);
+                colors.Add(vextexColorGradient.Evaluate(heightVert2 / 24f)); //MAGIC NUMBER
+
                 vertices.Add(new Vector3(x + 1, heightVert3, z + 1) * tM.TILE_WIDTH);
+                colors.Add(vextexColorGradient.Evaluate(heightVert3 / 24f)); //MAGIC NUMBER
 
                 //4 uvs... (There is an 8 by 8 texture grid)
                 Vector2 uvBasis = DetermineUVIndex(heightVert0, heightVert1, heightVert2, heightVert3) / 8f;
@@ -75,6 +84,13 @@ public class sTerrainChunk : MonoBehaviour
                 uvs.Add(uvBasis + new Vector2(0.125f, 0));
                 uvs.Add(uvBasis + new Vector2(0, 0.125f));
                 uvs.Add(uvBasis + new Vector2(0.125f, 0.125f));
+
+                //4 uvTwos
+                uvTwos.Add(new Vector2(x+xOrigin, z+zOrigin) / 1024); //1024?
+                uvTwos.Add(new Vector2(x+xOrigin+1, z+zOrigin) / 1024);
+                uvTwos.Add(new Vector2(x+xOrigin, z+zOrigin+1) / 1024);
+                uvTwos.Add(new Vector2(x+xOrigin+1, z+zOrigin+1) / 1024);
+
 
                 //6 tri-indexes forming 2 triangles
                 triangles.Add(index + 0);
@@ -91,8 +107,11 @@ public class sTerrainChunk : MonoBehaviour
         mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+
         mesh.uv = uvs.ToArray();
+        mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
+
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
         mesh.Optimize();
@@ -107,17 +126,17 @@ public class sTerrainChunk : MonoBehaviour
         //flat, ridge, high corner, and low corner needed.
         float avgHeight = (SW + SE + NW + NE) / 4f;
 
-        if (avgHeight < 0.25f)
+        if (avgHeight < 0.3f)
         {
             return new Vector2(1, 1);
         }
         else if (avgHeight < 3f)
         {
-            return new Vector2(4, 1);
+            return new Vector2(2, 2);
         }
         else if (avgHeight < 20f)
         {
-            return new Vector2(1,4);
+            return new Vector2(3, 3);
         }
         else //the rest
         {

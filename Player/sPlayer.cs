@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sPlayer : MonoBehaviour
+public class sPlayer : MonoBehaviour, IKillable
 {
     private GameManager gM;
     private sTerrainManager tM;
@@ -11,6 +11,9 @@ public class sPlayer : MonoBehaviour
     private CharacterController cC;
     private RaycastHit rayFwd;
     public Transform cameraTransform;
+
+    [Space(10)]
+    [Header("Unity")]
     [SerializeField] private LayerMask terrainMask;
     [SerializeField] private AudioSource windAudio;
 
@@ -28,20 +31,34 @@ public class sPlayer : MonoBehaviour
     private float yawSensitivity = 4;
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
-    private float rollRecover = 2;
-    private float gravity = -0.5f;
+    private float rollRecover = 1.5f;
 
     //Clamps 
-    private float viewLimits = 85;
-    private float maxMoveSpeed = 10;
-    
+    private float viewLimits = 80;
+    private float speed = 0.6f; //between zero and one!
+    private int wrapAt;
+
+    //Prefabs
+    [Space(10)]
+    [Header("Prefabs")]
+    [SerializeField] private GameObject fireballPrefab;
+
+    //Health
+    public int currentHealth { get; set; } = 10;
+    public int maxHealth { get; set; } = 10;
+    public bool isDead { get; set; } = false;
+
 
     void Start()
     {
+        gM = GameManager.instance;
         tM = sTerrainManager.instance;
+
         cC = GetComponent<CharacterController>();
         freelookFrozen = false;
         windAudio.Play();
+
+        wrapAt = tM.chunks.GetLength(0) * (tM.CHUNK_WIDTH - 1) * tM.TILE_WIDTH;
     }
 
     void Update()
@@ -49,17 +66,21 @@ public class sPlayer : MonoBehaviour
         //Spell Panel
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
             freelookFrozen = true;
             Actions.OnSpellPanelToggle.Invoke(true);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
         {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
             freelookFrozen = false;
             Actions.OnSpellPanelToggle.Invoke(false);
         }
 
-        //Free Look:
+        //Not Menuing on in Cinematic...
         if (!freelookFrozen)
         {
             //Gather Inputs
@@ -80,6 +101,16 @@ public class sPlayer : MonoBehaviour
 
             Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
             cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                Shoot(0);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                Shoot(1);
+            }
         }
 
         //Wind audio (for some reason I can go 50 velocity, despite the clamp)
@@ -88,40 +119,21 @@ public class sPlayer : MonoBehaviour
         //Wind audio panning
         windAudio.panStereo = -cameraRoll / 45f;
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            //print("Shooting ray!");
-            if (Physics.Raycast(transform.position, cameraTransform.forward, out rayFwd, Mathf.Infinity, terrainMask))
-            {
-                Debug.DrawRay(transform.position, cameraTransform.forward * rayFwd.distance, Color.red, 1f);
-                switch (rayFwd.collider.gameObject.layer)
-                {
-                    case 1:
-                        break;                    
-                    case 2:
-                        break;                    
-                    case 3:
-                        tM.AlterTerrain(rayFwd.point);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        //Quit
+        if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
         {
-            Application.Quit();
+            gM.LoadLevel(0);
         }
     }
 
     private void FixedUpdate()
     {
-        //Wrap Player Location. Player bounds centroid is 1488, 1488
-        if (transform.position.x < 0f) { transform.position = new Vector3(2976f, transform.position.y, transform.position.z); return; }
-        if (transform.position.z < 0f) { transform.position = new Vector3(transform.position.x, transform.position.y, 2976f); return; }
-        if (transform.position.x > 2976f) { transform.position = new Vector3(0f, transform.position.y, transform.position.z); return; }
-        if (transform.position.z > 2976f) { transform.position = new Vector3(transform.position.x, transform.position.y, 0f); return; }
+        //Wrap Player Location. Player bounds centroid is 1488, 1488, or now 496,496 - 712,7
+        if (transform.position.x < 0f) { transform.position = new Vector3(wrapAt, transform.position.y, transform.position.z); return; }
+        if (transform.position.z < 0f) { transform.position = new Vector3(transform.position.x, transform.position.y, wrapAt); return; }
+        if (transform.position.x > wrapAt) { transform.position = new Vector3(0f, transform.position.y, transform.position.z); return; }
+        if (transform.position.z > wrapAt) { transform.position = new Vector3(transform.position.x, transform.position.y, 0f); return; }
 
         //Probe ground distance
         RaycastHit groundHit;
@@ -150,13 +162,98 @@ public class sPlayer : MonoBehaviour
         zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
 
         //Clamping horizontal movement
-        Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement);
-        movement = Vector3.ClampMagnitude(movement, maxMoveSpeed);
+        Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
 
         movement.y = yComponentOfMovement;
 
         //Send it!
         cC.Move(movement);
+    }
+
+    private void Shoot(int mouseButton = 0)
+    {
+
+        //Poll for enemy positions, find one in front
+        GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
+        if (target)
+        {
+            //print(target.name + " is in range!");
+            if (target.TryGetComponent(out IKillable script))
+            {
+                Instantiate(
+                    gM.fireBall,
+                    cameraTransform.position,
+                    Quaternion.LookRotation(target.transform.position - cameraTransform.position),
+                    null
+                );
+            }
+        }
+        else
+        {
+            //print("No target");
+            Instantiate(gM.fireBall, cameraTransform.position, cameraTransform.rotation, null);
+        }
+    }
+
+    public bool TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        Actions.OnHealthChange(currentHealth, maxHealth);
+        StartCoroutine(CameraShake());
+
+        if (currentHealth == 0)
+        {
+            Die();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private void Die()
+    {
+        print("Player died!");
+
+        //TODO
+        //freelookFrozen = true;
+        //isDead = true;        
+        //Death cam
+        //Restart level?
+        //Go to main screen?
+    }
+
+    private IEnumerator CameraShake(float duration = 0.25f, float magnitude = 0.25f)
+    {
+        Vector3 originalCamPos = cameraTransform.localPosition;
+
+        float elapsed = 0.0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float x = Random.Range(-1f, 1f) * magnitude;
+            float y = Random.Range(-1f, 1f) * magnitude;
+            cameraTransform.localPosition = originalCamPos + new Vector3(x, y, 0);
+            yield return null;
+        }
+
+        cameraTransform.localPosition = originalCamPos;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Mana")
+        {
+            print("Collect Mana");
+            Destroy(other.gameObject);
+        }
+        if (other.gameObject.name == "Fireball(Clone)")
+        {
+            print("Ouch!");
+        }
     }
 
     //private void OnDrawGizmos()
