@@ -9,3 +9,8 @@ public interface IKillable
     bool isDead { get; set; }
     public bool TakeDamage(int damage);
 }
+
+public interface IProjectile
+{
+    string ownerName { get; set; }
+}

@@ -2,13 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AIState
+{
+    ROAMING    = 0,
+    ATTACKING  = 1,
+    RETREATING = 2,
+    COLLECTING = 3,
+}
+
+
 public class sEnemy : MonoBehaviour, IKillable
 {
     private GameManager gM;
 
     //Unity
     private CharacterController cC;
-    [SerializeField] private LayerMask terrainMask;
+    [SerializeField] private AudioSource enemyAudioSource;
+
+    //[SerializeField] private LayerMask terrainMask; //Floaty enemies also?
 
     //State
     private float yComponentOfMovement;
@@ -20,20 +31,28 @@ public class sEnemy : MonoBehaviour, IKillable
 
     //AI Info
     private float distanceToPlayer;
+    private Vector3 homeBase;
 
     //Multipliers
     private float gravity = -1f;
 
     //Prefabs
-    [SerializeField] private GameObject fireballPrefab;
     private float timeLastShot = -0.5f;
     private float shotCooldown = 0.5f;
-
 
     void Start()
     {
         gM = GameManager.instance;
         cC = GetComponent<CharacterController>();
+
+        homeBase = transform.position;
+
+        StartCoroutine(ChangeAIState());
+    }
+
+    private void OnDestroy()
+    {
+        StopAllCoroutines();
     }
 
     private void Update()
@@ -46,11 +65,13 @@ public class sEnemy : MonoBehaviour, IKillable
     private void FixedUpdate()
     {
         Vector3 normalVectorToPlayer = Vector3.zero;
+        float healthPercent = currentHealth / maxHealth;
 
         //Gather information
         if (gM.player)
         {
             transform.LookAt(gM.player.transform);
+
             normalVectorToPlayer = (gM.player.transform.position - transform.position).normalized;
             distanceToPlayer = Vector3.Distance(transform.position, gM.player.transform.position);
         }
@@ -78,13 +99,18 @@ public class sEnemy : MonoBehaviour, IKillable
         if (Time.time > timeLastShot + shotCooldown)
         {
             timeLastShot = Time.time;
-            Instantiate(fireballPrefab, transform.position + new Vector3(0, 1, 1), transform.rotation, null);
+            enemyAudioSource.PlayOneShot(gM.fireBallClip);
+
+            //Mark projectile with ownerName!
+            //TODO Random scatter needed!
+            Instantiate(gM.fireBallPrefab, transform.position + new Vector3(0, 1, 1), transform.rotation, null)
+                .GetComponent<IProjectile>().ownerName = this.gameObject.name; ;
         }
     }
 
     public bool TakeDamage(int damage)
     {
-        print("Owwie!!");
+        //print("Owwie!!");
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         
@@ -107,6 +133,17 @@ public class sEnemy : MonoBehaviour, IKillable
 
     private void SpawnManaReward()
     {
-        Instantiate(gM.manaOrb, transform.position + Vector3.up, transform.rotation, null);
+        Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
+    }
+
+    private IEnumerator ChangeAIState()
+    {
+        while (gM.player)
+        {
+            yield return new WaitForSeconds(3);
+            print("Making AI decision to...");
+            print("KILL THE PLAYER");
+            //TODO - Change AI state based on current factors like Life, Mana, Castle Damage
+        }
     }
 }

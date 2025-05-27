@@ -24,8 +24,13 @@ public class GameManager : MonoBehaviour
 
     [Space(10)]
     [Header("Common Prefabs")]
-    public GameObject manaOrb;
-    public GameObject fireBall;
+    public GameObject manaOrbPrefab;
+    public GameObject fireBallPrefab;
+
+    [Space(10)]
+    [Header("Common Audio")]
+    public AudioClip fireBallClip;
+    public AudioClip painClip;
 
     private void Awake()
     {

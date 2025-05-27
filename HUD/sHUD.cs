@@ -20,12 +20,16 @@ public class sHUD : MonoBehaviour
     [Header("Stats")]
     [SerializeField] private RectTransform healthBar;
     [SerializeField] private RectTransform manaBar;
+    [SerializeField] private Transform damageFrame;
+
 
     private void Awake()
     {
         Actions.OnHealthChange += HandleHealthChange;
         Actions.OnManaChange += HandleManaChange;
+
         Actions.OnSpellPanelToggle += HandleSpellPanelToggle;
+
         Actions.OnEnemyDeath += HandleEnemyDeath;
     }
 
@@ -33,8 +37,10 @@ public class sHUD : MonoBehaviour
     {
         Actions.OnHealthChange -= HandleHealthChange;
         Actions.OnManaChange -= HandleManaChange;
+
         Actions.OnManaChange -= HandleManaChange;
         Actions.OnSpellPanelToggle -= HandleSpellPanelToggle;
+
         Actions.OnEnemyDeath -= HandleEnemyDeath;
     }
 
@@ -42,7 +48,9 @@ public class sHUD : MonoBehaviour
     {
         gM = GameManager.instance;
         tM = sTerrainManager.instance;
+
         spellPanel.localScale = Vector3.zero;
+        damageFrame.localScale = Vector3.zero;
     }
 
     private void Update()
@@ -64,16 +72,20 @@ public class sHUD : MonoBehaviour
         }
     }
 
-    private void HandleHealthChange(int currentHealth, int maxHealth)
+    private void HandleHealthChange(int currentHealth, int maxHealth, bool isDamage)
     {
-        //change health bar
-        healthBar.localScale = new Vector2((float)currentHealth / (float)maxHealth, 1) ;
+        //change mana bar
+        healthBar.localScale = new Vector2((float)currentHealth / (float)maxHealth, 1);
+        
+        if (isDamage)
+        {
+            StartCoroutine(ShowDamageFrame());
+        }
     }
 
     private void HandleManaChange(int currentMana, int maxMana)
     {
-        //change mana bar
-        healthBar.localScale = new Vector2((float)currentMana / (float)maxMana, 1);
+        manaBar.localScale = new Vector2((float)currentMana / (float)maxMana, 1);
     }
 
     private void HandleSpellPanelToggle(bool isOpen)
@@ -91,5 +103,17 @@ public class sHUD : MonoBehaviour
     private void HandleEnemyDeath()
     {
         return;
+    }
+
+    private IEnumerator ShowDamageFrame()
+    {
+        damageFrame.localScale = Vector3.one;
+        float timeElapsed = 0.0f;
+        while (timeElapsed < 0.25f)
+        {
+            timeElapsed += Time.deltaTime;
+            yield return null;
+        }
+        damageFrame.localScale = Vector3.zero;
     }
 }

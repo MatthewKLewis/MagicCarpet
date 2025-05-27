@@ -2,11 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sFireball : MonoBehaviour
+/*
+ * The way that preventing self damage works is by ownerName.
+ * The projectile-generating character will mark the projectile
+ * with the same name as itself. 
+ * 
+ */
+
+public class sFireball : MonoBehaviour, IProjectile
 {
     private float speed = 100f;
     private float lifeTime = 3f;
     private float spawnTime;
+
+    public string ownerName { get; set; }
 
     private void Start()
     {
@@ -27,10 +36,14 @@ public class sFireball : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent(out IKillable scriptOfKillable))
+        if (other.gameObject.name != ownerName)
         {
-            scriptOfKillable.TakeDamage(1);
+            if (other.TryGetComponent(out IKillable scriptOfKillable))
+            {
+                scriptOfKillable.TakeDamage(1);
+            }
+
+            Destroy(this.gameObject);
         }
-        Destroy(this.gameObject);
     }
 }

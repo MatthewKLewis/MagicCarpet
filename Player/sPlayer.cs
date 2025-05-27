@@ -15,7 +15,13 @@ public class sPlayer : MonoBehaviour, IKillable
     [Space(10)]
     [Header("Unity")]
     [SerializeField] private LayerMask terrainMask;
-    [SerializeField] private AudioSource windAudio;
+
+    [Space(10)]
+    [Header("Audio")]
+    [SerializeField] private AudioSource windAudioSource;
+    [SerializeField] private AudioSource playerAudioSource;
+    [SerializeField] private AudioClip painClip;
+    [SerializeField] private AudioClip fireBallClip;
 
     //State
     private Vector3 playerFacing;
@@ -38,15 +44,21 @@ public class sPlayer : MonoBehaviour, IKillable
     private float speed = 0.6f; //between zero and one!
     private int wrapAt;
 
-    //Prefabs
-    [Space(10)]
-    [Header("Prefabs")]
-    [SerializeField] private GameObject fireballPrefab;
+    //Prefabs - may need them later if projectiles vary
+    //[Space(10)]
+    //[Header("Prefabs")]
+    //[SerializeField] private GameObject fireballPrefab;
 
     //Health
-    public int currentHealth { get; set; } = 10;
+    public int currentHealth { get; set; } = 3;
     public int maxHealth { get; set; } = 10;
     public bool isDead { get; set; } = false;
+
+    private int currentMana = 3;
+    private int maxMana = 10;
+
+    private float timeLastRegen = -1f;
+    private float regenCooldown = 1f;
 
 
     void Start()
@@ -56,71 +68,77 @@ public class sPlayer : MonoBehaviour, IKillable
 
         cC = GetComponent<CharacterController>();
         freelookFrozen = false;
-        windAudio.Play();
+        windAudioSource.Play();
 
         wrapAt = tM.chunks.GetLength(0) * (tM.CHUNK_WIDTH - 1) * tM.TILE_WIDTH;
+
+        Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
+        Actions.OnManaChange.Invoke(currentMana, maxMana);
     }
 
     void Update()
     {
-        //Spell Panel
-        if (Input.GetKeyDown(KeyCode.LeftControl))
+        if (!isDead)
         {
-            Cursor.lockState = CursorLockMode.Confined;
-            Cursor.visible = true;
-            freelookFrozen = true;
-            Actions.OnSpellPanelToggle.Invoke(true);
-        }
-
-        if (Input.GetKeyUp(KeyCode.LeftControl))
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            freelookFrozen = false;
-            Actions.OnSpellPanelToggle.Invoke(false);
-        }
-
-        //Not Menuing on in Cinematic...
-        if (!freelookFrozen)
-        {
-            //Gather Inputs
-            Vector2 mouseChange = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
-
-            //Rotate Player Yaw
-            playerFacing += new Vector3(0, mouseChange.x, 0) * yawSensitivity;
-            transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
-
-            //Rotate Camera Pitch...
-            cameraPitch += -mouseChange.y * pitchSensitivity;
-            cameraPitch = Mathf.Clamp(cameraPitch, -viewLimits, viewLimits);
-
-            //...and Roll
-            cameraRoll += -mouseChange.x * rollSensitivity;
-            cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
-            cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
-
-            Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
-            cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
-
-            if (Input.GetMouseButtonDown(0))
+            //Spell Panel
+            if (Input.GetKeyDown(KeyCode.LeftControl))
             {
-                Shoot(0);
+                Cursor.lockState = CursorLockMode.Confined;
+                Cursor.visible = true;
+                freelookFrozen = true;
+                Actions.OnSpellPanelToggle.Invoke(true);
             }
 
-            if (Input.GetMouseButtonDown(1))
+            if (Input.GetKeyUp(KeyCode.LeftControl))
             {
-                Shoot(1);
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                freelookFrozen = false;
+                Actions.OnSpellPanelToggle.Invoke(false);
             }
+
+            if (!freelookFrozen)
+            {
+                //Gather Inputs
+                Vector2 mouseChange = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+
+                //Rotate Player Yaw
+                playerFacing += new Vector3(0, mouseChange.x, 0) * yawSensitivity;
+                transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
+
+                //Rotate Camera Pitch...
+                cameraPitch += -mouseChange.y * pitchSensitivity;
+                cameraPitch = Mathf.Clamp(cameraPitch, -viewLimits, viewLimits);
+
+                //...and Roll
+                cameraRoll += -mouseChange.x * rollSensitivity;
+                cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
+                cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
+
+                Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
+                cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
+
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Shoot(0);
+                }
+
+                if (Input.GetMouseButtonDown(1))
+                {
+                    Shoot(1);
+                }
+            }
+
+            //Wind audio (for some reason I can go 50 velocity, despite the clamp)
+            windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
+
+            //Wind audio panning
+            windAudioSource.panStereo = -cameraRoll / 45f;
+
+            RegenHealthAndMana();
         }
 
-        //Wind audio (for some reason I can go 50 velocity, despite the clamp)
-        windAudio.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
-
-        //Wind audio panning
-        windAudio.panStereo = -cameraRoll / 45f;
-
-
-        //Quit
+        //Quit, even when dead
         if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
         {
             gM.LoadLevel(0);
@@ -146,7 +164,7 @@ public class sPlayer : MonoBehaviour, IKillable
 
         //Falloff
         xComponentOfMovement *= moveFalloff;
-        yComponentOfMovement = (-distanceToGround * Time.deltaTime); //smooth gravity
+        yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
         zComponentOfMovement *= moveFalloff;
 
         //Inputs
@@ -172,26 +190,33 @@ public class sPlayer : MonoBehaviour, IKillable
 
     private void Shoot(int mouseButton = 0)
     {
-
         //Poll for enemy positions, find one in front
         GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
-        if (target)
+
+        if (target) //Auto-aim fireball
         {
-            //print(target.name + " is in range!");
             if (target.TryGetComponent(out IKillable script))
             {
+                //Mark projectile with ownerName!
                 Instantiate(
-                    gM.fireBall,
+                    gM.fireBallPrefab,
                     cameraTransform.position,
                     Quaternion.LookRotation(target.transform.position - cameraTransform.position),
                     null
-                );
+                ).GetComponent<IProjectile>().ownerName = this.gameObject.name;
+
+                playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+                playerAudioSource.PlayOneShot(fireBallClip);
             }
         }
-        else
+        else //Non auto-aim fireball
         {
-            //print("No target");
-            Instantiate(gM.fireBall, cameraTransform.position, cameraTransform.rotation, null);
+            playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+            playerAudioSource.PlayOneShot(fireBallClip);
+
+            //Mark projectile with ownerName!
+            Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
+                .GetComponent<IProjectile>().ownerName = this.gameObject.name;
         }
     }
 
@@ -200,7 +225,10 @@ public class sPlayer : MonoBehaviour, IKillable
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
-        Actions.OnHealthChange(currentHealth, maxHealth);
+        //Sounds and Visuals
+        playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+        playerAudioSource.PlayOneShot(painClip);
+        Actions.OnHealthChange(currentHealth, maxHealth, damage > 0);
         StartCoroutine(CameraShake());
 
         if (currentHealth == 0)
@@ -211,6 +239,20 @@ public class sPlayer : MonoBehaviour, IKillable
         else
         {
             return false;
+        }
+    }
+
+    public void RegenHealthAndMana()
+    {
+        if (Time.time > timeLastRegen + regenCooldown)
+        {
+            timeLastRegen = Time.time;
+            currentHealth += 1;
+            currentMana += 1;
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+            currentMana = Mathf.Clamp(currentMana, 0, maxMana);
+            Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
+            Actions.OnManaChange.Invoke(currentMana, maxMana);
         }
     }
 
@@ -250,15 +292,5 @@ public class sPlayer : MonoBehaviour, IKillable
             print("Collect Mana");
             Destroy(other.gameObject);
         }
-        if (other.gameObject.name == "Fireball(Clone)")
-        {
-            print("Ouch!");
-        }
     }
-
-    //private void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.yellow;
-    //    Gizmos.DrawCube(transform.position, new Vector3(.75f, 2, .75f));
-    //}
 }

@@ -21,6 +21,10 @@ public static class Actions
     public static Action<int> OnPlotEvent;
 
     //Player
-    public static Action<int, int> OnHealthChange;
+    /// <summary>
+    /// Current Health, Max Health, isDamage
+    /// </summary>
+    public static Action<int, int, bool> OnHealthChange;
+
     public static Action<int, int> OnManaChange;
 }

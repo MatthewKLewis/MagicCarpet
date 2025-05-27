@@ -46,6 +46,6 @@ public class sCritter : MonoBehaviour, IKillable
 
     private void SpawnManaReward()
     {
-        Instantiate(gM.manaOrb, transform.position, transform.rotation, null);
+        Instantiate(gM.manaOrbPrefab, transform.position, transform.rotation, null);
     }
 }
