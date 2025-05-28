@@ -40,6 +40,10 @@ public class sEnemy : MonoBehaviour, IKillable
     private float timeLastShot = -0.5f;
     private float shotCooldown = 0.5f;
 
+    [Space(10)]
+    [Header("Wake and Dust")]
+    [SerializeField] private sWakeAndDust wakeAndDust;
+
     void Start()
     {
         gM = GameManager.instance;
@@ -90,8 +94,11 @@ public class sEnemy : MonoBehaviour, IKillable
         //Recomposing
         movement.y = yComponentOfMovement;
 
-        //Print!
+        //Send it!
         cC.Move(movement);
+
+        //Wake and Dust
+        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 2f);
     }
 
     private void Shoot()

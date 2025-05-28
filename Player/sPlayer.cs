@@ -9,7 +9,6 @@ public class sPlayer : MonoBehaviour, IKillable
 
     //Unity
     private CharacterController cC;
-    private RaycastHit rayFwd;
     public Transform cameraTransform;
 
     [Space(10)]
@@ -44,11 +43,6 @@ public class sPlayer : MonoBehaviour, IKillable
     private float speed = 0.6f; //between zero and one!
     private int wrapAt;
 
-    //Prefabs - may need them later if projectiles vary
-    //[Space(10)]
-    //[Header("Prefabs")]
-    //[SerializeField] private GameObject fireballPrefab;
-
     //Health
     public int currentHealth { get; set; } = 3;
     public int maxHealth { get; set; } = 10;
@@ -56,9 +50,12 @@ public class sPlayer : MonoBehaviour, IKillable
 
     private int currentMana = 3;
     private int maxMana = 10;
-
     private float timeLastRegen = -1f;
     private float regenCooldown = 1f;
+
+    [Space(10)]
+    [Header("Wake and Dust")]
+    [SerializeField] private sWakeAndDust wakeAndDust;
 
 
     void Start()
@@ -67,6 +64,7 @@ public class sPlayer : MonoBehaviour, IKillable
         tM = sTerrainManager.instance;
 
         cC = GetComponent<CharacterController>();
+
         freelookFrozen = false;
         windAudioSource.Play();
 
@@ -129,13 +127,12 @@ public class sPlayer : MonoBehaviour, IKillable
                 }
             }
 
-            //Wind audio (for some reason I can go 50 velocity, despite the clamp)
-            windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
-
-            //Wind audio panning
-            windAudioSource.panStereo = -cameraRoll / 45f;
-
+            //Regen
             RegenHealthAndMana();
+
+            //Sounds and FX
+            windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
+            windAudioSource.panStereo = -cameraRoll / 45f;
         }
 
         //Quit, even when dead
@@ -186,6 +183,9 @@ public class sPlayer : MonoBehaviour, IKillable
 
         //Send it!
         cC.Move(movement);
+
+        //Wake and Dust
+        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
     }
 
     private void Shoot(int mouseButton = 0)
@@ -289,7 +289,8 @@ public class sPlayer : MonoBehaviour, IKillable
     {
         if (other.gameObject.tag == "Mana")
         {
-            print("Collect Mana");
+            playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+            playerAudioSource.PlayOneShot(gM.manaCollectClip);
             Destroy(other.gameObject);
         }
     }

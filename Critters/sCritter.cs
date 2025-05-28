@@ -23,7 +23,6 @@ public class sCritter : MonoBehaviour, IKillable
 
     public bool TakeDamage(int damage)
     {
-        print("Ouch!");
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
