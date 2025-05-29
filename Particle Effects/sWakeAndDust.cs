@@ -12,7 +12,7 @@ public class sWakeAndDust : MonoBehaviour
     {
         if (makeWake)
         {
-            print(transform.position.y);
+            //print(transform.position.y);
             if (transform.position.y < 1f) //Wake
             {
                 dustSystem.enableEmission = false;

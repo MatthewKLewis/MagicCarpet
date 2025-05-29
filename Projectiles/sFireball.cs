@@ -11,6 +11,8 @@ using UnityEngine;
 
 public class sFireball : MonoBehaviour, IProjectile
 {
+    private sTerrainManager tM;
+
     private float speed = 100f;
     private float lifeTime = 3f;
     private float spawnTime;
@@ -19,6 +21,7 @@ public class sFireball : MonoBehaviour, IProjectile
 
     private void Start()
     {
+        tM = sTerrainManager.instance;
         spawnTime = Time.time;
     }
 
@@ -38,9 +41,15 @@ public class sFireball : MonoBehaviour, IProjectile
     {
         if (other.gameObject.name != ownerName)
         {
-            if (other.TryGetComponent(out IKillable scriptOfKillable))
+            if (other.TryGetComponent(out IKillable victimScript))
             {
-                scriptOfKillable.TakeDamage(1);
+                victimScript.TakeDamage(1);
+            }
+
+            if (other.TryGetComponent(out sTerrainChunk chunkScript))
+            {
+                //print("Fireball hit a terrain chunk!");
+                tM.AlterTerrain(transform.position);
             }
 
             Destroy(this.gameObject);

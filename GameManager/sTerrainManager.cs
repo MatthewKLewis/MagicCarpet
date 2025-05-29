@@ -44,6 +44,13 @@ public class sTerrainManager : MonoBehaviour
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
 
+    //Templates
+    private int[,] smallExplosionTemplate = new int[3,3] {
+        { 0, 0, 0, },
+        { 0, 0, 0, }, 
+        { 0, 0, 0, },
+    };
+
     private void Awake()
     {
         //SINGLETON
@@ -109,7 +116,7 @@ public class sTerrainManager : MonoBehaviour
             for (int x = 0; x < levelTexture.width; x++)
             {
                 //from image
-                heightMap[x, z] = levelTexture.GetPixel(x, z).grayscale * MAX_HEIGHT;
+                heightMap[x, z] = levelTexture.GetPixel(x, z).r * MAX_HEIGHT;
             }
         }
 
@@ -155,22 +162,50 @@ public class sTerrainManager : MonoBehaviour
 
     public void AlterTerrain(Vector3 hitPoint)
     {
-        return;
-        //int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
-        //int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
+        //Find the chunk(S!) based on the hit
+        int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
+        int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
-        //print("Hitpoint: " + hitPoint + ": " + hitX + "," + hitZ);
+        //Early Return - No demo at height zero
+        if (heightMap[hitX, hitZ] < 0.1f)
+        {
+            print("No demolition at sea level!");
+            return;
+        }
 
-        ////Introduce Blast Sizes and Castles
-        ////
-        ////Reduces the height of a 3x3 tile area by 1m
-        //for (int i = -3; i <= 3; i++)
-        //{
-        //    for (int j = -3; j <= 3; j++)
-        //    {
-        //        heightMap[hitX + i, hitZ + j] = heightMap[hitX + i, hitZ + j] - 1; //MODULO AROUND 1025?
-        //    }
-        //}
+        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkZ = hitZ / CHUNK_WIDTH;
+
+        //Early Return - No demo at borders
+        if (chunkX == 0 || 
+            chunkZ == 0 || 
+            chunkX == chunks.GetLength(1)-1 || 
+            chunkZ == chunks.GetLength(0)-1
+        ) 
+        {
+            print("No demolition at borders!");
+            return;
+        }
+
+        //Introduce Blast Sizes and Castles
+        //Currently reduces the height of a 3x3 tile area by 1m, clamped
+        for (int i = -3; i <= 3; i++)
+        {
+            for (int j = -3; j <= 3; j++)
+            {
+                heightMap[hitX + i, hitZ + j] = Mathf.Clamp(heightMap[hitX + i, hitZ + j] - 1, 0, MAX_HEIGHT); //MODULO AROUND 1025?
+            }
+        }
+
+        //THIS IS NOT A COROUTINE TO ANIMATE THE CHUNK
+        //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                chunks[chunkX + j, chunkZ + i].UpdateChunk();
+            }
+        }
     }
 
     public GameObject GetNearestEnemyTo(Vector3 pos, Vector3 fwd)
