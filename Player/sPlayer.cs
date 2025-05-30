@@ -32,7 +32,7 @@ public class sPlayer : MonoBehaviour, IKillable
     private bool freelookFrozen;
 
     //Multipliers
-    private float moveFalloff = 0.98f;
+    private float moveFalloff = 0.99f; //now in Update, increased
     private float yawSensitivity = 4;
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
@@ -41,15 +41,15 @@ public class sPlayer : MonoBehaviour, IKillable
     //Clamps 
     private float viewLimits = 80;
     private float speed = 0.6f; //between zero and one!
-    private int wrapAt;
+    private float wrapAt;
 
     //Health
     public int currentHealth { get; set; } = 3;
-    public int maxHealth { get; set; } = 10;
+    public int maxHealth { get; set; } = 20;
     public bool isDead { get; set; } = false;
 
     private int currentMana = 3;
-    private int maxMana = 10;
+    private int maxMana = 20;
     private float timeLastRegen = -1f;
     private float regenCooldown = 1f;
 
@@ -76,6 +76,27 @@ public class sPlayer : MonoBehaviour, IKillable
 
     void Update()
     {
+        if (transform.position.x < 0f)
+        {
+            cC.enabled = false;
+            transform.position = new Vector3(wrapAt, transform.position.y, transform.position.z);
+        }
+        if (transform.position.x > wrapAt)
+        {
+            cC.enabled = false;
+            transform.position = new Vector3(0f, transform.position.y, transform.position.z);
+        }
+        if (transform.position.z < 0f)
+        {
+            cC.enabled = false;
+            transform.position = new Vector3(transform.position.x, transform.position.y, wrapAt);
+        }
+        if (transform.position.z > wrapAt)
+        {
+            cC.enabled = false;
+            transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
+        }
+
         if (!isDead)
         {
             //Spell Panel
@@ -127,6 +148,44 @@ public class sPlayer : MonoBehaviour, IKillable
                 }
             }
 
+            //Probe ground distance
+            RaycastHit groundHit;
+            float distanceToGround = 0;
+            if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
+            {
+                distanceToGround = groundHit.distance;
+                //print(distanceToGround);            
+            }
+
+            //Falloff
+            xComponentOfMovement *= moveFalloff;
+            yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
+            zComponentOfMovement *= moveFalloff;
+
+            //Inputs
+            Vector3 inputVector = new Vector3(
+                Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
+                0, //NO INPUT FOR Y
+                Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
+            ).normalized * Time.deltaTime;
+            Vector3 transformedInputs = transform.TransformDirection(inputVector);
+
+            //Adding the X and Z inputs
+            xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
+            zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
+
+            //Clamping horizontal movement
+            Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
+
+            movement.y = yComponentOfMovement;
+
+            //Send it!
+            cC.enabled = true;
+            cC.Move(movement);
+
+            //Wake and Dust
+            wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
+
             //Regen
             RegenHealthAndMana();
 
@@ -142,51 +201,45 @@ public class sPlayer : MonoBehaviour, IKillable
         }
     }
 
-    private void FixedUpdate()
-    {
-        //Wrap Player Location. Player bounds centroid is 1488, 1488, or now 496,496 - 712,7
-        if (transform.position.x < 0f) { transform.position = new Vector3(wrapAt, transform.position.y, transform.position.z); return; }
-        if (transform.position.z < 0f) { transform.position = new Vector3(transform.position.x, transform.position.y, wrapAt); return; }
-        if (transform.position.x > wrapAt) { transform.position = new Vector3(0f, transform.position.y, transform.position.z); return; }
-        if (transform.position.z > wrapAt) { transform.position = new Vector3(transform.position.x, transform.position.y, 0f); return; }
+    //private void FixedUpdate()
+    //{
+    //    //Probe ground distance
+    //    RaycastHit groundHit;
+    //    float distanceToGround = 0;
+    //    if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
+    //    {
+    //        distanceToGround = groundHit.distance;
+    //        //print(distanceToGround);            
+    //    }
 
-        //Probe ground distance
-        RaycastHit groundHit;
-        float distanceToGround = 0;
-        if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
-        {
-            distanceToGround = groundHit.distance;
-            //print(distanceToGround);            
-        }
+    //    //Falloff
+    //    xComponentOfMovement *= moveFalloff;
+    //    yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
+    //    zComponentOfMovement *= moveFalloff;
 
-        //Falloff
-        xComponentOfMovement *= moveFalloff;
-        yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
-        zComponentOfMovement *= moveFalloff;
+    //    //Inputs
+    //    Vector3 inputVector = new Vector3(
+    //        Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
+    //        0, //NO INPUT FOR Y
+    //        Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
+    //    ).normalized * Time.deltaTime;
+    //    Vector3 transformedInputs = transform.TransformDirection(inputVector);
 
-        //Inputs
-        Vector3 inputVector = new Vector3(
-            Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
-            0, //NO INPUT FOR Y
-            Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
-        ).normalized * Time.deltaTime;
-        Vector3 transformedInputs = transform.TransformDirection(inputVector);
+    //    //Adding the X and Z inputs
+    //    xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
+    //    zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
 
-        //Adding the X and Z inputs
-        xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
-        zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
+    //    //Clamping horizontal movement
+    //    Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
 
-        //Clamping horizontal movement
-        Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
+    //    movement.y = yComponentOfMovement;
 
-        movement.y = yComponentOfMovement;
+    //    //Send it!
+    //    cC.Move(movement);
 
-        //Send it!
-        cC.Move(movement);
-
-        //Wake and Dust
-        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
-    }
+    //    //Wake and Dust
+    //    wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
+    //}
 
     private void Shoot(int mouseButton = 0)
     {

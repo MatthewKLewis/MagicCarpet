@@ -21,6 +21,8 @@ public class sTerrainManager : MonoBehaviour
     public static sTerrainManager instance;
     private GameManager gM;
 
+    [Space(10)]
+    [Header("Level Image")]
     public Texture2D levelTexture;
     public GameObject terrainGridPrefab;
 
@@ -35,10 +37,11 @@ public class sTerrainManager : MonoBehaviour
     //For a heightMap[1025,1025], the chunks array will be [32,32], for [512,512] - [16,16]
     public sTerrainChunk[,] chunks;
 
+    //Parent to put the terrain chunks in.
     [Space(10)]
-    [Header("Adjacent Planes")]
-    [SerializeField] private Transform adjacentPlaneParent;
-    [SerializeField] private GameObject adjacentPlanePrefab;
+    [Header("Parents")]
+    [SerializeField] private Transform chunkParent;
+    [SerializeField] private Transform adjacentChunksParent;
 
     [Space(20)]
     [Header("Enemies")]
@@ -80,29 +83,6 @@ public class sTerrainManager : MonoBehaviour
         DrawAdjacentPlanes();
     }
 
-    private void Update()
-    {
-        return;
-        //if (gM.player)
-        //{
-        //    //Figure out what grid square the player is in
-        //    //Chunks are 93 by 93 units wide : (CHUNK_WIDTH - 1) * TILE_WIDTH
-        //    float gridX = gM.player.transform.position.x / (((CHUNK_WIDTH-1) * TILE_WIDTH));
-        //    float gridZ = gM.player.transform.position.z / (((CHUNK_WIDTH-1) * TILE_WIDTH));
-        //    int GRIDX = Mathf.FloorToInt(gridX);
-        //    int GRIDZ = Mathf.FloorToInt(gridZ);
-
-        //    //make even MORE efficient
-        //    for (int i = -1; i <= 1; i++)
-        //    {
-        //        for (int j = -1; j <= 1; j++)
-        //        {
-        //            //chunks[GRIDX + i, GRIDZ + j].UpdateChunk();
-        //        }
-        //    }
-        //}
-    }
-
     private void DrawChunks()
     {
         if (levelTexture.width != levelTexture.height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
@@ -129,7 +109,7 @@ public class sTerrainManager : MonoBehaviour
                     terrainGridPrefab,
                     Vector3.zero,
                     Quaternion.Euler(Vector3.zero),
-                    transform
+                    chunkParent
                 );
                 gO.name = "Chunk: " + x + ", " + z;
                 chunks[x, z] = gO.GetComponent<sTerrainChunk>();
@@ -149,12 +129,13 @@ public class sTerrainManager : MonoBehaviour
                 if (i != 0 || j != 0)
                 {
                     GameObject gO = Instantiate(
-                        adjacentPlanePrefab,
-                        new Vector3(j, 0, i) * fullWidth + new Vector3(1, 0, 1) * fullWidth / 2,
-                        Quaternion.Euler(Vector3.zero),
-                        adjacentPlaneParent
+                        chunkParent.gameObject,
+                        new Vector3(j, 0, i) * fullWidth,
+                        adjacentChunksParent.rotation,
+                        adjacentChunksParent
                     );
-                    gO.transform.localScale = Vector3.one * fullWidth;
+                    gO.name = "Adjacent: " + i + ", " + j;
+                    //gO.transform.localScale = Vector3.one * fullWidth;
                 }
             }
         }
@@ -169,7 +150,7 @@ public class sTerrainManager : MonoBehaviour
         //Early Return - No demo at height zero
         if (heightMap[hitX, hitZ] < 0.1f)
         {
-            print("No demolition at sea level!");
+            //print("No demolition at sea level!");
             return;
         }
 
@@ -183,7 +164,7 @@ public class sTerrainManager : MonoBehaviour
             chunkZ == chunks.GetLength(0)-1
         ) 
         {
-            print("No demolition at borders!");
+            //print("No demolition at borders!");
             return;
         }
 

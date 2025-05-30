@@ -1,16 +1,7 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public enum AIState
-{
-    ROAMING    = 0,
-    ATTACKING  = 1,
-    RETREATING = 2,
-    COLLECTING = 3,
-}
-
-public class sEnemy : MonoBehaviour, IKillable
+public class sBeeEnemy : MonoBehaviour, IKillable
 {
     private GameManager gM;
 
@@ -18,7 +9,8 @@ public class sEnemy : MonoBehaviour, IKillable
     private CharacterController cC;
     [SerializeField] private AudioSource enemyAudioSource;
     [SerializeField] private LayerMask terrainMask;
-    [SerializeField] private Transform spellOrigin;
+
+    //[SerializeField] private LayerMask terrainMask; //Floaty enemies also?
 
     //State
     private float yComponentOfMovement;
@@ -44,9 +36,7 @@ public class sEnemy : MonoBehaviour, IKillable
     {
         gM = GameManager.instance;
         cC = GetComponent<CharacterController>();
-
         homeBase = transform.position;
-
         StartCoroutine(ChangeAIState());
     }
 
@@ -57,12 +47,11 @@ public class sEnemy : MonoBehaviour, IKillable
 
     private void Update()
     {
-        if (distanceToPlayer < 10f)
+        if (distanceToPlayer < 4f)
         {
-            Shoot();
+            Sting();
         }
     }
-
     private void FixedUpdate()
     {
         Vector3 normalVectorToPlayer = Vector3.zero;
@@ -72,7 +61,7 @@ public class sEnemy : MonoBehaviour, IKillable
         if (gM.player)
         {
             transform.LookAt(gM.player.transform);
-            spellOrigin.LookAt(gM.player.transform);
+
             normalVectorToPlayer = (gM.player.transform.position - transform.position).normalized;
             distanceToPlayer = Vector3.Distance(transform.position, gM.player.transform.position);
         }
@@ -90,7 +79,7 @@ public class sEnemy : MonoBehaviour, IKillable
 
         //Horizontal movement
         Vector3 movement = Vector3.zero;
-        if (distanceToPlayer > 10f)
+        if (distanceToPlayer > 1f)
         {
             movement = new Vector3(normalVectorToPlayer.x, 0, normalVectorToPlayer.z) / 2f; //MAGIC NUMBER
         }
@@ -100,22 +89,14 @@ public class sEnemy : MonoBehaviour, IKillable
 
         //Send it!
         cC.Move(movement);
-
-        //Wake and Dust
-        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 2f);
     }
 
-    private void Shoot()
+    private void Sting()
     {
         if (Time.time > timeLastShot + shotCooldown)
         {
             timeLastShot = Time.time;
-            enemyAudioSource.PlayOneShot(gM.fireBallClip);
-
-            //Mark projectile with ownerName!
-            float randomDeg = Mathf.Deg2Rad * Random.Range(-15, 15);
-            Instantiate(gM.fireBallPrefab, spellOrigin.position, Quaternion.LookRotation(spellOrigin.forward + new Vector3(randomDeg, 0, randomDeg)), null)
-                .GetComponent<IProjectile>().ownerName = this.gameObject.name; ;
+            print("Sting player!");
         }
     }
 
@@ -124,7 +105,7 @@ public class sEnemy : MonoBehaviour, IKillable
         //print("Owwie!!");
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-        
+
         if (currentHealth == 0)
         {
             Die();
@@ -152,8 +133,8 @@ public class sEnemy : MonoBehaviour, IKillable
         while (gM.player)
         {
             yield return new WaitForSeconds(3);
-            print("Making AI decision to...");
-            print("KILL THE PLAYER");
+            //print("Making AI decision to...");
+            //print("KILL THE PLAYER");
             //TODO - Change AI state based on current factors like Life, Mana, Castle Damage
         }
     }
