@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class sFireball : MonoBehaviour, IProjectile
+public class sSpikifier : MonoBehaviour, IProjectile
 {
     private sTerrainManager tM;
 
@@ -8,10 +8,10 @@ public class sFireball : MonoBehaviour, IProjectile
     private float lifeTime = 3f;
     private float spawnTime;
 
-    private int[,] smallExplosionTemplate = new int[3, 3] {
-        { -1, -1, -1, },
-        { -1, -1, -1, },
-        { -1, -1, -1, },
+    private int[,] spikeTemplate = new int[3, 3] {
+        { 3, 3, 3, },
+        { 3, 3, 3, },
+        { 3, 3, 3, },
     };
 
 
@@ -39,16 +39,10 @@ public class sFireball : MonoBehaviour, IProjectile
     {
         if (other.gameObject.name != ownerName)
         {
-            if (other.TryGetComponent(out IKillable victimScript))
-            {
-                victimScript.TakeDamage(1);
-            }
-
-            //Optional terrain destruction
             if (other.TryGetComponent(out sTerrainChunk chunkScript))
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.AlterTerrain(transform.position, smallExplosionTemplate);
+                tM.AlterTerrain(transform.position, spikeTemplate);
             }
 
             Destroy(this.gameObject);

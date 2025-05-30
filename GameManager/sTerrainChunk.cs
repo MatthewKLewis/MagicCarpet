@@ -37,8 +37,6 @@ public class sTerrainChunk : MonoBehaviour
         DrawTerrain();
     }
 
-    //This is the Update method for this class it is
-    //uun as often as Update is run on Terrain Manager
     public void UpdateChunk()
     {
         //print(this.gameObject.name);
@@ -55,9 +53,9 @@ public class sTerrainChunk : MonoBehaviour
         uvTwos = new List<Vector2>();
 
         int index = 0;
-        for (int z = 0; z < 31; z++) //FENCEPOST!
+        for (int z = 0; z < tM.CHUNK_WIDTH-1; z++) //FENCEPOST!
         {
-            for (int x = 0; x < 31; x++)
+            for (int x = 0; x < tM.CHUNK_WIDTH-1; x++)
             {
                 //get heights
                 float heightVert0 = tM.heightMap[x + xOrigin, z + zOrigin];
@@ -67,16 +65,16 @@ public class sTerrainChunk : MonoBehaviour
 
                 //4 vertices and...
                 vertices.Add(new Vector3(x, heightVert0, z) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert0 / 24f)); //MAGIC NUMBER
+                colors.Add(vextexColorGradient.Evaluate(heightVert0 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x + 1, heightVert1, z) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert1 / 24f)); //MAGIC NUMBER
+                colors.Add(vextexColorGradient.Evaluate(heightVert1 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x, heightVert2, z + 1) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert2 / 24f)); //MAGIC NUMBER
+                colors.Add(vextexColorGradient.Evaluate(heightVert2 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x + 1, heightVert3, z + 1) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert3 / 24f)); //MAGIC NUMBER
+                colors.Add(vextexColorGradient.Evaluate(heightVert3 / tM.MAX_HEIGHT)); 
 
                 //4 uvs... (There is an 8 by 8 texture grid)
                 Vector2 uvBasis = DetermineUVIndex(heightVert0, heightVert1, heightVert2, heightVert3) / 8f;
@@ -87,10 +85,9 @@ public class sTerrainChunk : MonoBehaviour
 
                 //4 uvTwos
                 uvTwos.Add(new Vector2(x+xOrigin, z+zOrigin) / 1024); //1024?
-                uvTwos.Add(new Vector2(x+xOrigin+1, z+zOrigin) / 1024);
+                uvTwos.Add(new Vector2(x+xOrigin+1, z+zOrigin) / 1024); //1024 is the tileMap width&height!
                 uvTwos.Add(new Vector2(x+xOrigin, z+zOrigin+1) / 1024);
                 uvTwos.Add(new Vector2(x+xOrigin+1, z+zOrigin+1) / 1024);
-
 
                 //6 tri-indexes forming 2 triangles
                 triangles.Add(index + 0);
@@ -144,11 +141,4 @@ public class sTerrainChunk : MonoBehaviour
         }
     }
 
-    //private void OnDrawGizmos()
-    //{
-    //    //Gizmos.DrawWireCube(
-    //    //    new Vector3(1, 0, 1) * tM.CHUNK_WIDTH / 2, 
-    //    //    new Vector3(1 * tM.CHUNK_WIDTH, -1, 1 * tM.CHUNK_WIDTH)
-    //    //);
-    //}
 }

@@ -2,6 +2,47 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct Tile
+{
+    //public Tile(float x, float y)
+    //{
+    //    X = x;
+    //    Y = y;
+    //}
+
+    public int xOrigin;
+    public int zOrigin;
+
+    public float height00;
+    public float height10;
+    public float height01;
+    public float height11;
+
+    public Color vertColor00;
+    public Color vertColor10;
+    public Color vertColor01;
+    public Color vertColor11;
+
+    public Vector2 uv00;
+    public Vector2 uv10;
+    public Vector2 uv01;
+    public Vector2 uv11;
+
+    public Vector2 uv200;
+    public Vector2 uv210;
+    public Vector2 uv201;
+    public Vector2 uv211;
+
+    public int tri0;
+    public int tri1;
+    public int tri2;
+    public int tri3;
+    public int tri4;
+    public int tri5;
+
+    public bool triangleFlipped;
+}
+
 /*
  * The Terrain Manager is the singleton manager for terrain generation.
  * It creates TerrainChunks, and delegates terrain alteration
@@ -47,12 +88,6 @@ public class sTerrainManager : MonoBehaviour
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
 
-    //Templates
-    private int[,] smallExplosionTemplate = new int[3,3] {
-        { 0, 0, 0, },
-        { 0, 0, 0, }, 
-        { 0, 0, 0, },
-    };
 
     private void Awake()
     {
@@ -141,7 +176,7 @@ public class sTerrainManager : MonoBehaviour
         }
     }
 
-    public void AlterTerrain(Vector3 hitPoint)
+    public void AlterTerrain(Vector3 hitPoint, int[,] alterationTemplate)
     {
         //Find the chunk(S!) based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
@@ -157,7 +192,7 @@ public class sTerrainManager : MonoBehaviour
         int chunkX = hitX / CHUNK_WIDTH;
         int chunkZ = hitZ / CHUNK_WIDTH;
 
-        //Early Return - No demo at borders
+        //Early Return - No demo at borders MODULO AROUND 1025?
         if (chunkX == 0 || 
             chunkZ == 0 || 
             chunkX == chunks.GetLength(1)-1 || 
@@ -168,25 +203,8 @@ public class sTerrainManager : MonoBehaviour
             return;
         }
 
-        //Introduce Blast Sizes and Castles
-        //Currently reduces the height of a 3x3 tile area by 1m, clamped
-        for (int i = -3; i <= 3; i++)
-        {
-            for (int j = -3; j <= 3; j++)
-            {
-                heightMap[hitX + i, hitZ + j] = Mathf.Clamp(heightMap[hitX + i, hitZ + j] - 1, 0, MAX_HEIGHT); //MODULO AROUND 1025?
-            }
-        }
-
-        //THIS IS NOT A COROUTINE TO ANIMATE THE CHUNK
-        //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW
-        for (int i = -1; i <= 1; i++)
-        {
-            for (int j = -1; j <= 1; j++)
-            {
-                chunks[chunkX + j, chunkZ + i].UpdateChunk();
-            }
-        }
+        //Animate Terrain Coroutine
+        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, alterationTemplate, chunkX, chunkZ)));
     }
 
     public GameObject GetNearestEnemyTo(Vector3 pos, Vector3 fwd)
@@ -195,7 +213,7 @@ public class sTerrainManager : MonoBehaviour
         FilterEnemiesList();
         if (enemies.Count == 0)
         {
-            print("No enemies to target");
+            //print("No enemies to target");
             return null;
         }
 
@@ -233,6 +251,45 @@ public class sTerrainManager : MonoBehaviour
         // Check if log2(n) is an integer
         // and 2^(logn) = n
         return Mathf.Pow(2, logValue) == n;
+    }
+
+    private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int[,] alterationTemplate, int chunkX, int chunkZ)
+    {
+        float animationSteps = 4;
+        float overSeconds = 0.5f;
+        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
+
+        for (int s = 0; s < animationSteps; s++)
+        {
+            //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
+            //       FROM X+ AND Z+ OF THE HIT POINT RATHER THAN THE MIDDLE.
+            for (int i = 0; i < alterationTemplate.GetLength(0); i++)
+            {
+                for (int j = 0; j < alterationTemplate.GetLength(1); j++)
+                {
+                    heightMap[hitX + i, hitZ + j] = Mathf.Clamp(
+                        heightMap[hitX + i, hitZ + j] + (alterationTemplate[i, j] / animationSteps), 
+                        0, 
+                        MAX_HEIGHT
+                    ); 
+                }
+            }
+
+            //print(s);
+            //THIS IS NOT A COROUTINE TO ANIMATE THE CHUNK
+            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    chunks[chunkX + j, chunkZ + i].DrawTerrain();
+                }
+            }
+
+            yield return new WaitForSeconds(overSeconds / animationSteps);
+        }
+
+
     }
 
     private void OnDrawGizmos()

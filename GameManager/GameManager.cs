@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     [Header("Common Prefabs")]
     public GameObject manaOrbPrefab;
     public GameObject fireBallPrefab;
+    public GameObject spikifierPrefab;
 
     [Space(10)]
     [Header("Common Audio Clips")]
@@ -50,10 +51,10 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
-        //QualitySettings.vSyncCount = 0;
+        QualitySettings.vSyncCount = 1;
 
         // Limit framerate
-        //Application.targetFrameRate = 30;
+        Application.targetFrameRate = 60;
 
         listener = GetComponent<AudioListener>();
 

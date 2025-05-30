@@ -10,6 +10,13 @@ public interface IKillable
     public bool TakeDamage(int damage);
 }
 
+
+/*
+ * The way that preventing self damage works is by ownerName.
+ * The projectile-generating character will mark the projectile
+ * with the same name as itself. 
+ * MKL
+ */
 public interface IProjectile
 {
     string ownerName { get; set; }

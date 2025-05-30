@@ -8,6 +8,10 @@ public class sMagicCamera : MonoBehaviour
     private Transform target;
     private Camera cam;
 
+    [Space(10)]
+    [Header("Follow Vars")]
+    [SerializeField] private float followFactor;
+
     private void Awake()
     {
         gM = GameManager.instance;
@@ -31,7 +35,12 @@ public class sMagicCamera : MonoBehaviour
         if (target)
         {
             transform.rotation = target.rotation;
-            transform.position = target.position;
+            //transform.position = target.position;
+            transform.position = new Vector3(
+                target.position.x, 
+                Mathf.Lerp(transform.position.y, target.position.y, followFactor), 
+                target.position.z)
+            ;
         }
     }
 

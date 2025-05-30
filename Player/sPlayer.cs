@@ -11,11 +11,11 @@ public class sPlayer : MonoBehaviour, IKillable
     private CharacterController cC;
     public Transform cameraTransform;
 
-    [Space(10)]
+    [Space(4)]
     [Header("Unity")]
     [SerializeField] private LayerMask terrainMask;
 
-    [Space(10)]
+    [Space(4)]
     [Header("Audio")]
     [SerializeField] private AudioSource windAudioSource;
     [SerializeField] private AudioSource playerAudioSource;
@@ -31,8 +31,12 @@ public class sPlayer : MonoBehaviour, IKillable
     private float cameraRoll;
     private bool freelookFrozen;
 
+    [Space(4)]
+    [Header("Carpet")]
+    [SerializeField] private Transform carpetTransform;
+
     //Multipliers
-    private float moveFalloff = 0.99f; //now in Update, increased
+    private float moveFalloff = 0.98f; //now in Update, provide a target FPS in GameManager for stability!
     private float yawSensitivity = 4;
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
@@ -53,7 +57,7 @@ public class sPlayer : MonoBehaviour, IKillable
     private float timeLastRegen = -1f;
     private float regenCooldown = 1f;
 
-    [Space(10)]
+    [Space(4)]
     [Header("Wake and Dust")]
     [SerializeField] private sWakeAndDust wakeAndDust;
 
@@ -107,7 +111,6 @@ public class sPlayer : MonoBehaviour, IKillable
                 freelookFrozen = true;
                 Actions.OnSpellPanelToggle.Invoke(true);
             }
-
             if (Input.GetKeyUp(KeyCode.LeftControl))
             {
                 Cursor.lockState = CursorLockMode.Locked;
@@ -148,11 +151,16 @@ public class sPlayer : MonoBehaviour, IKillable
                 }
             }
 
-            //Probe ground distance
+            //GROUND DISTANCE
             RaycastHit groundHit;
             float distanceToGround = 0;
             if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
             {
+                //Match carpet rotation to ground plane rotation?
+                Vector3 gpAngle = Vector3.ProjectOnPlane(transform.forward, groundHit.normal); //cameraGimbal.forward
+                carpetTransform.rotation = Quaternion.Lerp(carpetTransform.rotation, Quaternion.LookRotation(gpAngle, groundHit.normal), 0.05f); //normal angle
+
+                Debug.DrawRay(cameraTransform.position, Vector3.down, Color.red, 0.2f);
                 distanceToGround = groundHit.distance;
                 //print(distanceToGround);            
             }
@@ -168,23 +176,29 @@ public class sPlayer : MonoBehaviour, IKillable
                 0, //NO INPUT FOR Y
                 Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
             ).normalized * Time.deltaTime;
-            Vector3 transformedInputs = transform.TransformDirection(inputVector);
+
+            // TRANSFORM THE INPUTS ACCORDING TO EITHER 
+            // BASE TRANSFORM OR GROUNDPLANE TRANSFORM
+            //Vector3 transformedInputs = groundPlane.TransformDirection(inputVector); // Movement parallel to ground plane. 
+            Vector3 transformedInputs = transform.TransformDirection(inputVector); // "Bump" your way up hills
 
             //Adding the X and Z inputs
             xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
             zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
 
-            //Clamping horizontal movement
-            Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
+            yComponentOfMovement += transformedInputs.y;
 
-            movement.y = yComponentOfMovement;
+            //Clamping horizontal movement
+            Vector3 movement = new Vector3(xComponentOfMovement, yComponentOfMovement, zComponentOfMovement) * speed;
+
+            //movement.y = yComponentOfMovement;
 
             //Send it!
             cC.enabled = true;
             cC.Move(movement);
 
             //Wake and Dust
-            wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
+            wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
 
             //Regen
             RegenHealthAndMana();
@@ -243,34 +257,44 @@ public class sPlayer : MonoBehaviour, IKillable
 
     private void Shoot(int mouseButton = 0)
     {
-        //Poll for enemy positions, find one in front
-        GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
-
-        if (target) //Auto-aim fireball
+        if (mouseButton == 0)
         {
-            if (target.TryGetComponent(out IKillable script))
-            {
-                //Mark projectile with ownerName!
-                Instantiate(
-                    gM.fireBallPrefab,
-                    cameraTransform.position,
-                    Quaternion.LookRotation(target.transform.position - cameraTransform.position),
-                    null
-                ).GetComponent<IProjectile>().ownerName = this.gameObject.name;
+            //Poll for enemy positions, find one in front
+            GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
 
+            if (target) //Auto-aim fireball
+            {
+                if (target.TryGetComponent(out IKillable script))
+                {
+                    //Mark projectile with ownerName!
+                    Instantiate(
+                        gM.fireBallPrefab,
+                        cameraTransform.position,
+                        Quaternion.LookRotation(target.transform.position - cameraTransform.position),
+                        null
+                    ).GetComponent<IProjectile>().ownerName = this.gameObject.name;
+
+                    playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+                    playerAudioSource.PlayOneShot(fireBallClip);
+                }
+            }
+            else //Non auto-aim fireball
+            {
                 playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
                 playerAudioSource.PlayOneShot(fireBallClip);
+
+                //Mark projectile with ownerName!
+                Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
+                    .GetComponent<IProjectile>().ownerName = this.gameObject.name;
             }
         }
-        else //Non auto-aim fireball
+        else if (mouseButton == 1)
         {
-            playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
-            playerAudioSource.PlayOneShot(fireBallClip);
-
             //Mark projectile with ownerName!
-            Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
+            Instantiate(gM.spikifierPrefab, cameraTransform.position, cameraTransform.rotation, null)
                 .GetComponent<IProjectile>().ownerName = this.gameObject.name;
         }
+
     }
 
     public bool TakeDamage(int damage)

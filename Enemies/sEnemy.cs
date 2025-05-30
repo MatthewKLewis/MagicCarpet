@@ -55,15 +55,8 @@ public class sEnemy : MonoBehaviour, IKillable
         StopAllCoroutines();
     }
 
-    private void Update()
-    {
-        if (distanceToPlayer < 10f)
-        {
-            Shoot();
-        }
-    }
 
-    private void FixedUpdate()
+    private void Update()
     {
         Vector3 normalVectorToPlayer = Vector3.zero;
         float healthPercent = currentHealth / maxHealth;
@@ -101,8 +94,18 @@ public class sEnemy : MonoBehaviour, IKillable
         //Send it!
         cC.Move(movement);
 
+        if (distanceToPlayer < 10f)
+        {
+            Shoot();
+        }
+
         //Wake and Dust
-        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 2f);
+        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
+    }
+
+    private void FixedUpdate()
+    {
+        //Update used to just have the Shoot logic, now everything is in Update and FixedUpdate is empty.
     }
 
     private void Shoot()
