@@ -4,12 +4,6 @@ using UnityEngine;
 
 public struct Tile
 {
-    //public Tile(float x, float y)
-    //{
-    //    X = x;
-    //    Y = y;
-    //}
-
     public int xOrigin;
     public int zOrigin;
 
@@ -41,6 +35,28 @@ public struct Tile
     public int tri5;
 
     public bool triangleFlipped;
+
+    public override string ToString()
+    {
+        return $"Tile:\n" +
+               $"  Origin: (x: {xOrigin}, z: {zOrigin})\n" +
+               $"  Heights:\n" +
+               $"    height00: {height00}, height10: {height10}\n" +
+               $"    height01: {height01}, height11: {height11}\n" +
+               $"  Vertex Colors:\n" +
+               $"    vertColor00: {vertColor00}, vertColor10: {vertColor10}\n" +
+               $"    vertColor01: {vertColor01}, vertColor11: {vertColor11}\n" +
+               $"  UVs:\n" +
+               $"    uv00: {uv00}, uv10: {uv10}\n" +
+               $"    uv01: {uv01}, uv11: {uv11}\n" +
+               $"  Secondary UVs:\n" +
+               $"    uv200: {uv200}, uv210: {uv210}\n" +
+               $"    uv201: {uv201}, uv211: {uv211}\n" +
+               $"  Triangles:\n" +
+               $"    tri0: {tri0}, tri1: {tri1}, tri2: {tri2}\n" +
+               $"    tri3: {tri3}, tri4: {tri4}, tri5: {tri5}\n" +
+               $"  Triangle Flipped: {triangleFlipped}";
+    }
 }
 
 /*
@@ -65,6 +81,7 @@ public class sTerrainManager : MonoBehaviour
     [Space(10)]
     [Header("Level Image")]
     public Texture2D levelTexture;
+    [SerializeField] private Gradient vertexColorGradient;
     public GameObject terrainGridPrefab;
 
     //256 65 x 65 tiles
@@ -73,7 +90,10 @@ public class sTerrainManager : MonoBehaviour
     public float MAX_HEIGHT = 24.0f;
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
+    //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
+    public Tile[,] tileMap;
     public float[,] heightMap;
+
 
     //For a heightMap[1025,1025], the chunks array will be [32,32], for [512,512] - [16,16]
     public sTerrainChunk[,] chunks;
@@ -122,10 +142,15 @@ public class sTerrainManager : MonoBehaviour
     {
         if (levelTexture.width != levelTexture.height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
         if (!isPowerofTwo(levelTexture.width - 1)) { Debug.LogWarning("LEVEL TEXTURE NOT POW2+1"); }
+
+        //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
         heightMap = new float[levelTexture.width, levelTexture.width]; // 1025,1025, or 513, 513
+        tileMap = new Tile[levelTexture.width - 1, levelTexture.width - 1];
+        //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
+
         chunks = new sTerrainChunk[(levelTexture.width - 1) / CHUNK_WIDTH, (levelTexture.width - 1) / CHUNK_WIDTH]; // 32,32 or 16,16
 
-        //fill the heightmaps list
+        //fill the heightmap
         for (int z = 0; z < levelTexture.width; z++)
         {
             for (int x = 0; x < levelTexture.width; x++)
@@ -134,6 +159,59 @@ public class sTerrainManager : MonoBehaviour
                 heightMap[x, z] = levelTexture.GetPixel(x, z).r * MAX_HEIGHT;
             }
         }
+
+        //fill the tileMap FENCEPOST!
+        int index = 0;
+        for (int z = 0; z < levelTexture.width-1; z++)
+        {
+            for (int x = 0; x < levelTexture.width-1; x++)
+            {
+                //new tile
+                Tile tile = new Tile();
+                tile.zOrigin = z;
+                tile.xOrigin = x;
+
+                float heightVert0 = heightMap[x, z];
+                float heightVert1 = heightMap[x + +1, z];
+                float heightVert2 = heightMap[x, z + +1];
+                float heightVert3 = heightMap[x + 1, z + 1];
+
+                tile.height00 = heightVert0;
+                tile.height10 = heightVert1;
+                tile.height01 = heightVert2;
+                tile.height11 = heightVert3;
+                tile.vertColor00 = vertexColorGradient.Evaluate(heightVert0);
+                tile.vertColor10 = vertexColorGradient.Evaluate(heightVert1);
+                tile.vertColor01 = vertexColorGradient.Evaluate(heightVert2);
+                tile.vertColor11 = vertexColorGradient.Evaluate(heightVert3);
+
+                Vector2 uvBasis = DetermineUVIndex(heightVert0, heightVert1, heightVert2, heightVert3) / 8f;
+                tile.uv00 = uvBasis;
+                tile.uv10 = uvBasis + new Vector2(0.125f, 0);
+                tile.uv01 = uvBasis + new Vector2(0, 0.125f);
+                tile.uv11 = uvBasis + new Vector2(0.125f, 0.125f);
+
+                tile.uv200 = new Vector2(x, z) / 1024f;
+                tile.uv210 = new Vector2(x, z) / 1024f;
+                tile.uv201 = new Vector2(x, z) / 1024f;
+                tile.uv211 = new Vector2(x, z) / 1024f;
+
+                tile.tri0 = index + 0;
+                tile.tri1 = index + 3;
+                tile.tri2 = index + 1;
+                tile.tri3 = index + 0;
+                tile.tri4 = index + 2;
+                tile.tri5 = index + 3;
+                //public static function that just resorts the order of these to rotate the tri's
+
+                tile.triangleFlipped = false;
+
+                tileMap[x, z] = tile;
+
+                index += 4;
+            }
+        }
+        print(tileMap[400, 400].ToString());
 
         //make a terrain grid for each heightmap.
         for (int z = 0; z < chunks.GetLength(0); z++)
@@ -240,6 +318,31 @@ public class sTerrainManager : MonoBehaviour
     }
 
     //Utility
+    private Vector2 DetermineUVIndex(float SW, float SE, float NW, float NE)
+    {
+        //Get Average height of the 4 corners,
+        //Fork into sections, water and coast, coast and grass, grass and rock, etc.
+        //flat, ridge, high corner, and low corner needed.
+        float avgHeight = (SW + SE + NW + NE) / 4f;
+
+        if (avgHeight < 0.3f)
+        {
+            return new Vector2(1, 1);
+        }
+        else if (avgHeight < 3f)
+        {
+            return new Vector2(2, 2);
+        }
+        else if (avgHeight < 20f)
+        {
+            return new Vector2(3, 3);
+        }
+        else //the rest
+        {
+            return new Vector2(4, 4);
+        }
+    }
+
     private bool isPowerofTwo(int n)
     {
         if (n <= 0)

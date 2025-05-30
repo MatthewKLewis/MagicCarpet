@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class sTerrainChunk : MonoBehaviour
 {
-    [SerializeField] private Gradient vextexColorGradient;
+    [SerializeField] private Gradient vertexColorGradient;
 
     int xOrigin;
     int zOrigin;
@@ -65,16 +65,16 @@ public class sTerrainChunk : MonoBehaviour
 
                 //4 vertices and...
                 vertices.Add(new Vector3(x, heightVert0, z) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert0 / tM.MAX_HEIGHT)); 
+                colors.Add(vertexColorGradient.Evaluate(heightVert0 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x + 1, heightVert1, z) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert1 / tM.MAX_HEIGHT)); 
+                colors.Add(vertexColorGradient.Evaluate(heightVert1 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x, heightVert2, z + 1) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert2 / tM.MAX_HEIGHT)); 
+                colors.Add(vertexColorGradient.Evaluate(heightVert2 / tM.MAX_HEIGHT)); 
 
                 vertices.Add(new Vector3(x + 1, heightVert3, z + 1) * tM.TILE_WIDTH);
-                colors.Add(vextexColorGradient.Evaluate(heightVert3 / tM.MAX_HEIGHT)); 
+                colors.Add(vertexColorGradient.Evaluate(heightVert3 / tM.MAX_HEIGHT)); 
 
                 //4 uvs... (There is an 8 by 8 texture grid)
                 Vector2 uvBasis = DetermineUVIndex(heightVert0, heightVert1, heightVert2, heightVert3) / 8f;
