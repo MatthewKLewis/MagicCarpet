@@ -49,10 +49,6 @@ public class sTerrainManager : MonoBehaviour
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
 
-    private Deformation smallCrater = new Deformation();
-    private Deformation castleDeformation;
-
-
     private void Awake()
     {
         //SINGLETON
@@ -77,33 +73,8 @@ public class sTerrainManager : MonoBehaviour
         {
             enemies.Add(nme);
         }
-
         DrawChunks();
-        DrawAdjacentPlanes();
-
-        //TODO - Make a public static resource class for various useful deforms
-        castleDeformation = new Deformation();
-        castleDeformation.flattenFirst = true;
-        castleDeformation.heightOffsets = new float[3, 3] { 
-            { 5, 5, 5 }, 
-            { 5, 5.5f, 5 }, 
-            { 5, 5, 5 }, 
-        };
-        castleDeformation.colorChanges = new Color[3, 3] {
-            { Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.orange, Color.gray },
-            { Color.gray, Color.gray, Color.gray }
-        };
-        castleDeformation.uvBasisRemaps = new Vector2[2, 2]
-        {
-            {Vector2.zero, Vector2.zero, },
-            {Vector2.zero, Vector2.zero, },
-        };
-        castleDeformation.triangleFlips = new bool[2, 2]
-        {
-            {true, false, },
-            {false, true, },
-        };
+        DrawAdjacentPlanes();        
     }
 
     private void DrawChunks()
@@ -245,7 +216,7 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //Animate Terrain Coroutine
-        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, castleDeformation)));
+        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, Deformations.returnCastleDeformation_NEW())));
     }
 
     private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
