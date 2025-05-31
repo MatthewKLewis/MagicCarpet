@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class sTerrainChunk : MonoBehaviour
@@ -100,7 +101,6 @@ public class sTerrainChunk : MonoBehaviour
         mesh.uv = uvs.ToArray();
         //mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
-
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
         mesh.Optimize();

@@ -14,8 +14,9 @@ public static class Actions
     public static Action OnConversationStart;
     public static Action OnConversationEnd;
 
-    //from HUD to GAME
+    //HUD
     public static Action<bool> OnSpellPanelToggle;
+    public static Action<string> OnHUDWarning;
 
     //Journal
     public static Action<int> OnPlotEvent;

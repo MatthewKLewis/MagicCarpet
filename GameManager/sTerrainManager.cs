@@ -21,16 +21,22 @@ public class sTerrainManager : MonoBehaviour
     public static sTerrainManager instance;
     private GameManager gM;
 
-    [Space(10)]
-    [Header("Level Image")]
-    public Texture2D levelTexture;
-    [SerializeField] private Gradient vertexColorGradient;
+    //CHUNK DATA
+    [Space(4)]
+    [Header("Chunks")]
     public GameObject terrainChunkPrefab;
-
-    //256 65 x 65 tiles
     [HideInInspector] public int CHUNK_WIDTH = 32;
     public int TILE_WIDTH = 1;
     public float MAX_HEIGHT = 24.0f;
+
+    [Space(4)]
+    [Header("Levels")]
+    [Range(0, 2)] //Update as needed
+    public int levelIndex = 0;
+    public List<Texture2D> levelTextures;
+    [SerializeField] private List<Gradient> vertexColorGradients;
+    [SerializeField] private List<Color> fogColors;
+
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
     //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
@@ -40,12 +46,12 @@ public class sTerrainManager : MonoBehaviour
     public sTerrainChunk[,] chunks;
 
     //Parent to put the terrain chunks in.
-    [Space(10)]
+    [Space(4)]
     [Header("Parents")]
     [SerializeField] private Transform chunkParent;
     [SerializeField] private Transform adjacentChunksParent;
 
-    [Space(20)]
+    [Space(4)]
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
 
@@ -73,35 +79,38 @@ public class sTerrainManager : MonoBehaviour
         {
             enemies.Add(nme);
         }
+
+        RenderSettings.fogColor = fogColors[levelIndex];
+
         DrawChunks();
         DrawAdjacentPlanes();        
     }
 
     private void DrawChunks()
     {
-        if (levelTexture.width != levelTexture.height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
-        if (!isPowerofTwo(levelTexture.width - 1)) { Debug.LogWarning("LEVEL TEXTURE NOT POW2+1"); }
+        if (levelTextures[levelIndex].width != levelTextures[levelIndex].height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
+        if (!isPowerofTwo(levelTextures[levelIndex].width - 1)) { Debug.LogWarning("LEVEL TEXTURE NOT POW2+1"); }
 
-        vertexMap = new Vertex[levelTexture.width, levelTexture.width]; // 1025,1025, or 513, 513
-        squareMap = new Square[levelTexture.width - 1, levelTexture.width - 1];
-        chunks = new sTerrainChunk[(levelTexture.width - 1) / CHUNK_WIDTH, (levelTexture.width - 1) / CHUNK_WIDTH]; // 32,32 or 16,16
+        vertexMap = new Vertex[levelTextures[levelIndex].width, levelTextures[levelIndex].width]; // 1025,1025, or 513, 513
+        squareMap = new Square[levelTextures[levelIndex].width - 1, levelTextures[levelIndex].width - 1];
+        chunks = new sTerrainChunk[(levelTextures[levelIndex].width - 1) / CHUNK_WIDTH, (levelTextures[levelIndex].width - 1) / CHUNK_WIDTH]; // 32,32 or 16,16
 
         //fill the heightmap
-        for (int z = 0; z < levelTexture.width; z++)
+        for (int z = 0; z < levelTextures[levelIndex].width; z++)
         {
-            for (int x = 0; x < levelTexture.width; x++)
+            for (int x = 0; x < levelTextures[levelIndex].width; x++)
             {
                 //from image
-                float pixelRValue = levelTexture.GetPixel(x, z).r;
+                float pixelRValue = levelTextures[levelIndex].GetPixel(x, z).r;
                 vertexMap[x, z].height = pixelRValue * MAX_HEIGHT;
-                vertexMap[x, z].color = vertexColorGradient.Evaluate(pixelRValue);
+                vertexMap[x, z].color = vertexColorGradients[levelIndex].Evaluate(pixelRValue);
             }
         }
 
         //fill the squareMap FENCEPOST
-        for (int z = 0; z < levelTexture.width-1; z++)
+        for (int z = 0; z < levelTextures[levelIndex].width-1; z++)
         {
-            for (int x = 0; x < levelTexture.width-1; x++)
+            for (int x = 0; x < levelTextures[levelIndex].width-1; x++)
             {
                 //new tile
                 Square sq = new Square();
@@ -198,6 +207,7 @@ public class sTerrainManager : MonoBehaviour
         if (vertexMap[hitX, hitZ].height < 0.1f)
         {
             //print("No demolition at sea level!");
+            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT SEA LEVEL");
             return;
         }
 
@@ -212,6 +222,7 @@ public class sTerrainManager : MonoBehaviour
         )
         {
             //print("No demolition at borders!");
+            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT BORDERS");
             return;
         }
 

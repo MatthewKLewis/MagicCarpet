@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +10,13 @@ public class sHUD : MonoBehaviour
     private GameManager gM;
     private sTerrainManager tM;
 
+    [Space(10)]
+    [Header("Warning")]
+    [SerializeField] private Transform warningTextPanel;
+    [SerializeField] private TextMeshProUGUI warningText;
+
+    [Space(10)]
+    [Header("Spell")]
     [SerializeField] private Transform spellPanel;
 
     [Space(10)]
@@ -31,6 +40,8 @@ public class sHUD : MonoBehaviour
         Actions.OnSpellPanelToggle += HandleSpellPanelToggle;
 
         Actions.OnEnemyDeath += HandleEnemyDeath;
+
+        Actions.OnHUDWarning += HandleWarning;
     }
 
     private void OnDestroy()
@@ -42,6 +53,9 @@ public class sHUD : MonoBehaviour
         Actions.OnSpellPanelToggle -= HandleSpellPanelToggle;
 
         Actions.OnEnemyDeath -= HandleEnemyDeath;
+
+        Actions.OnHUDWarning -= HandleWarning;
+
     }
 
     private void Start()
@@ -51,6 +65,7 @@ public class sHUD : MonoBehaviour
 
         spellPanel.localScale = Vector3.zero;
         damageFrame.localScale = Vector3.zero;
+        warningTextPanel.localScale = Vector3.zero;
     }
 
     private void Update()
@@ -115,5 +130,16 @@ public class sHUD : MonoBehaviour
             yield return null;
         }
         damageFrame.localScale = Vector3.zero;
+    }
+
+    private void HandleWarning(string text) { StartCoroutine(HandleWarningCoroutine(text)); }
+
+    private IEnumerator HandleWarningCoroutine(string text) 
+    {
+        warningText.text = text;
+        warningTextPanel.localScale = Vector3.one;
+        yield return new WaitForSeconds(1f);
+        warningText.text = "";
+        warningTextPanel.localScale = Vector3.zero;
     }
 }

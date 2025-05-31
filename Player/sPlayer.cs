@@ -155,10 +155,10 @@ public class sPlayer : MonoBehaviour, IKillable
                     Shoot(1);
                 }
 
-                //if (Input.GetKey(KeyCode.G))
-                //{
-                //    SwingScymitar();
-                //}
+                if (Input.GetKey(KeyCode.G))
+                {
+                    SwingScymitar();
+                }
             }
 
             //GROUND DISTANCE
@@ -386,4 +386,19 @@ public class sPlayer : MonoBehaviour, IKillable
             Destroy(other.gameObject);
         }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        print(collision.gameObject.name);
+        Actions.OnHUDWarning(collision.gameObject.name);
+    }
+
+    //private void OnControllerColliderHit(ControllerColliderHit hit)
+    //{
+    //    if (hit.gameObject.tag == "Obstacle")
+    //    {
+    //        xComponentOfMovement = -xComponentOfMovement * 0.5f;
+    //        zComponentOfMovement = -zComponentOfMovement * 0.5f;
+    //    }
+    //}
 }
