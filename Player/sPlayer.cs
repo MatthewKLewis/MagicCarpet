@@ -61,6 +61,11 @@ public class sPlayer : MonoBehaviour, IKillable
     [Header("Wake and Dust")]
     [SerializeField] private sWakeAndDust wakeAndDust;
 
+    [Space(4)]
+    [Header("Scymitar")]
+    [SerializeField] private Transform scymitarPivot;
+    [SerializeField] private AnimationCurve scymitarSwing;
+
 
     void Start()
     {
@@ -149,6 +154,11 @@ public class sPlayer : MonoBehaviour, IKillable
                 {
                     Shoot(1);
                 }
+
+                //if (Input.GetKey(KeyCode.G))
+                //{
+                //    SwingScymitar();
+                //}
             }
 
             //GROUND DISTANCE
@@ -295,6 +305,11 @@ public class sPlayer : MonoBehaviour, IKillable
                 .GetComponent<IProjectile>().ownerName = this.gameObject.name;
         }
 
+    }
+
+    private void SwingScymitar()
+    {
+        scymitarPivot.Rotate(Vector3.down * 20f);
     }
 
     public bool TakeDamage(int damage)

@@ -8,12 +8,6 @@ public class sFireball : MonoBehaviour, IProjectile
     private float lifeTime = 3f;
     private float spawnTime;
 
-    private int[,] smallExplosionTemplate = new int[3, 3] {
-        { -1, -1, -1, },
-        { -1, -1, -1, },
-        { -1, -1, -1, },
-    };
-
 
     public string ownerName { get; set; }
 
@@ -45,7 +39,7 @@ public class sFireball : MonoBehaviour, IProjectile
             }
 
             //Optional terrain destruction - only within the first second of life.
-            if (Time.time > spawnTime + 1f && other.TryGetComponent(out sTerrainChunk chunkScript))
+            if (Time.time < spawnTime + 1f && other.TryGetComponent(out sTerrainChunk chunkScript))
             {
                 //print("Fireball hit a terrain chunk!");
                 tM.AlterTerrain(transform.position);

@@ -8,13 +8,6 @@ public class sSpikifier : MonoBehaviour, IProjectile
     private float lifeTime = 3f;
     private float spawnTime;
 
-    private int[,] spikeTemplate = new int[3, 3] {
-        { 3, 3, 3, },
-        { 3, 3, 3, },
-        { 3, 3, 3, },
-    };
-
-
     public string ownerName { get; set; }
 
     private void Start()

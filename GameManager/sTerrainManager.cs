@@ -49,7 +49,8 @@ public class sTerrainManager : MonoBehaviour
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
 
-    private TileDeformation[,] smallCrater = new TileDeformation[,] { {}, };
+    private Deformation smallCrater = new Deformation();
+    private Deformation castleDeformation;
 
 
     private void Awake()
@@ -79,6 +80,30 @@ public class sTerrainManager : MonoBehaviour
 
         DrawChunks();
         DrawAdjacentPlanes();
+
+        //TODO - Make a public static resource class for various useful deforms
+        castleDeformation = new Deformation();
+        castleDeformation.flattenFirst = true;
+        castleDeformation.heightOffsets = new float[3, 3] { 
+            { 5, 5, 5 }, 
+            { 5, 5.5f, 5 }, 
+            { 5, 5, 5 }, 
+        };
+        castleDeformation.colorChanges = new Color[3, 3] {
+            { Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.orange, Color.gray },
+            { Color.gray, Color.gray, Color.gray }
+        };
+        castleDeformation.uvBasisRemaps = new Vector2[2, 2]
+        {
+            {Vector2.zero, Vector2.zero, },
+            {Vector2.zero, Vector2.zero, },
+        };
+        castleDeformation.triangleFlips = new bool[2, 2]
+        {
+            {true, false, },
+            {false, true, },
+        };
     }
 
     private void DrawChunks()
@@ -86,11 +111,8 @@ public class sTerrainManager : MonoBehaviour
         if (levelTexture.width != levelTexture.height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
         if (!isPowerofTwo(levelTexture.width - 1)) { Debug.LogWarning("LEVEL TEXTURE NOT POW2+1"); }
 
-        //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
         vertexMap = new Vertex[levelTexture.width, levelTexture.width]; // 1025,1025, or 513, 513
         squareMap = new Square[levelTexture.width - 1, levelTexture.width - 1];
-        //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
-
         chunks = new sTerrainChunk[(levelTexture.width - 1) / CHUNK_WIDTH, (levelTexture.width - 1) / CHUNK_WIDTH]; // 32,32 or 16,16
 
         //fill the heightmap
@@ -111,8 +133,15 @@ public class sTerrainManager : MonoBehaviour
             for (int x = 0; x < levelTexture.width-1; x++)
             {
                 //new tile
-                Square tile = MakeSquare(x,z);
-                squareMap[x, z] = tile;
+                Square sq = new Square();
+                sq.uvBasis = DetermineUVBasis(
+                    vertexMap[x, z].height,
+                    vertexMap[x + 1, z].height,
+                    vertexMap[x, z + 1].height,
+                    vertexMap[x + 1, z + 1].height
+                ) / 8f; //TODO - MAGIC NUMBER HERE, COMMIT TO 8X8?
+                sq.triangleFlipped = false;
+                squareMap[x, z] = sq;
             }
         }        
 
@@ -150,35 +179,16 @@ public class sTerrainManager : MonoBehaviour
                 }
             }
         }
+
+        //Get rid of components in all adjacent chunks
+        sTerrainChunk[] allChildChunks = adjacentChunksParent.GetComponentsInChildren<sTerrainChunk>();
+        MeshCollider[] allChildColliders = adjacentChunksParent.GetComponentsInChildren<MeshCollider>();
+        //print("Number of sTerrainChunks: " + allChildChunks.Length);
+        foreach (sTerrainChunk tc in allChildChunks) { Destroy(tc); }
+        foreach (MeshCollider mc in allChildColliders) { Destroy(mc); }
     }
 
-
-    private Square MakeSquare(int x, int z)
-    {
-        Square newTile = new Square();
-
-        float heightVert00 = vertexMap[x, z].height;
-        float heightVert10 = vertexMap[x + +1, z].height;
-        float heightVert01 = vertexMap[x, z + +1].height;
-        float heightVert11 = vertexMap[x + 1, z + 1].height;
-
-        Vector2 uvBasis = DetermineUVIndex(heightVert00, heightVert10, heightVert01, heightVert11) / 8f;
-        newTile.uv00 = uvBasis;
-        newTile.uv10 = uvBasis + new Vector2(0.125f, 0);
-        newTile.uv01 = uvBasis + new Vector2(0, 0.125f);
-        newTile.uv11 = uvBasis + new Vector2(0.125f, 0.125f);
-        //newTile.uv200 = new Vector2(x, z) / 1024f;
-        //newTile.uv210 = new Vector2(x + 1, z) / 1024f;
-        //newTile.uv201 = new Vector2(x, z + 1) / 1024f;
-        //newTile.uv211 = new Vector2(x + 1, z + 1) / 1024f;
-
-        //public static function that just resorts the order of these to rotate the tri's?
-        newTile.triangleFlipped = false;
-
-        return newTile;
-    }
-
-    private Vector2 DetermineUVIndex(float SW, float SE, float NW, float NE)
+    private Vector2 DetermineUVBasis(float SW, float SE, float NW, float NE)
     {
         //Get Average height of the 4 corners,
         //Fork into sections, water and coast, coast and grass, grass and rock, etc.
@@ -235,17 +245,52 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //Animate Terrain Coroutine
-        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ)));
+        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, castleDeformation)));
     }
 
-    private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
+    private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
     {
-        float animationSteps = 4;
-        float overSeconds = 0.5f;
+        float animationSteps = 1;
+        float overSeconds = 1f;
 
         //Height of one vertex, color of one vertex
         vertexMap[hitX, hitZ].height = Mathf.Clamp(vertexMap[hitX, hitZ].height - 0.25f, 0, MAX_HEIGHT );
         vertexMap[hitX, hitZ].color = new Color(0.1f, 0.1f, 0.1f);
+
+        print(deformation);
+
+        //VERTICES FIRST: HEIGHT
+        for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
+        {
+            for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
+            {
+                vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i];
+            }
+        }
+        //COLOR
+        for (int i = 0; i < deformation.colorChanges.GetLength(0); i++)
+        {
+            for (int j = 0; j < deformation.colorChanges.GetLength(0); j++)
+            {
+                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j, i];
+            }
+        }
+        //SQUARES SECOND: UVS
+        for (int i = 0; i < deformation.uvBasisRemaps.GetLength(0); i++)
+        {
+            for (int j = 0; j < deformation.uvBasisRemaps.GetLength(1); j++)
+            {
+                squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j, i];
+            }
+        }
+        //FLIPS
+        for (int i = 0; i < deformation.triangleFlips.GetLength(0); i++)
+        {
+            for (int j = 0; j < deformation.triangleFlips.GetLength(1); j++)
+            {
+                squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j, i];
+            }
+        }
 
         for (int s = 0; s < animationSteps; s++)
         {
@@ -253,14 +298,19 @@ public class sTerrainManager : MonoBehaviour
             //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
 
             //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE SQUARES TO REDRAW!
-            for (int i = -1; i <= 1; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
-                    Square newSquare = MakeSquare(hitX + i, hitZ + j);
-                    squareMap[hitX + i, hitZ + j] = newSquare;
-                }
-            }
+            //for (int i = -1; i <= 1; i++)
+            //{
+            //    for (int j = -1; j <= 1; j++)
+            //    {
+            //        Square newSquare = MakeSquare(
+            //            hitX + i, 
+            //            hitZ + j, 
+            //            squareMap[hitX + j, hitZ + i].uvBasis, 
+            //            squareMap[hitX + j, hitZ + i].triangleFlipped
+            //        );
+            //        squareMap[hitX + i, hitZ + j] = newSquare;
+            //    }
+            //}
 
             yield return null; //single frame break to avoid lag spike?
 

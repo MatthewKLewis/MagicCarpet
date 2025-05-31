@@ -60,23 +60,34 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(tM.vertexMap[x + 1, z].color);
                 colors.Add(tM.vertexMap[x, z + 1].color);
                 colors.Add(tM.vertexMap[x + 1, z + 1].color);
+
                 //4 uv0s
-                uvs.Add(tM.squareMap[x, z].uv00);
-                uvs.Add(tM.squareMap[x, z].uv10);
-                uvs.Add(tM.squareMap[x, z].uv01);
-                uvs.Add(tM.squareMap[x, z].uv11);
-                //4 uv2s
-                //uvTwos.Add(tM.squareMap[x, z].uv200);
-                //uvTwos.Add(tM.squareMap[x, z].uv210);
-                //uvTwos.Add(tM.squareMap[x, z].uv201);
-                //uvTwos.Add(tM.squareMap[x, z].uv211);
+                if (z == 0 && x == 0) print(tM.squareMap[x, z].uvBasis);
+                uvs.Add(tM.squareMap[x, z].uvBasis);
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0));
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0, 0.125f));
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0.125f));
+
+
                 //6 tri-indexes
-                triangles.Add(index + 0);
-                triangles.Add(index + 3);
-                triangles.Add(index + 1);
-                triangles.Add(index + 0);
-                triangles.Add(index + 2);
-                triangles.Add(index + 3);
+                if (tM.squareMap[x,z].triangleFlipped)
+                {
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 3);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 3);
+                }
+                else
+                {
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 3);
+                }
                 index += 4;
             }
         }
@@ -87,7 +98,7 @@ public class sTerrainChunk : MonoBehaviour
         mesh.triangles = triangles.ToArray();
 
         mesh.uv = uvs.ToArray();
-        mesh.uv2 = uvTwos.ToArray();
+        //mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
 
         mesh.RecalculateBounds();
@@ -127,22 +138,35 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(tM.vertexMap[x, z + 1].color);
                 colors.Add(tM.vertexMap[x + 1, z + 1].color);
                 //4 uv0s
-                uvs.Add(tM.squareMap[x, z].uv00);
-                uvs.Add(tM.squareMap[x, z].uv10);
-                uvs.Add(tM.squareMap[x, z].uv01);
-                uvs.Add(tM.squareMap[x, z].uv11);
+                uvs.Add(tM.squareMap[x, z].uvBasis);
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0));
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0, 0.125f));
+                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0.125f));
                 //4 uv2s
                 //uvTwos.Add(tM.squareMap[x, z].uv200);
                 //uvTwos.Add(tM.squareMap[x, z].uv210);
                 //uvTwos.Add(tM.squareMap[x, z].uv201);
                 //uvTwos.Add(tM.squareMap[x, z].uv211);
+
                 //6 tri-indexes
-                triangles.Add(index + 0);
-                triangles.Add(index + 3);
-                triangles.Add(index + 1);
-                triangles.Add(index + 0);
-                triangles.Add(index + 2);
-                triangles.Add(index + 3);
+                if (tM.squareMap[x, z].triangleFlipped)
+                {
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 3);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 3);
+                }
+                else
+                {
+                    triangles.Add(index + 0);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 1);
+                    triangles.Add(index + 2);
+                    triangles.Add(index + 3);
+                }
                 index += 4;
             }
         }
