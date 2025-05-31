@@ -42,7 +42,7 @@ public class sSpikifier : MonoBehaviour, IProjectile
             if (other.TryGetComponent(out sTerrainChunk chunkScript))
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.AlterTerrain(transform.position, spikeTemplate);
+                tM.AlterTerrain(transform.position);
             }
 
             Destroy(this.gameObject);

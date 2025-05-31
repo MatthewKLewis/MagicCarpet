@@ -44,11 +44,11 @@ public class sFireball : MonoBehaviour, IProjectile
                 victimScript.TakeDamage(1);
             }
 
-            //Optional terrain destruction
-            if (other.TryGetComponent(out sTerrainChunk chunkScript))
+            //Optional terrain destruction - only within the first second of life.
+            if (Time.time > spawnTime + 1f && other.TryGetComponent(out sTerrainChunk chunkScript))
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.AlterTerrain(transform.position, smallExplosionTemplate);
+                tM.AlterTerrain(transform.position);
             }
 
             Destroy(this.gameObject);
