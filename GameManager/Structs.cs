@@ -17,6 +17,15 @@ public enum OWNER_ID
 
 public struct Castle
 {
+    public Castle(int x, int z, int l, OWNER_ID owner)
+    {
+        xOrigin = x;
+        zOrigin = z;
+        level = l;
+        ownerID = owner;
+    }
+
+    public OWNER_ID ownerID;
     public int xOrigin;
     public int zOrigin;
     public int level;

@@ -12,7 +12,7 @@ public enum AIState
 
 public class sEnemy : MonoBehaviour, IKillable
 {
-    public OWNER_ID ownerID = OWNER_ID.NPC_1;
+    public OWNER_ID ownerID { get; set; } = OWNER_ID.NPC_1;
 
     private GameManager gM;
 

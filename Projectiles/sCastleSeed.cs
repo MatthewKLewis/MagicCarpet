@@ -10,6 +10,7 @@ public class sCastleSeed : MonoBehaviour, IProjectile
 
     //IProjectile
     public bool hasHit { get; set; }
+    public int damage { get; set; }
     public OWNER_ID ownerID { get; set; }
 
     private void Start()
@@ -37,19 +38,29 @@ public class sCastleSeed : MonoBehaviour, IProjectile
         {
             if (other.GetComponent<sTerrainChunk>())
             {
-                if (true)
+                if (tM.castleInfo[(int)ownerID].level == 0)
                 {
-                    tM.CreateCastle(transform.position);
+                    tM.CreateCastle(transform.position, ownerID);
                 }
                 else
                 {
-                    tM.UpgradeCastle(transform.position);
+                    tM.UpgradeCastle(transform.position, ownerID);
                 }
             }
 
+            // If the other component is a projectile spawner with the same ID as
+            // the owner ID of this projectile - abort.
+            if (other.TryGetComponent(out IProjectileSpawner iProjectileSpawner))
+            {
+                if (iProjectileSpawner.ownerID == ownerID)
+                {
+                    //DO NOT INTERACT
+                    return;
+                }
+            }
             //Needed due to double hits
             hasHit = true;
-            Destroy(this.gameObject);
+            Destroy(this.gameObject);            
         }
     }
 }

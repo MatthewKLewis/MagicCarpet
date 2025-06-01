@@ -10,6 +10,11 @@ public interface IKillable
     public bool TakeDamage(int damage);
 }
 
+public interface IProjectileSpawner
+{
+    public OWNER_ID ownerID { get; set; }
+}
+
 
 /*
  * The way that preventing self damage works is by ownerName.
@@ -20,5 +25,6 @@ public interface IKillable
 public interface IProjectile
 {
     OWNER_ID ownerID { get; set; }
+    public int damage { get; set; }
     bool hasHit { get; set; }
 }

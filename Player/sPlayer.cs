@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sPlayer : MonoBehaviour, IKillable
+public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 {
-    public OWNER_ID ownerID = OWNER_ID.PLAYER;
+    public OWNER_ID ownerID { get; set; } = OWNER_ID.PLAYER;
 
     private GameManager gM;
     private sTerrainManager tM;

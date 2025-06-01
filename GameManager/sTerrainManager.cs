@@ -17,7 +17,6 @@ using UnityEngine;
 
 public class sTerrainManager : MonoBehaviour
 {
-
     public static sTerrainManager instance;
     private GameManager gM;
 
@@ -59,7 +58,18 @@ public class sTerrainManager : MonoBehaviour
     [Space(4)]
     [Header("Castles")]
     [SerializeField] private GameObject castleFlag;
-    public int[] castleLevels = new int[6] { 0, 0, 0, 0, 0, 0 };
+    public Castle[] castleInfo = new Castle[10] {
+        new Castle(0, 0, 0, OWNER_ID.NONE),
+        new Castle(0, 0, 0, OWNER_ID.PLAYER),
+        new Castle(0, 0, 0, OWNER_ID.NPC_1),
+        new Castle(0, 0, 0, OWNER_ID.NPC_2),
+        new Castle(0, 0, 0, OWNER_ID.NPC_3),
+        new Castle(0, 0, 0, OWNER_ID.NPC_4),
+        new Castle(0, 0, 0, OWNER_ID.NPC_5),
+        new Castle(0, 0, 0, OWNER_ID.NPC_6),
+        new Castle(0, 0, 0, OWNER_ID.NPC_7),
+        new Castle(0, 0, 0, OWNER_ID.NPC_8),
+    };
 
     private void Awake()
     {
@@ -346,7 +356,7 @@ public class sTerrainManager : MonoBehaviour
      * Building and Expansion
      * 
      */
-    public void CreateCastle(Vector3 hitPoint)
+    public void CreateCastle(Vector3 hitPoint, OWNER_ID ownerID)
     {
         //Find the square based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
@@ -393,21 +403,32 @@ public class sTerrainManager : MonoBehaviour
 
         //PASSED ALL CHECKS - INFORM PLAYER OR NPC THAT HE WILL HAVE HIS CASTLE
         //Actions.OnCastleCreation.Invoke(building.castleID);
+        castleInfo[(int)ownerID].level = 1;
         Instantiate(castleFlag, new Vector3(hitX, 10f, hitZ), transform.rotation, transform);
 
         //Animate Terrain Coroutine
-        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ));
+        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID));
     }
 
-    public void UpgradeCastle(Vector3 hitPoint)
+    public void UpgradeCastle(Vector3 hitPoint, OWNER_ID ownerID)
     {
+        //TODO - Check if hitpoint is close to player castle.
+
         //TODO - EARLY RETURNS FOR UPGRADE CASTLE
+        if (true)
+        {
+            Actions.OnHUDWarning.Invoke("TODO - Castle Upgrading");
+            return;
+        }
+
+        castleInfo[(int)ownerID].level = castleInfo[(int)ownerID].level + 1;
         StartCoroutine(UpgradeCastleCoroutine(1, 1, 1, 1));
     }
 
-    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
+    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID)
     {
         BuildingDeformation building = Deformations.CastleOrigin();
+        building.ownerID = ownerID;
 
         //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
         int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
@@ -475,7 +496,7 @@ public class sTerrainManager : MonoBehaviour
     private IEnumerator UpgradeCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
     {
         //Find out what level castle to build.
-
+        print("TODO - UPGRADE CASTLE!");
         yield return null;
     }
 
