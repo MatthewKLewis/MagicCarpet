@@ -35,6 +35,10 @@ public class sPlayer : MonoBehaviour, IKillable
     [Header("Carpet")]
     [SerializeField] private Transform carpetTransform;
 
+    [Space(4)]
+    [Header("Castle")]
+    public bool hasCastle;
+
     //Multipliers
     private float moveFalloff = 0.98f; //now in Update, provide a target FPS in GameManager for stability!
     private float yawSensitivity = 4;
@@ -69,6 +73,15 @@ public class sPlayer : MonoBehaviour, IKillable
     [Header("Guidance Line")]
     [SerializeField] private LineRenderer guidanceLine;
 
+    private void Awake()
+    {
+        Actions.OnCastleCreation += HandleCastleCreation;
+    }
+
+    private void OnDestroy()
+    {
+        Actions.OnCastleCreation -= HandleCastleCreation;
+    }
 
     void Start()
     {
@@ -89,24 +102,29 @@ public class sPlayer : MonoBehaviour, IKillable
 
     void Update()
     {
+        //TODO - Optimize this with || 
         if (transform.position.x < 0f)
         {
             cC.enabled = false;
+            Actions.OnPlayerWarp(transform.position);
             transform.position = new Vector3(wrapAt, transform.position.y, transform.position.z);
         }
         if (transform.position.x > wrapAt)
         {
             cC.enabled = false;
+            Actions.OnPlayerWarp(transform.position);
             transform.position = new Vector3(0f, transform.position.y, transform.position.z);
         }
         if (transform.position.z < 0f)
         {
             cC.enabled = false;
+            Actions.OnPlayerWarp(transform.position);
             transform.position = new Vector3(transform.position.x, transform.position.y, wrapAt);
         }
         if (transform.position.z > wrapAt)
         {
             cC.enabled = false;
+            Actions.OnPlayerWarp(transform.position);
             transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
         }
 
@@ -364,6 +382,14 @@ public class sPlayer : MonoBehaviour, IKillable
         //Death cam
         //Restart level?
         //Go to main screen?
+    }
+
+    private void HandleCastleCreation(CASTLE_ID castleID)
+    {
+        if (castleID == CASTLE_ID.PLAYER)
+        {
+            hasCastle = true;
+        }
     }
 
     private IEnumerator CameraShake(float duration = 0.25f, float magnitude = 0.25f)

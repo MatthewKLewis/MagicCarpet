@@ -42,6 +42,8 @@ public class sHUD : MonoBehaviour
         Actions.OnEnemyDeath += HandleEnemyDeath;
 
         Actions.OnHUDWarning += HandleWarning;
+
+        Actions.OnPlayerWarp += HandleWarp;
     }
 
     private void OnDestroy()
@@ -56,6 +58,7 @@ public class sHUD : MonoBehaviour
 
         Actions.OnHUDWarning -= HandleWarning;
 
+        Actions.OnPlayerWarp -= HandleWarp;
     }
 
     private void Start()
@@ -113,6 +116,11 @@ public class sHUD : MonoBehaviour
         {
             spellPanel.localScale = Vector3.zero;
         }
+    }
+
+    private void HandleWarp(Vector3 _pos)
+    {
+        HandleWarning("...");
     }
 
     private void HandleEnemyDeath()

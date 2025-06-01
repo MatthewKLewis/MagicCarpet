@@ -20,4 +20,5 @@ public interface IKillable
 public interface IProjectile
 {
     string ownerName { get; set; }
+    bool hasHit { get; set; }
 }

@@ -5,27 +5,46 @@ using UnityEngine;
 
 public static class Actions
 {
-    //many to many
+    //???
     public static Action OnEnemyDeath;
     public static Action<float, float> OnExperienceGain;
     public static Action OnPlayerDeath;
 
-    //conversations
-    public static Action OnConversationStart;
-    public static Action OnConversationEnd;
+    //TERRAIN  ---------------------------
 
-    //HUD
+    /// <summary>
+    /// isOpen
+    /// </summary>
+    public static Action<CASTLE_ID> OnCastleCreation;
+
+
+    //HUD --------------------------------
+
+    /// <summary>
+    /// isOpen
+    /// </summary>
     public static Action<bool> OnSpellPanelToggle;
+
+    /// <summary>
+    /// The message to display
+    /// </summary>
     public static Action<string> OnHUDWarning;
 
-    //Journal
-    public static Action<int> OnPlotEvent;
+    //Player -----------------------------
 
-    //Player
     /// <summary>
     /// Current Health, Max Health, isDamage
     /// </summary>
     public static Action<int, int, bool> OnHealthChange;
 
+    /// <summary>
+    /// Current Mana, Max Mana
+    /// </summary>
     public static Action<int, int> OnManaChange;
+
+    /// <summary>
+    /// OLD position
+    /// </summary>
+    public static Action<Vector3> OnPlayerWarp;
+
 }

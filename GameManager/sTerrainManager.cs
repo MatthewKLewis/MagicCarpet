@@ -25,10 +25,10 @@ public class sTerrainManager : MonoBehaviour
     [Space(4)]
     [Header("Chunks")]
     public GameObject terrainChunkPrefab;
-    [HideInInspector] public int CHUNK_WIDTH = 32;
-    public int TILE_WIDTH = 1;
-    public int TILE_SPRITES = 8;
-    public float MAX_HEIGHT = 24.0f;
+    [HideInInspector] public int CHUNK_WIDTH = 32; //Tiles on side of Chunk
+    public int TILE_WIDTH = 1; //Meter size of tile
+    public int TILE_SPRITES = 8; //Refers to texture atlas - the number of textures on a side of the atlas
+    public float MAX_HEIGHT = 24.0f; //Max height of the terrain
 
     [Space(4)]
     [Header("Levels")]
@@ -40,7 +40,6 @@ public class sTerrainManager : MonoBehaviour
 
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
-    //NEW GOD MODE 2-ACCESSOR ARRAY OF TILES
     public Square[,] squareMap;
     public Vertex[,] vertexMap;
 
@@ -55,6 +54,10 @@ public class sTerrainManager : MonoBehaviour
     [Space(4)]
     [Header("Enemies")]
     [SerializeField] private List<GameObject> enemies;
+
+    [Space(4)]
+    [Header("Levels")]
+    [SerializeField] private GameObject castleFlag;
 
     private void Awake()
     {
@@ -195,23 +198,41 @@ public class sTerrainManager : MonoBehaviour
     }
 
 
-    //TERRAIN ALTERATION
-    //TERRAIN ALTERATION
-    //TERRAIN ALTERATION
-    public void AlterTerrain(Vector3 hitPoint, Deformation deformation)
+    /*
+     * 
+     * Deformation and Damage
+     * 
+     */
+    public void ManageTerrainHit(Vector3 hitPoint, int damage, DestructionDeformation deformation)
     {
-        //Find the chunk(S!) based on the hit
+        //Find the square based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
         int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
-        //Early Return - No demo at height zero
+        //Early Return - No demolition at height zero
         if (vertexMap[hitX, hitZ].height < 0.1f)
         {
             //print("No demolition at sea level!");
-            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT SEA LEVEL");
+            Actions.OnHUDWarning.Invoke("NO DEFORMATION AT SEA LEVEL");
             return;
         }
 
+        //Early Return - no deformation on a castle.
+        //Checks for castles at a radius of 5 (TODO - should be deformation's width + 5 maybe?)
+        //checks 25 squares for a castle ID before allowing
+        for (int i = -2; i <= 2; i++)
+        {
+            for (int j = -2; j <= 2; j++)
+            {
+                if (squareMap[hitX + j, hitZ + i].castleID != CASTLE_ID.NONE)
+                {
+                    Actions.OnHUDWarning.Invoke("NO DEFORMATION ON A CASTLE");
+                    return;
+                }
+            }
+        }
+
+        //Find the chunk based on the tile
         int chunkX = hitX / CHUNK_WIDTH;
         int chunkZ = hitZ / CHUNK_WIDTH;
 
@@ -228,51 +249,44 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //Animate Terrain Coroutine
-        StartCoroutine(AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+        StartCoroutine(DeformTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
     }
 
-    private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
+    private IEnumerator DeformTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, DestructionDeformation deformation)
     {
+        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
+
         //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
-        //       PROCEDING FROM THE HIT POINT FORWARD IN X AND Z RATHER THAN OUT
+        //       PROCEDING FROM THE HIT POINT FORWARD IN X AND Z (North and East) RATHER THAN OUT
         //       FROM THE MIDDLE!
 
         float animationSteps = 4f;
         float overSeconds = 0.5f;
 
-        //Height of one vertex, color of one vertex
-        //vertexMap[hitX, hitZ].height = Mathf.Clamp(vertexMap[hitX, hitZ].height - 0.25f, 0, MAX_HEIGHT );
-        //vertexMap[hitX, hitZ].color = new Color(0.1f, 0.1f, 0.1f);
-
-        //UVS
+        //SQUARE - UVS AND TRIFLIPS
         for (int i = 0; i < deformation.uvBasisRemaps.GetLength(0); i++)
         {
             for (int j = 0; j < deformation.uvBasisRemaps.GetLength(1); j++)
             {
+                //rendering
                 squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j, i];
-            }
-        }
-
-        //TRI-FLIPS
-        for (int i = 0; i < deformation.triangleFlips.GetLength(0); i++)
-        {
-            for (int j = 0; j < deformation.triangleFlips.GetLength(1); j++)
-            {
                 squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j, i];
             }
         }
 
-        //COLORS
+        //VERTEX - COLORS
         for (int i = 0; i < deformation.colorChanges.GetLength(0); i++)
         {
             for (int j = 0; j < deformation.colorChanges.GetLength(0); j++)
             {
+                //rendering
                 vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j, i];
             }
         }
 
-        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
-        for (int s = 0; s < animationSteps; s++)
+        //NEVER FLATTEN BEFORE DEFORMATIONS
+
+        if (deformation.noAnimation)
         {
             //HEIGHTS (over time)
             for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
@@ -293,14 +307,166 @@ public class sTerrainManager : MonoBehaviour
                     chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
                 }
             }
-            yield return new WaitForSeconds(overSeconds / animationSteps);
+            yield return null; //END
+        }
+        else //the deformation IS animated
+        {
+            //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
+            for (int s = 0; s < animationSteps; s++)
+            {
+                //HEIGHTS (over time)
+                for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
+                {
+                    for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
+                    {
+                        vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i] / animationSteps;
+                    }
+                }
+
+                yield return null; //single frame break to avoid lag spike?
+
+                //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW!
+                for (int i = -1; i <= 1; i++)
+                {
+                    for (int j = -1; j <= 1; j++)
+                    {
+                        chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
+                    }
+                }
+                yield return new WaitForSeconds(overSeconds / animationSteps); //END
+            }
         }
     }
 
 
-    //ENEMIES
-    //ENEMIES
-    //ENEMIES
+    /*
+     * 
+     * Building and Expansion
+     * 
+     */
+    public void ManageCastleCreation(Vector3 hitPoint, BuildingDeformation building)
+    {
+        //Find the square based on the hit
+        int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
+        int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
+
+        //Early Return - no duplicate castles
+        if (building.castleID != CASTLE_ID.NONE && gM.player.GetComponent<sPlayer>().hasCastle)
+        {
+            Actions.OnHUDWarning.Invoke("YOU ALREADY HAVE A CASTLE");
+            return;
+        }
+
+        //Checks for castles at a radius of 5 (TODO - should be deformation's width + 5 maybe?)
+        //checks 25 squares for a castle ID before allowing
+        for (int i = -2; i <= 2; i++)
+        {
+            for (int j = -2; j <= 2; j++)
+            {
+                if (squareMap[hitX + j, hitZ + i].castleID != CASTLE_ID.NONE)
+                {
+                    Actions.OnHUDWarning.Invoke("CASTLE NEAR CASTLE");
+                    //TODO - CASTLE EXPANSION
+                    return;
+                }
+            }
+        }
+
+        //Find the chunk based on the tile
+        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkZ = hitZ / CHUNK_WIDTH;
+
+        //Early Return - No demo at borders MODULO AROUND 1025?
+        if (chunkX == 0 ||
+            chunkZ == 0 ||
+            chunkX == chunks.GetLength(1) - 1 ||
+            chunkZ == chunks.GetLength(0) - 1
+        )
+        {
+            //print("No demolition at borders!");
+            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT BORDERS");
+            return;
+        }
+
+        //PASSED ALL CHECKS - INFORM PLAYER OR NPC THAT HE WILL HAVE HIS CASTLE
+        Actions.OnCastleCreation.Invoke(building.castleID);
+        Instantiate(castleFlag, new Vector3(hitX, 10f, hitZ), transform.rotation, transform);
+
+        //Animate Terrain Coroutine
+        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, building));
+    }
+
+    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, BuildingDeformation building)
+    {
+        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
+        int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
+        if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!"); yield break; }
+
+
+        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
+        for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
+            {
+                //info
+                squareMap[hitX + j, hitZ + i].castleID = building.castleID;
+
+                //texture and geometry
+                squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j+offsetX, i+offsetZ];
+                squareMap[hitX + j, hitZ + i].triangleFlipped = building.triangleFlips[j + offsetX, i + offsetZ];
+            }
+        }
+
+        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
+        for (int i = -offsetZ; i < building.colorChanges.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.colorChanges.GetLength(0) - offsetX; j++)
+            {
+                //simplest height averager - make it all the height of the origin
+                //TODO - average instead?
+                vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
+
+                //change vertex color
+                vertexMap[hitX + j, hitZ + i].color = building.colorChanges[j + offsetX, i+ offsetZ];
+            }
+        }
+
+        //ALWAYS ANIMATE BUILDINGS!
+        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
+        float animationSteps = 4f;
+        float overSeconds = 0.5f;
+        for (int s = 0; s < animationSteps; s++)
+        {
+            //VERTEX - HEIGHTS (over time)
+            for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
+            {
+                for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
+                {
+                    vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ] / animationSteps;
+                }
+            }
+
+            yield return null; //single frame break to avoid lag spike?
+
+            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW!
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
+                }
+            }
+            yield return new WaitForSeconds(overSeconds / animationSteps); //END
+        }        
+    }
+
+
+    /*
+     * 
+     * Enemies
+     * 
+     */
     public GameObject GetNearestEnemyTo(Vector3 pos, Vector3 fwd)
     {
         //print("Find closest enemy to " + pos.ToString() + " facing direction: " + fwd.ToString());
@@ -334,9 +500,11 @@ public class sTerrainManager : MonoBehaviour
     }
 
 
-    //UTILITY
-    //UTILITY
-    //UTILITY
+    /*
+     * 
+     * Utility
+     * 
+     */
     private bool isPowerofTwo(int n)
     {
         if (n <= 0)
@@ -351,9 +519,11 @@ public class sTerrainManager : MonoBehaviour
     }
 
 
-    //GIZMOS
-    //GIZMOS
-    //GIZMOS
+    /*
+     * 
+     * Gizmos
+     * 
+     */
     private void OnDrawGizmos()
     {
         int fullWidth = 32 * (CHUNK_WIDTH - 1) * TILE_WIDTH;

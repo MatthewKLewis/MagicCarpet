@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class sSpikifier : MonoBehaviour, IProjectile
+public class sCastleSeed : MonoBehaviour, IProjectile
 {
     private sTerrainManager tM;
 
@@ -8,6 +8,8 @@ public class sSpikifier : MonoBehaviour, IProjectile
     private float lifeTime = 3f;
     private float spawnTime;
 
+    //IProjectile
+    public bool hasHit { get; set; }
     public string ownerName { get; set; }
 
     private void Start()
@@ -30,14 +32,15 @@ public class sSpikifier : MonoBehaviour, IProjectile
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.name != ownerName)
+        if (!hasHit && other.gameObject.name != ownerName)
         {
             if (other.GetComponent<sTerrainChunk>())
             {
-                //print("Fireball hit a terrain chunk!");
-                tM.AlterTerrain(transform.position, Deformations.returnCastleDeformation());
+                //print(Time.time + " Castler hit.");
+                tM.ManageCastleCreation(transform.position, Deformations.ReturnCastleOrigin());
             }
-
+            //Needed due to double hits
+            hasHit = true;
             Destroy(this.gameObject);
         }
     }

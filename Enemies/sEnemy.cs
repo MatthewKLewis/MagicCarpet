@@ -21,6 +21,7 @@ public class sEnemy : MonoBehaviour, IKillable
     [SerializeField] private Transform spellOrigin;
 
     //AI
+    public CASTLE_ID castleID = CASTLE_ID.ENEMY_1;
     private AIState aiState = AIState.ROAMING;
 
     //State
