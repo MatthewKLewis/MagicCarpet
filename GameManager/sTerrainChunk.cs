@@ -36,7 +36,7 @@ public class sTerrainChunk : MonoBehaviour
         DrawTerrain();
     }
 
-    // Drawing and Drawing Coroutines
+    // Drawing and Drawing Coroutine
     public void DrawTerrain()
     {
         //refill arrays
@@ -56,6 +56,7 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z].height, z));
                 vertices.Add(new Vector3(x, tM.vertexMap[x, z + 1].height, z + 1));
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z + 1].height, z + 1));
+
                 //4 colors
                 colors.Add(tM.vertexMap[x, z].color);
                 colors.Add(tM.vertexMap[x + 1, z].color);
@@ -63,12 +64,10 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(tM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                if (z == 0 && x == 0) print(tM.squareMap[x, z].uvBasis);
-                uvs.Add(tM.squareMap[x, z].uvBasis);
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0));
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0, 0.125f));
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0.125f));
-
+                uvs.Add(tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES);
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
                 if (tM.squareMap[x,z].triangleFlipped)
@@ -108,11 +107,7 @@ public class sTerrainChunk : MonoBehaviour
         mCollider.sharedMesh = mesh;
     }
 
-    public void StartDrawTerrainCoroutine()
-    {
-        StartCoroutine(DrawTerrainCoroutine());
-    }
-
+    public void StartDrawTerrainCoroutine() { StartCoroutine(DrawTerrainCoroutine()); }
     private IEnumerator DrawTerrainCoroutine()
     {
         //refill arrays
@@ -132,21 +127,18 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z].height, z));
                 vertices.Add(new Vector3(x, tM.vertexMap[x, z + 1].height, z + 1));
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z + 1].height, z + 1));
+
                 //4 colors
                 colors.Add(tM.vertexMap[x, z].color);
                 colors.Add(tM.vertexMap[x + 1, z].color);
                 colors.Add(tM.vertexMap[x, z + 1].color);
                 colors.Add(tM.vertexMap[x + 1, z + 1].color);
+
                 //4 uv0s
-                uvs.Add(tM.squareMap[x, z].uvBasis);
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0));
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0, 0.125f));
-                uvs.Add(tM.squareMap[x, z].uvBasis + new Vector2(0.125f, 0.125f));
-                //4 uv2s
-                //uvTwos.Add(tM.squareMap[x, z].uv200);
-                //uvTwos.Add(tM.squareMap[x, z].uv210);
-                //uvTwos.Add(tM.squareMap[x, z].uv201);
-                //uvTwos.Add(tM.squareMap[x, z].uv211);
+                uvs.Add(tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES);
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
                 if (tM.squareMap[x, z].triangleFlipped)

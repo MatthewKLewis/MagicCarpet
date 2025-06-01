@@ -27,6 +27,7 @@ public class sTerrainManager : MonoBehaviour
     public GameObject terrainChunkPrefab;
     [HideInInspector] public int CHUNK_WIDTH = 32;
     public int TILE_WIDTH = 1;
+    public int TILE_SPRITES = 8;
     public float MAX_HEIGHT = 24.0f;
 
     [Space(4)]
@@ -119,7 +120,7 @@ public class sTerrainManager : MonoBehaviour
                     vertexMap[x + 1, z].height,
                     vertexMap[x, z + 1].height,
                     vertexMap[x + 1, z + 1].height
-                ) / 8f; //TODO - MAGIC NUMBER HERE, COMMIT TO 8X8?
+                ); //TODO - MAGIC NUMBER HERE, COMMIT TO 8X8?
                 sq.triangleFlipped = false;
                 squareMap[x, z] = sq;
             }
@@ -197,7 +198,7 @@ public class sTerrainManager : MonoBehaviour
     //TERRAIN ALTERATION
     //TERRAIN ALTERATION
     //TERRAIN ALTERATION
-    public void AlterTerrain(Vector3 hitPoint)
+    public void AlterTerrain(Vector3 hitPoint, Deformation deformation)
     {
         //Find the chunk(S!) based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
@@ -227,37 +228,23 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //Animate Terrain Coroutine
-        StartCoroutine((AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, Deformations.returnCastleDeformation_NEW())));
+        StartCoroutine(AnimateTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
     }
 
     private IEnumerator AnimateTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
     {
-        float animationSteps = 1;
-        float overSeconds = 1f;
+        //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
+        //       PROCEDING FROM THE HIT POINT FORWARD IN X AND Z RATHER THAN OUT
+        //       FROM THE MIDDLE!
+
+        float animationSteps = 4f;
+        float overSeconds = 0.5f;
 
         //Height of one vertex, color of one vertex
-        vertexMap[hitX, hitZ].height = Mathf.Clamp(vertexMap[hitX, hitZ].height - 0.25f, 0, MAX_HEIGHT );
-        vertexMap[hitX, hitZ].color = new Color(0.1f, 0.1f, 0.1f);
+        //vertexMap[hitX, hitZ].height = Mathf.Clamp(vertexMap[hitX, hitZ].height - 0.25f, 0, MAX_HEIGHT );
+        //vertexMap[hitX, hitZ].color = new Color(0.1f, 0.1f, 0.1f);
 
-        print(deformation);
-
-        //VERTICES FIRST: HEIGHT
-        for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
-        {
-            for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
-            {
-                vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i];
-            }
-        }
-        //COLOR
-        for (int i = 0; i < deformation.colorChanges.GetLength(0); i++)
-        {
-            for (int j = 0; j < deformation.colorChanges.GetLength(0); j++)
-            {
-                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j, i];
-            }
-        }
-        //SQUARES SECOND: UVS
+        //UVS
         for (int i = 0; i < deformation.uvBasisRemaps.GetLength(0); i++)
         {
             for (int j = 0; j < deformation.uvBasisRemaps.GetLength(1); j++)
@@ -265,7 +252,8 @@ public class sTerrainManager : MonoBehaviour
                 squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j, i];
             }
         }
-        //FLIPS
+
+        //TRI-FLIPS
         for (int i = 0; i < deformation.triangleFlips.GetLength(0); i++)
         {
             for (int j = 0; j < deformation.triangleFlips.GetLength(1); j++)
@@ -274,25 +262,26 @@ public class sTerrainManager : MonoBehaviour
             }
         }
 
+        //COLORS
+        for (int i = 0; i < deformation.colorChanges.GetLength(0); i++)
+        {
+            for (int j = 0; j < deformation.colorChanges.GetLength(0); j++)
+            {
+                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j, i];
+            }
+        }
+
+        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
         for (int s = 0; s < animationSteps; s++)
         {
-            //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
-            //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
-
-            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE SQUARES TO REDRAW!
-            //for (int i = -1; i <= 1; i++)
-            //{
-            //    for (int j = -1; j <= 1; j++)
-            //    {
-            //        Square newSquare = MakeSquare(
-            //            hitX + i, 
-            //            hitZ + j, 
-            //            squareMap[hitX + j, hitZ + i].uvBasis, 
-            //            squareMap[hitX + j, hitZ + i].triangleFlipped
-            //        );
-            //        squareMap[hitX + i, hitZ + j] = newSquare;
-            //    }
-            //}
+            //HEIGHTS (over time)
+            for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
+            {
+                for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
+                {
+                    vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i] / animationSteps;
+                }
+            }
 
             yield return null; //single frame break to avoid lag spike?
 

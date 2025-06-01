@@ -4,6 +4,7 @@ public struct Square
 {
     public Vector2 uvBasis;
     public bool triangleFlipped;
+    public int castleID;
 
     public override string ToString()
     {
@@ -23,6 +24,7 @@ public struct Deformation
 {
     //Pre-process
     public bool flattenFirst;
+    public bool markCastleID;
 
     //Vertex based
     public float[,] heightOffsets;

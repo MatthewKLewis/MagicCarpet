@@ -64,7 +64,10 @@ public class sPlayer : MonoBehaviour, IKillable
     [Space(4)]
     [Header("Scymitar")]
     [SerializeField] private Transform scymitarPivot;
-    [SerializeField] private AnimationCurve scymitarSwing;
+
+    [Space(4)]
+    [Header("Guidance Line")]
+    [SerializeField] private LineRenderer guidanceLine;
 
 
     void Start()
@@ -76,6 +79,7 @@ public class sPlayer : MonoBehaviour, IKillable
 
         freelookFrozen = false;
         windAudioSource.Play();
+        guidanceLine.useWorldSpace = true;
 
         wrapAt = tM.chunks.GetLength(0) * (tM.CHUNK_WIDTH - 1) * tM.TILE_WIDTH;
 
@@ -214,6 +218,8 @@ public class sPlayer : MonoBehaviour, IKillable
             RegenHealthAndMana();
 
             //Sounds and FX
+            guidanceLine.SetPosition(0, transform.position);
+            guidanceLine.SetPosition(1, Vector3.zero);
             windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
             windAudioSource.panStereo = -cameraRoll / 45f;
         }

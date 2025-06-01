@@ -32,10 +32,10 @@ public class sSpikifier : MonoBehaviour, IProjectile
     {
         if (other.gameObject.name != ownerName)
         {
-            if (other.TryGetComponent(out sTerrainChunk chunkScript))
+            if (other.GetComponent<sTerrainChunk>())
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.AlterTerrain(transform.position);
+                tM.AlterTerrain(transform.position, Deformations.returnCastleDeformation());
             }
 
             Destroy(this.gameObject);
