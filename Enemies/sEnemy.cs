@@ -20,8 +20,13 @@ public class sEnemy : MonoBehaviour, IKillable
     [SerializeField] private LayerMask terrainMask;
     [SerializeField] private Transform spellOrigin;
 
+    //AI
+    private AIState aiState = AIState.ROAMING;
+
     //State
+    private float distanceToGround;
     private float yComponentOfMovement;
+    private RaycastHit groundHit;
 
     //Health
     public int currentHealth { get; set; } = 10;
@@ -31,6 +36,7 @@ public class sEnemy : MonoBehaviour, IKillable
     //AI Info
     private float distanceToPlayer;
     private Vector3 homeBase;
+    private Vector3 roamTarget;
 
     //Prefabs
     private float timeLastShot = -0.5f;
@@ -55,28 +61,82 @@ public class sEnemy : MonoBehaviour, IKillable
         StopAllCoroutines();
     }
 
+    /*
+     * 
+     * Update and _U Functions
+     * 
+     */
+
 
     private void Update()
     {
-        Vector3 normalVectorToPlayer = Vector3.zero;
-        float healthPercent = currentHealth / maxHealth;
-
-        //Gather information
         if (gM.player)
         {
-            transform.LookAt(gM.player.transform);
-            spellOrigin.LookAt(gM.player.transform);
-            normalVectorToPlayer = (gM.player.transform.position - transform.position).normalized;
+            // Most important piece of AI info is collected on frame.
             distanceToPlayer = Vector3.Distance(transform.position, gM.player.transform.position);
+
+            //Probe ground distance
+            if (Physics.Raycast(transform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
+            {
+                distanceToGround = groundHit.distance;
+            }
+
+            switch (aiState)
+            {
+                case AIState.ROAMING:
+                    Roam_U();
+                    break;
+                case AIState.ATTACKING:
+                    Attack_U();
+                    break;
+                case AIState.RETREATING:
+                    Retreat_U();
+                    break;
+                case AIState.COLLECTING:
+                    //Nothing?
+                    break;
+                default:
+                    Roam_U();
+                    break;
+            }        
+        }
+        else
+        {
+            Roam_U(); //Just mill around if the player is dead.
         }
 
-        //Probe ground distance
-        RaycastHit groundHit;
-        float distanceToGround = 0;
-        if (Physics.Raycast(transform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
-        {
-            distanceToGround = groundHit.distance;
-        }
+        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
+    }
+
+    private void Roam_U()
+    {
+        //TODO - move towards RoamTarget
+    }
+
+    private void Retreat_U()
+    {
+        transform.LookAt(homeBase);
+        spellOrigin.LookAt(homeBase);
+        Vector3 normalVectorToHomeBase = (homeBase - transform.position).normalized;
+
+        //Y movement
+        yComponentOfMovement = -distanceToGround * Time.deltaTime;
+
+        //Horizontal movement
+        Vector3 movement = new Vector3(normalVectorToHomeBase.x, 0, normalVectorToHomeBase.z) / 2f; //MAGIC NUMBER
+        movement.y = yComponentOfMovement;        
+
+        //Send it!
+        cC.Move(movement);
+
+        //Wake and Dust
+    }
+
+    private void Attack_U()
+    {
+        transform.LookAt(gM.player.transform);
+        spellOrigin.LookAt(gM.player.transform);
+        Vector3 normalVectorToPlayer = (gM.player.transform.position - transform.position).normalized;        
 
         //Y movement
         yComponentOfMovement = -distanceToGround * Time.deltaTime;
@@ -94,19 +154,18 @@ public class sEnemy : MonoBehaviour, IKillable
         //Send it!
         cC.Move(movement);
 
+        //COMBAT
         if (distanceToPlayer < 10f)
         {
             Shoot();
         }
-
-        //Wake and Dust
-        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
     }
 
-    private void FixedUpdate()
-    {
-        //Update used to just have the Shoot logic, now everything is in Update and FixedUpdate is empty.
-    }
+    /*
+     * 
+     * Beginneth the section for combat
+     * 
+     */
 
     private void Shoot()
     {
@@ -150,14 +209,41 @@ public class sEnemy : MonoBehaviour, IKillable
         Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
     }
 
+    /*
+     * 
+     * Coroutines
+     * 
+     */
+
     private IEnumerator ChangeAIState()
     {
+        // THIS ONLY MARKS A NEW AI STATE FOR THE ENEMY, THE BEHAVIORS RELEVANT
+        // TO THE AI ARE IN UPDATE
+        // TODO - Change AI state based on current factors like Life, Mana, Castle Damage
+
         while (gM.player)
         {
             yield return new WaitForSeconds(3);
-            print("Making AI decision to...");
-            print("KILL THE PLAYER");
-            //TODO - Change AI state based on current factors like Life, Mana, Castle Damage
+
+            float healthPercent = currentHealth / maxHealth;
+            if (healthPercent < 0.5f)
+            {
+                print(this.gameObject.name + " is now retreating.");
+                aiState = AIState.RETREATING;
+            }
+            else if (distanceToPlayer < 50f)
+            {
+                print(this.gameObject.name + " is now attacking.");
+                aiState = AIState.ATTACKING;
+            }
+            else if (Vector3.Distance(transform.position, homeBase) < 2f)
+            {
+                print(this.gameObject.name + " is now roaming.");
+
+                //TODO - Pick a roaming spot if you're gonna roam
+
+                aiState = AIState.ROAMING;
+            }
         }
     }
 }
