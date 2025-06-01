@@ -15,7 +15,7 @@ public static class Actions
     /// <summary>
     /// isOpen
     /// </summary>
-    public static Action<CASTLE_ID> OnCastleCreation;
+    //   public static Action<CASTLE_ID> OnCastleCreation;
 
 
     //HUD --------------------------------

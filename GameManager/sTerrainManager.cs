@@ -53,11 +53,13 @@ public class sTerrainManager : MonoBehaviour
 
     [Space(4)]
     [Header("Enemies")]
+    //put something here
     [SerializeField] private List<GameObject> enemies;
 
     [Space(4)]
-    [Header("Levels")]
+    [Header("Castles")]
     [SerializeField] private GameObject castleFlag;
+    public int[] castleLevels = new int[6] { 0, 0, 0, 0, 0, 0 };
 
     private void Awake()
     {
@@ -224,7 +226,7 @@ public class sTerrainManager : MonoBehaviour
         {
             for (int j = -2; j <= 2; j++)
             {
-                if (squareMap[hitX + j, hitZ + i].castleID != CASTLE_ID.NONE)
+                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
                 {
                     Actions.OnHUDWarning.Invoke("NO DEFORMATION ON A CASTLE");
                     return;
@@ -344,14 +346,15 @@ public class sTerrainManager : MonoBehaviour
      * Building and Expansion
      * 
      */
-    public void ManageCastleCreation(Vector3 hitPoint, BuildingDeformation building)
+    public void CreateCastle(Vector3 hitPoint)
     {
         //Find the square based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
         int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
         //Early Return - no duplicate castles
-        if (building.castleID != CASTLE_ID.NONE && gM.player.GetComponent<sPlayer>().hasCastle)
+        // TODO - TRACK PLAYER AND ALL ENEMY CASTLE LEVELS
+        if (false)
         {
             Actions.OnHUDWarning.Invoke("YOU ALREADY HAVE A CASTLE");
             return;
@@ -363,7 +366,7 @@ public class sTerrainManager : MonoBehaviour
         {
             for (int j = -2; j <= 2; j++)
             {
-                if (squareMap[hitX + j, hitZ + i].castleID != CASTLE_ID.NONE)
+                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
                 {
                     Actions.OnHUDWarning.Invoke("CASTLE NEAR CASTLE");
                     //TODO - CASTLE EXPANSION
@@ -389,15 +392,23 @@ public class sTerrainManager : MonoBehaviour
         }
 
         //PASSED ALL CHECKS - INFORM PLAYER OR NPC THAT HE WILL HAVE HIS CASTLE
-        Actions.OnCastleCreation.Invoke(building.castleID);
+        //Actions.OnCastleCreation.Invoke(building.castleID);
         Instantiate(castleFlag, new Vector3(hitX, 10f, hitZ), transform.rotation, transform);
 
         //Animate Terrain Coroutine
-        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, building));
+        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ));
     }
 
-    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, BuildingDeformation building)
+    public void UpgradeCastle(Vector3 hitPoint)
     {
+        //TODO - EARLY RETURNS FOR UPGRADE CASTLE
+        StartCoroutine(UpgradeCastleCoroutine(1, 1, 1, 1));
+    }
+
+    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
+    {
+        BuildingDeformation building = Deformations.CastleOrigin();
+
         //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
         int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
         int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
@@ -410,7 +421,7 @@ public class sTerrainManager : MonoBehaviour
             for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
             {
                 //info
-                squareMap[hitX + j, hitZ + i].castleID = building.castleID;
+                squareMap[hitX + j, hitZ + i].ownerID = building.ownerID;
 
                 //texture and geometry
                 squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j+offsetX, i+offsetZ];
@@ -461,6 +472,12 @@ public class sTerrainManager : MonoBehaviour
         }        
     }
 
+    private IEnumerator UpgradeCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
+    {
+        //Find out what level castle to build.
+
+        yield return null;
+    }
 
     /*
      * 

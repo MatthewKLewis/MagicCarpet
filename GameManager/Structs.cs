@@ -1,19 +1,32 @@
 using UnityEngine;
 
-public enum CASTLE_ID
+public enum OWNER_ID
 {
     NONE = 0,
     PLAYER = 1,
-    ENEMY_1 = 2,
-    ENEMY_2 = 3,
-    ENEMY_3 = 4,
+    //
+    NPC_1 = 2,
+    NPC_2 = 3,
+    NPC_3 = 4,
+    NPC_4 = 5,
+    NPC_5 = 6,
+    NPC_6 = 7,
+    NPC_7 = 8,
+    NPC_8 = 9,
+}
+
+public struct Castle
+{
+    public int xOrigin;
+    public int zOrigin;
+    public int level;
 }
 
 public struct Square
 {
     public Vector2 uvBasis;
     public bool triangleFlipped;
-    public CASTLE_ID castleID;
+    public OWNER_ID ownerID;
 
     public override string ToString()
     {
@@ -21,7 +34,6 @@ public struct Square
                $"  Triangle Flipped: {triangleFlipped}";
     }
 }
-
 
 public struct Vertex
 {
@@ -57,7 +69,7 @@ public struct BuildingDeformation
 {
 
     //Informatation
-    public CASTLE_ID castleID;
+    public OWNER_ID ownerID;
 
     //Vertex based
     public float[,] heightOffsets;

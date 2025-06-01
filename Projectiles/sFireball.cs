@@ -10,7 +10,7 @@ public class sFireball : MonoBehaviour, IProjectile
 
     //IProjectile
     public bool hasHit { get; set; }
-    public string ownerName { get; set; }
+    public OWNER_ID ownerID { get; set; }
 
     private void Start()
     {
@@ -32,7 +32,8 @@ public class sFireball : MonoBehaviour, IProjectile
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!hasHit && other.gameObject.name != ownerName)
+        //TODO - GET OWNERID OF OTHER GAME OBJECT?
+        if (!hasHit)
         {
             if (other.TryGetComponent(out IKillable victimScript))
             {
@@ -43,8 +44,9 @@ public class sFireball : MonoBehaviour, IProjectile
             if (Time.time < spawnTime + 1f && other.GetComponent<sTerrainChunk>())
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.ManageTerrainHit(transform.position, 1, Deformations.ReturnPockMark());
+                tM.ManageTerrainHit(transform.position, 1, Deformations.PockMark());
             }
+
             //Needed due to double hits
             hasHit = true;
             Destroy(this.gameObject);

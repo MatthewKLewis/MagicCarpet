@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class sPlayer : MonoBehaviour, IKillable
 {
+    public OWNER_ID ownerID = OWNER_ID.PLAYER;
+
     private GameManager gM;
     private sTerrainManager tM;
 
@@ -35,9 +37,6 @@ public class sPlayer : MonoBehaviour, IKillable
     [Header("Carpet")]
     [SerializeField] private Transform carpetTransform;
 
-    [Space(4)]
-    [Header("Castle")]
-    public bool hasCastle;
 
     //Multipliers
     private float moveFalloff = 0.98f; //now in Update, provide a target FPS in GameManager for stability!
@@ -75,12 +74,12 @@ public class sPlayer : MonoBehaviour, IKillable
 
     private void Awake()
     {
-        Actions.OnCastleCreation += HandleCastleCreation;
+
     }
 
     private void OnDestroy()
     {
-        Actions.OnCastleCreation -= HandleCastleCreation;
+
     }
 
     void Start()
@@ -306,7 +305,7 @@ public class sPlayer : MonoBehaviour, IKillable
                         cameraTransform.position,
                         Quaternion.LookRotation(target.transform.position - cameraTransform.position),
                         null
-                    ).GetComponent<IProjectile>().ownerName = this.gameObject.name;
+                    ).GetComponent<IProjectile>().ownerID = ownerID;
 
                     playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
                     playerAudioSource.PlayOneShot(fireBallClip);
@@ -319,14 +318,14 @@ public class sPlayer : MonoBehaviour, IKillable
 
                 //Mark projectile with ownerName!
                 Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
-                    .GetComponent<IProjectile>().ownerName = this.gameObject.name;
+                    .GetComponent<IProjectile>().ownerID = ownerID;
             }
         }
         else if (mouseButton == 1)
         {
             //Mark projectile with ownerName!
             Instantiate(gM.spikifierPrefab, cameraTransform.position, cameraTransform.rotation, null)
-                .GetComponent<IProjectile>().ownerName = this.gameObject.name;
+                .GetComponent<IProjectile>().ownerID = ownerID;
         }
 
     }
@@ -382,14 +381,6 @@ public class sPlayer : MonoBehaviour, IKillable
         //Death cam
         //Restart level?
         //Go to main screen?
-    }
-
-    private void HandleCastleCreation(CASTLE_ID castleID)
-    {
-        if (castleID == CASTLE_ID.PLAYER)
-        {
-            hasCastle = true;
-        }
     }
 
     private IEnumerator CameraShake(float duration = 0.25f, float magnitude = 0.25f)

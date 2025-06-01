@@ -10,7 +10,7 @@ public class sCastleSeed : MonoBehaviour, IProjectile
 
     //IProjectile
     public bool hasHit { get; set; }
-    public string ownerName { get; set; }
+    public OWNER_ID ownerID { get; set; }
 
     private void Start()
     {
@@ -32,13 +32,21 @@ public class sCastleSeed : MonoBehaviour, IProjectile
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!hasHit && other.gameObject.name != ownerName)
+        //TODO - GET OWNERID OF OTHER GAME OBJECT?
+        if (!hasHit)
         {
             if (other.GetComponent<sTerrainChunk>())
             {
-                //print(Time.time + " Castler hit.");
-                tM.ManageCastleCreation(transform.position, Deformations.ReturnCastleOrigin());
+                if (true)
+                {
+                    tM.CreateCastle(transform.position);
+                }
+                else
+                {
+                    tM.UpgradeCastle(transform.position);
+                }
             }
+
             //Needed due to double hits
             hasHit = true;
             Destroy(this.gameObject);

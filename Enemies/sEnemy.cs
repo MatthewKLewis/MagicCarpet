@@ -12,6 +12,8 @@ public enum AIState
 
 public class sEnemy : MonoBehaviour, IKillable
 {
+    public OWNER_ID ownerID = OWNER_ID.NPC_1;
+
     private GameManager gM;
 
     //Unity
@@ -21,7 +23,6 @@ public class sEnemy : MonoBehaviour, IKillable
     [SerializeField] private Transform spellOrigin;
 
     //AI
-    public CASTLE_ID castleID = CASTLE_ID.ENEMY_1;
     private AIState aiState = AIState.ROAMING;
 
     //State
@@ -198,7 +199,7 @@ public class sEnemy : MonoBehaviour, IKillable
             //Mark projectile with ownerName!
             float randomDeg = Mathf.Deg2Rad * Random.Range(-15, 15);
             Instantiate(gM.fireBallPrefab, spellOrigin.position, Quaternion.LookRotation(spellOrigin.forward + new Vector3(randomDeg, 0, randomDeg)), null)
-                .GetComponent<IProjectile>().ownerName = this.gameObject.name; ;
+                .GetComponent<IProjectile>().ownerID = ownerID;
         }
     }
 

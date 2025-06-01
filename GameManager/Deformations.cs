@@ -16,12 +16,11 @@ public static class Deformations
     public static Vector2 RUBBLE = new Vector2(0, 1);
     public static Vector2 WATER = new Vector2(1, 1);
 
-    public static BuildingDeformation ReturnCastleOrigin()
+    public static BuildingDeformation CastleOrigin()
     {
         BuildingDeformation castle = new BuildingDeformation();
 
         //INFORMATION
-        castle.castleID = CASTLE_ID.PLAYER;
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         castle.heightOffsets = new float[5, 5] {
@@ -57,7 +56,13 @@ public static class Deformations
         return castle;
     }
 
-    public static DestructionDeformation ReturnPockMark()
+    public static BuildingDeformation CastleUpgrade_1()
+    {
+        BuildingDeformation castle = new BuildingDeformation();
+        return castle;
+    }
+
+    public static DestructionDeformation PockMark()
     {
         DestructionDeformation pock = new DestructionDeformation();
 
