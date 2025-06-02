@@ -25,7 +25,11 @@ public class sTerrainManager : MonoBehaviour
     [Header("Chunks")]
     public GameObject terrainChunkPrefab;
     [HideInInspector] public int CHUNK_WIDTH = 32; //Tiles on side of Chunk
+
+    //TODO - this applies to the gizmo, and to the chunk placement, but the actual tiles dont get bigger
     public int TILE_WIDTH = 1; //Meter size of tile
+
+
     public int TILE_SPRITES = 8; //Refers to texture atlas - the number of textures on a side of the atlas
     public float MAX_HEIGHT = 24.0f; //Max height of the terrain
 
@@ -59,16 +63,16 @@ public class sTerrainManager : MonoBehaviour
     [Header("Castles")]
     [SerializeField] private GameObject castleFlag;
     public Castle[] castleInfo = new Castle[10] {
-        new Castle(0, 0, 0, OWNER_ID.NONE),
-        new Castle(0, 0, 0, OWNER_ID.PLAYER),
-        new Castle(0, 0, 0, OWNER_ID.NPC_1),
-        new Castle(0, 0, 0, OWNER_ID.NPC_2),
-        new Castle(0, 0, 0, OWNER_ID.NPC_3),
-        new Castle(0, 0, 0, OWNER_ID.NPC_4),
-        new Castle(0, 0, 0, OWNER_ID.NPC_5),
-        new Castle(0, 0, 0, OWNER_ID.NPC_6),
-        new Castle(0, 0, 0, OWNER_ID.NPC_7),
-        new Castle(0, 0, 0, OWNER_ID.NPC_8),
+        new Castle(0, 0, 0, 0, OWNER_ID.NONE),
+        new Castle(0, 0, 0, 0, OWNER_ID.PLAYER),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_1),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_2),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_3),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_4),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_5),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_6),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_7),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_8),
     };
 
     private void Awake()
@@ -104,8 +108,8 @@ public class sTerrainManager : MonoBehaviour
 
     private void DrawChunks()
     {
-        if (levelTextures[levelIndex].width != levelTextures[levelIndex].height) { Debug.LogWarning("LEVEL TEXTURE NOT SQUARE!"); }
-        if (!isPowerofTwo(levelTextures[levelIndex].width - 1)) { Debug.LogWarning("LEVEL TEXTURE NOT POW2+1"); }
+        if (levelTextures[levelIndex].width != levelTextures[levelIndex].height) { Debug.LogError("LEVEL TEXTURE NOT SQUARE!"); }
+        if (!isPowerofTwo(levelTextures[levelIndex].width - 1)) { Debug.LogError("LEVEL TEXTURE NOT POW2+1"); }
 
         vertexMap = new Vertex[levelTextures[levelIndex].width, levelTextures[levelIndex].width]; // 1025,1025, or 513, 513
         squareMap = new Square[levelTextures[levelIndex].width - 1, levelTextures[levelIndex].width - 1];
@@ -135,11 +139,14 @@ public class sTerrainManager : MonoBehaviour
                     vertexMap[x + 1, z].height,
                     vertexMap[x, z + 1].height,
                     vertexMap[x + 1, z + 1].height
-                ); //TODO - MAGIC NUMBER HERE, COMMIT TO 8X8?
+                );
                 sq.triangleFlipped = false;
                 squareMap[x, z] = sq;
             }
-        }        
+        }
+
+        //TODO - More random buildings?
+        AddRandomBuilding(100, 100, OWNER_ID.NPC_8, Deformations.Lodge());
 
         //Divide into chunks and instantiate
         for (int z = 0; z < chunks.GetLength(0); z++) //chunks.GetLength(0) or 1
@@ -362,9 +369,12 @@ public class sTerrainManager : MonoBehaviour
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
         int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
+        //Find the chunk based on the tile
+        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkZ = hitZ / CHUNK_WIDTH;
+
         //Early Return - no duplicate castles
-        // TODO - TRACK PLAYER AND ALL ENEMY CASTLE LEVELS
-        if (false)
+        if (castleInfo[(int)ownerID].level > 0)
         {
             Actions.OnHUDWarning.Invoke("YOU ALREADY HAVE A CASTLE");
             return;
@@ -379,15 +389,10 @@ public class sTerrainManager : MonoBehaviour
                 if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
                 {
                     Actions.OnHUDWarning.Invoke("CASTLE NEAR CASTLE");
-                    //TODO - CASTLE EXPANSION
                     return;
                 }
             }
         }
-
-        //Find the chunk based on the tile
-        int chunkX = hitX / CHUNK_WIDTH;
-        int chunkZ = hitZ / CHUNK_WIDTH;
 
         //Early Return - No demo at borders MODULO AROUND 1025?
         if (chunkX == 0 ||
@@ -401,40 +406,70 @@ public class sTerrainManager : MonoBehaviour
             return;
         }
 
-        //PASSED ALL CHECKS - INFORM PLAYER OR NPC THAT HE WILL HAVE HIS CASTLE
-        //Actions.OnCastleCreation.Invoke(building.castleID);
+        //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+        float castleBaseHeight = vertexMap[hitX, hitZ].height;
         castleInfo[(int)ownerID].level = 1;
-        Instantiate(castleFlag, new Vector3(hitX, 10f, hitZ), transform.rotation, transform);
+        castleInfo[(int)ownerID].ownerID = ownerID;
+        castleInfo[(int)ownerID].xOrigin = hitX;
+        castleInfo[(int)ownerID].yOrigin = castleBaseHeight;
+        castleInfo[(int)ownerID].zOrigin = hitZ;
+
+        print(castleInfo[(int)ownerID].ToString());
+
+        Instantiate(castleFlag, new Vector3(hitX, castleBaseHeight + 6.5f, hitZ), transform.rotation, transform); //MAGIC NUMBER - FLAG HEIGHT
 
         //Animate Terrain Coroutine
-        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID));
+        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleOrigin()));
     }
 
     public void UpgradeCastle(Vector3 hitPoint, OWNER_ID ownerID)
     {
-        //TODO - Check if hitpoint is close to player castle.
-
-        //TODO - EARLY RETURNS FOR UPGRADE CASTLE
-        if (true)
+        //Early Return - Too far away
+        //MAGIC NUMBER - FLOAT DISTANCE
+        Castle castle = castleInfo[(int)ownerID];
+        if (Vector3.Distance(hitPoint, new Vector3(castle.xOrigin, hitPoint.y, castle.zOrigin)) > 10f)
         {
-            Actions.OnHUDWarning.Invoke("TODO - Castle Upgrading");
+            Actions.OnHUDWarning.Invoke("YOUR CASTLE IS TOO FAR AWAY");
             return;
         }
 
+        //TODO - hit and chunk should be based on what is stored in the castleInfo array!
+        int hitX = castleInfo[(int)ownerID].xOrigin;
+        int hitZ = castleInfo[(int)ownerID].zOrigin;
+        //Find the chunk based on the tile
+        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkZ = hitZ / CHUNK_WIDTH;        
+
+        //PASSED ALL CHECKS - UPDATE INFO
         castleInfo[(int)ownerID].level = castleInfo[(int)ownerID].level + 1;
-        StartCoroutine(UpgradeCastleCoroutine(1, 1, 1, 1));
+
+        switch (castleInfo[(int)ownerID].level)
+        {
+            case 2:
+                print("Upgrade to 2");
+                StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
+                break;
+            case 3:
+                print("Upgrade to 3");
+                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
+                break;
+            case 4:
+                print("Upgrade to 4");
+                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
+                break;
+            case 5:
+                print("Upgrade to 5");
+                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
+                break;
+        }
     }
 
-    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID)
+    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID, BuildingDeformation building)
     {
-        BuildingDeformation building = Deformations.CastleOrigin();
-        building.ownerID = ownerID;
-
         //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
         int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
         int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
-        if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!"); yield break; }
-
+        if (offsetX % 2 != 0) { Debug.LogError("Building vertex offset not even!"); yield break; }
 
         //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
         for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
@@ -442,7 +477,7 @@ public class sTerrainManager : MonoBehaviour
             for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
             {
                 //info
-                squareMap[hitX + j, hitZ + i].ownerID = building.ownerID;
+                squareMap[hitX + j, hitZ + i].ownerID = ownerID;
 
                 //texture and geometry
                 squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j+offsetX, i+offsetZ];
@@ -493,11 +528,75 @@ public class sTerrainManager : MonoBehaviour
         }        
     }
 
-    private IEnumerator UpgradeCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ)
+    //exactly the same as build castle, lets see if it works
+    private IEnumerator UpgradeCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID, BuildingDeformation building)
     {
-        //Find out what level castle to build.
-        print("TODO - UPGRADE CASTLE!");
-        yield return null;
+        print("I'm here 1");
+        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
+        int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
+
+        //Warning needed?
+        //if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even: " + offsetX); yield break; }
+
+        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
+        for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
+            {
+                //info
+                squareMap[hitX + j, hitZ + i].ownerID = ownerID;
+
+                //texture and geometry
+                squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j + offsetX, i + offsetZ];
+                squareMap[hitX + j, hitZ + i].triangleFlipped = building.triangleFlips[j + offsetX, i + offsetZ];
+            }
+        }
+
+        print("I'm here 2");
+
+
+        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
+        for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
+            {
+                vertexMap[hitX + j, hitZ + i].height = castleInfo[(int)ownerID].yOrigin;                
+
+                //change vertex color
+                vertexMap[hitX + j, hitZ + i].color = building.colorChanges[j + offsetX, i + offsetZ];
+            }
+        }
+
+        //ALWAYS ANIMATE BUILDINGS!
+        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
+        float animationSteps = 4f;
+        float overSeconds = 0.5f;
+        for (int s = 0; s < animationSteps; s++)
+        {
+            print("I'm here 3");
+
+            //VERTEX - HEIGHTS (over time)
+            for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
+            {
+                for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
+                {
+                    vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ] / animationSteps;
+                }
+            }
+
+            yield return null; //single frame break to avoid lag spike?
+
+            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW!
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
+                }
+            }
+            yield return new WaitForSeconds(overSeconds / animationSteps); //END
+        }
     }
 
     /*
@@ -571,5 +670,46 @@ public class sTerrainManager : MonoBehaviour
                 new Vector3(1, 0, 1) * fullWidth / 2,
                 new Vector3(1, 0, 1) * fullWidth
             );
+    }
+
+    /*
+     * 
+     * DrawChunks time random building creation
+     * 
+     */
+    private void AddRandomBuilding(int hitX, int hitZ, OWNER_ID ownerID, BuildingDeformation building)
+    {
+        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
+        int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
+
+        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
+        for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
+            {
+                //info
+                squareMap[hitX + j, hitZ + i].ownerID = ownerID;
+
+                //texture and geometry
+                squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j + offsetX, i + offsetZ];
+                squareMap[hitX + j, hitZ + i].triangleFlipped = building.triangleFlips[j + offsetX, i + offsetZ];
+            }
+        }
+
+        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
+        for (int i = -offsetZ; i < building.colorChanges.GetLength(0) - offsetZ; i++)
+        {
+            for (int j = -offsetX; j < building.colorChanges.GetLength(0) - offsetX; j++)
+            {
+                //TODO - no average as it stands
+                vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ];
+
+                //change vertex color
+                vertexMap[hitX + j, hitZ + i].color = building.colorChanges[j + offsetX, i + offsetZ];
+            }
+        }
+
+        //NO NEED TO REDRAW, IT WILL DRAW AT THE END!        
     }
 }

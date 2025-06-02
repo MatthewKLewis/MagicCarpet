@@ -52,7 +52,7 @@ public class sTerrainChunk : MonoBehaviour
             for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH - 1; x++)
             {
                 //4 verts
-                vertices.Add(new Vector3(x, tM.vertexMap[x, z].height, z));
+                vertices.Add(new Vector3(x, tM.vertexMap[x, z].height, z)); //TODO - these "1s" would need to be TILE_WIDTH to work properly.
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z].height, z));
                 vertices.Add(new Vector3(x, tM.vertexMap[x, z + 1].height, z + 1));
                 vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z + 1].height, z + 1));

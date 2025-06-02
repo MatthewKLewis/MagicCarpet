@@ -17,9 +17,10 @@ public enum OWNER_ID
 
 public struct Castle
 {
-    public Castle(int x, int z, int l, OWNER_ID owner)
+    public Castle(int x, float y, int z, int l, OWNER_ID owner)
     {
         xOrigin = x;
+        yOrigin = y;
         zOrigin = z;
         level = l;
         ownerID = owner;
@@ -27,8 +28,14 @@ public struct Castle
 
     public OWNER_ID ownerID;
     public int xOrigin;
+    public float yOrigin;
     public int zOrigin;
     public int level;
+
+    public override string ToString()
+    {
+        return $"Castle {{ OwnerID = {ownerID}, X = {xOrigin}, Y = {yOrigin}, Z = {zOrigin}, Level = {level} }}";
+    }
 }
 
 public struct Square

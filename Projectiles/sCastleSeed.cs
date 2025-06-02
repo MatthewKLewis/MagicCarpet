@@ -33,7 +33,6 @@ public class sCastleSeed : MonoBehaviour, IProjectile
 
     private void OnTriggerEnter(Collider other)
     {
-        //TODO - GET OWNERID OF OTHER GAME OBJECT?
         if (!hasHit)
         {
             if (other.GetComponent<sTerrainChunk>())

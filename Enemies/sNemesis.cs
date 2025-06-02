@@ -10,7 +10,7 @@ public enum AIState
     COLLECTING = 3,
 }
 
-public class sEnemy : MonoBehaviour, IKillable
+public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 {
     public OWNER_ID ownerID { get; set; } = OWNER_ID.NPC_1;
 

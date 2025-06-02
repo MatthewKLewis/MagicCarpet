@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public static class Deformations
@@ -16,6 +17,56 @@ public static class Deformations
     public static Vector2 RUBBLE = new Vector2(0, 1);
     public static Vector2 WATER = new Vector2(1, 1);
 
+    /*
+    * 
+    * Neutral Buildings
+    * 
+    */
+    public static BuildingDeformation Lodge()
+    {
+        BuildingDeformation lodge = new BuildingDeformation();
+
+        //INFORMATION
+
+        //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
+        lodge.heightOffsets = new float[5, 5] {
+            { 0, 0, 0, 0, 0 },
+            { 0, 4, 4, 4, 0 },
+            { 0, 4, 4, 4, 0 },
+            { 0, 4, 4, 4, 0 },
+            { 0, 0, 0, 0, 0 },
+        };
+        lodge.colorChanges = new Color[5, 5] {
+            { Color.red, Color.red, Color.red, Color.red, Color.red },
+            { Color.red, Color.red, Color.red, Color.red, Color.red },
+            { Color.red, Color.red, Color.red, Color.red, Color.red },
+            { Color.red, Color.red, Color.red, Color.red, Color.red },
+            { Color.red, Color.red, Color.red, Color.red, Color.red },
+        };
+
+        //FENCESPANS - ALWAYS EVEN
+        lodge.uvBasisRemaps = new Vector2[4, 4]
+        {
+            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
+            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
+            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
+            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
+        };
+        lodge.triangleFlips = new bool[4, 4]
+        {
+            {true, false, false, false},
+            {false, false, false, false},
+            {false, false, false, false},
+            {false, false, false, true},
+        };
+        return lodge;
+    }
+
+    /*
+     * 
+     * Player Castles
+     * 
+     */
     public static BuildingDeformation CastleOrigin()
     {
         BuildingDeformation castle = new BuildingDeformation();
@@ -25,9 +76,9 @@ public static class Deformations
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         castle.heightOffsets = new float[5, 5] {
             { 0, 0, 0, 0, 0 },
-            { 0, 5, 5, 5, 0 },
-            { 0, 5, 5.5f, 5, 0 },
-            { 0, 5, 5, 5, 0 },
+            { 0, 6, 6, 6, 0 },
+            { 0, 6, 6.5f, 6, 0 },
+            { 0, 6, 6, 6, 0 },
             { 0, 0, 0, 0, 0 },
         };
         castle.colorChanges = new Color[5, 5] {
@@ -56,12 +107,73 @@ public static class Deformations
         return castle;
     }
 
-    public static BuildingDeformation CastleUpgrade_1()
+    public static BuildingDeformation CastleUpgrade_2()
     {
+        //How to do a hole?
+
         BuildingDeformation castle = new BuildingDeformation();
+
+        //INFORMATION
+
+        //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
+        //CAN THIS ALLOW NULLS RATHER THAN FLOATS? TO SKIP?
+        castle.heightOffsets = new float[9, 9] {
+            { 6,6,6,0,0,0,6,6,6,},
+            { 6,7,6,0,0,0,6,7,6,},
+            { 6,6,6,0,0,0,6,6,6,},
+            { 0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,},
+            { 6,6,6,0,0,0,6,6,6,},
+            { 6,7,6,0,0,0,6,7,6,},
+            { 6,6,6,0,0,0,6,6,6,},
+
+        };
+        castle.colorChanges = new Color[9, 9] {
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+        };
+
+        //FENCESPANS - ALWAYS EVEN
+        castle.uvBasisRemaps = new Vector2[8, 8]
+        {
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+        };
+        castle.triangleFlips = new bool[8, 8]
+        {
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false},
+
+        };
         return castle;
     }
 
+
+    /*
+     * 
+     * Destruction
+     * 
+     */
     public static DestructionDeformation PockMark()
     {
         DestructionDeformation pock = new DestructionDeformation();

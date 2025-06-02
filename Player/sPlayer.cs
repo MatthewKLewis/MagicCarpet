@@ -290,8 +290,17 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void Shoot(int mouseButton = 0)
     {
-        if (mouseButton == 0)
+        if (mouseButton == 0) //FIREBALL
         {
+            int manaCost = 1;
+            if (currentMana < manaCost)
+            {
+                Actions.OnHUDWarning("NOT ENOUGH MANYA");
+                return;
+            }
+            currentMana -= manaCost;
+            Actions.OnManaChange.Invoke(currentMana, maxMana);
+
             //Poll for enemy positions, find one in front
             GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
 
@@ -321,13 +330,29 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
                     .GetComponent<IProjectile>().ownerID = ownerID;
             }
         }
-        else if (mouseButton == 1)
+        else if (mouseButton == 1) //CASTLESEED
         {
+            int manaCost = 15;
+            if (currentMana < manaCost)
+            {
+                Actions.OnHUDWarning("NOT ENOUGH MANYA");
+                return;
+            }
+
+            currentMana -= manaCost;
+            Actions.OnManaChange.Invoke(currentMana, maxMana);
+
             //Mark projectile with ownerName!
             Instantiate(gM.spikifierPrefab, cameraTransform.position, cameraTransform.rotation, null)
                 .GetComponent<IProjectile>().ownerID = ownerID;
         }
 
+    }
+
+    private bool HasManaToCast(int manaCost)
+    {
+        //TODO - rather than checking with 4 lines everywhere
+        return false;
     }
 
     private void SwingScymitar()
