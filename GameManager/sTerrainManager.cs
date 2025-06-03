@@ -27,7 +27,7 @@ public class sTerrainManager : MonoBehaviour
     [HideInInspector] public int CHUNK_WIDTH = 32; //Tiles on side of Chunk
 
     //TODO - this applies to the gizmo, and to the chunk placement, but the actual tiles dont get bigger
-    public int TILE_WIDTH = 1; //Meter size of tile
+    public int TILE_WIDTH = 2; //Meter size of tile
 
 
     public int TILE_SPRITES = 8; //Refers to texture atlas - the number of textures on a side of the atlas
@@ -415,8 +415,12 @@ public class sTerrainManager : MonoBehaviour
         castleInfo[(int)ownerID].zOrigin = hitZ;
 
         print(castleInfo[(int)ownerID].ToString());
-
-        Instantiate(castleFlag, new Vector3(hitX, castleBaseHeight + 6.5f, hitZ), transform.rotation, transform); //MAGIC NUMBER - FLAG HEIGHT
+        Instantiate(
+            castleFlag, 
+            new Vector3(hitX * TILE_WIDTH, castleBaseHeight + (6.5f * TILE_WIDTH), hitZ * TILE_WIDTH), //MAGIC NUMBER - FLAG HEIGHT
+            transform.rotation, 
+            transform
+        );
 
         //Animate Terrain Coroutine
         StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleOrigin()));
@@ -424,21 +428,22 @@ public class sTerrainManager : MonoBehaviour
 
     public void UpgradeCastle(Vector3 hitPoint, OWNER_ID ownerID)
     {
+        //TODO - hit and chunk should be based on what is stored in the castleInfo array!
+        int hitX = castleInfo[(int)ownerID].xOrigin;
+        int hitZ = castleInfo[(int)ownerID].zOrigin;
+
+        //Find the chunk based on the tile
+        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkZ = hitZ / CHUNK_WIDTH;
+
         //Early Return - Too far away
         //MAGIC NUMBER - FLOAT DISTANCE
         Castle castle = castleInfo[(int)ownerID];
-        if (Vector3.Distance(hitPoint, new Vector3(castle.xOrigin, hitPoint.y, castle.zOrigin)) > 10f)
+        if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(castle.xOrigin, 0, castle.zOrigin)) > 10f)
         {
             Actions.OnHUDWarning.Invoke("YOUR CASTLE IS TOO FAR AWAY");
             return;
         }
-
-        //TODO - hit and chunk should be based on what is stored in the castleInfo array!
-        int hitX = castleInfo[(int)ownerID].xOrigin;
-        int hitZ = castleInfo[(int)ownerID].zOrigin;
-        //Find the chunk based on the tile
-        int chunkX = hitX / CHUNK_WIDTH;
-        int chunkZ = hitZ / CHUNK_WIDTH;        
 
         //PASSED ALL CHECKS - UPDATE INFO
         castleInfo[(int)ownerID].level = castleInfo[(int)ownerID].level + 1;

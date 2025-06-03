@@ -74,12 +74,12 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void Awake()
     {
-
+        //
     }
 
     private void OnDestroy()
     {
-
+        //
     }
 
     void Start()
@@ -248,46 +248,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         }
     }
 
-    //private void FixedUpdate()
-    //{
-    //    //Probe ground distance
-    //    RaycastHit groundHit;
-    //    float distanceToGround = 0;
-    //    if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
-    //    {
-    //        distanceToGround = groundHit.distance;
-    //        //print(distanceToGround);            
-    //    }
-
-    //    //Falloff
-    //    xComponentOfMovement *= moveFalloff;
-    //    yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
-    //    zComponentOfMovement *= moveFalloff;
-
-    //    //Inputs
-    //    Vector3 inputVector = new Vector3(
-    //        Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
-    //        0, //NO INPUT FOR Y
-    //        Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
-    //    ).normalized * Time.deltaTime;
-    //    Vector3 transformedInputs = transform.TransformDirection(inputVector);
-
-    //    //Adding the X and Z inputs
-    //    xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
-    //    zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
-
-    //    //Clamping horizontal movement
-    //    Vector3 movement = new Vector3(xComponentOfMovement, 0, zComponentOfMovement) * speed;
-
-    //    movement.y = yComponentOfMovement;
-
-    //    //Send it!
-    //    cC.Move(movement);
-
-    //    //Wake and Dust
-    //    wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude > 4f && distanceToGround < 4f);
-    //}
-
     private void Shoot(int mouseButton = 0)
     {
         if (mouseButton == 0) //FIREBALL
@@ -332,10 +292,10 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         }
         else if (mouseButton == 1) //CASTLESEED
         {
-            int manaCost = 15;
+            int manaCost = 1;
             if (currentMana < manaCost)
             {
-                Actions.OnHUDWarning("NOT ENOUGH MANYA");
+                Actions.OnHUDWarning("NOT ENOUGH MANA");
                 return;
             }
 
