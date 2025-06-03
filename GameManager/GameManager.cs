@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
     public GameObject manaOrbPrefab;
     public GameObject fireBallPrefab;
     public GameObject spikifierPrefab;
+    public GameObject smallExplosionEffectPrefab;
 
     [Space(10)]
     [Header("Common Audio Clips")]

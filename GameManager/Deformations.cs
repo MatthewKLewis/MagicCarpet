@@ -186,8 +186,8 @@ public static class Deformations
             { -0.5f, -0.5f,},
         };
         pock.colorChanges = new Color[2, 2] {
-            { Color.gray3, Color.gray3},
-            { Color.gray3, Color.gray3},
+            { Color.gray1, Color.gray1},
+            { Color.gray1, Color.gray1},
         };
 
         //FENCESPANS

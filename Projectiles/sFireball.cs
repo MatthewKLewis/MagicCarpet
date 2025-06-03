@@ -56,6 +56,7 @@ public class sFireball : MonoBehaviour, IProjectile
 
             //Needed due to double hits
             hasHit = true;
+            Instantiate(GameManager.instance.smallExplosionEffectPrefab, transform.position, transform.rotation, null);
             Destroy(this.gameObject);
         }
     }
