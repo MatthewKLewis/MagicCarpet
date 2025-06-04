@@ -50,7 +50,7 @@ public class sFireball : MonoBehaviour, IProjectile
             //Optional terrain destruction - only within the first second of life.
             if (Time.time < spawnTime + 1f && other.GetComponent<sTerrainChunk>())
             {
-                print("Fireball hit a terrain chunk!");
+                //print("Fireball hit a terrain chunk!");
                 tM.ManageTerrainHit(transform.position, damage, Deformations.PockMark());
             }
 

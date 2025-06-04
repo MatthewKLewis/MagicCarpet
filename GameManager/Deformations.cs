@@ -75,11 +75,11 @@ public static class Deformations
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         castle.heightOffsets = new float[5, 5] {
-            { 0, 0, 0, 0, 0 },
-            { 0, 6, 6, 6, 0 },
-            { 0, 6, 6.5f, 6, 0 },
-            { 0, 6, 6, 6, 0 },
-            { 0, 0, 0, 0, 0 },
+            {0,0,0,0,0,},
+            {0,8,8,8,0,},
+            {0,8,8,8,0,},
+            {0,8,8,8,0,},
+            {0,0,0,0,0,},
         };
         castle.colorChanges = new Color[5, 5] {
             { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
@@ -115,54 +115,71 @@ public static class Deformations
 
         //INFORMATION
 
+
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         //CAN THIS ALLOW NULLS RATHER THAN FLOATS? TO SKIP?
-        castle.heightOffsets = new float[9, 9] {
-            { 6,6,6,0,0,0,6,6,6,},
-            { 6,7,6,0,0,0,6,7,6,},
-            { 6,6,6,0,0,0,6,6,6,},
-            { 0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,0,0,0,0,},
-            { 6,6,6,0,0,0,6,6,6,},
-            { 6,7,6,0,0,0,6,7,6,},
-            { 6,6,6,0,0,0,6,6,6,},
-
+        castle.heightOffsets = new float[13, 13] {
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
+            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
+            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
         };
-        castle.colorChanges = new Color[9, 9] {
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+        castle.colorChanges = new Color[13, 13] {
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
         };
 
         //FENCESPANS - ALWAYS EVEN
-        castle.uvBasisRemaps = new Vector2[8, 8]
+        castle.uvBasisRemaps = new Vector2[12, 12]
         {
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+
         };
-        castle.triangleFlips = new bool[8, 8]
+        castle.triangleFlips = new bool[12, 12]
         {
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, false, false, false, false, false, false, false, false, false},
 
         };
         return castle;

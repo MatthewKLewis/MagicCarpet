@@ -161,10 +161,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
                 //...and Roll
                 cameraRoll += -mouseChange.x * rollSensitivity;
                 cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
-                cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
-
-                Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
-                cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
 
                 if (Input.GetMouseButtonDown(0))
                 {
@@ -181,6 +177,12 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
                     SwingScymitar();
                 }
             }
+            //Roll back to straight, even while menuing
+            cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
+
+            Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
+            cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
+
 
             //GROUND DISTANCE
             RaycastHit groundHit;

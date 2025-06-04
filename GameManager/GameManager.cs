@@ -66,9 +66,9 @@ public class GameManager : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            player = GameObject.Instantiate(playerPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
+            player = Instantiate(playerPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
             listener.enabled = false; //Deactivate this audio listener just before spawning camera, which has a listener.
-            magicCamera = GameObject.Instantiate(magicCameraPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
+            magicCamera = Instantiate(magicCameraPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
         }
         #endregion
     }

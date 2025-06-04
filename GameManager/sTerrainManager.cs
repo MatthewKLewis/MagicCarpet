@@ -28,8 +28,6 @@ public class sTerrainManager : MonoBehaviour
 
     //TODO - this applies to the gizmo, and to the chunk placement, but the actual tiles dont get bigger
     public int TILE_WIDTH = 2; //Meter size of tile
-
-
     public int TILE_SPRITES = 8; //Refers to texture atlas - the number of textures on a side of the atlas
     public float MAX_HEIGHT = 24.0f; //Max height of the terrain
 
@@ -37,10 +35,11 @@ public class sTerrainManager : MonoBehaviour
     [Header("Levels")]
     [Range(0, 2)] //Update as needed
     public int levelIndex = 0;
+    [Space(2)]
     public List<Texture2D> levelTextures;
     [SerializeField] private List<Gradient> vertexColorGradients;
     [SerializeField] private List<Color> fogColors;
-
+    [SerializeField] private List<float> fogIntensities;
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
     public Square[,] squareMap;
@@ -75,6 +74,10 @@ public class sTerrainManager : MonoBehaviour
         new Castle(0, 0, 0, 0, OWNER_ID.NPC_8),
     };
 
+    [Space(4)]
+    [Header("Lights")]
+    [SerializeField] private Light sunLight;
+
     private void Awake()
     {
         //SINGLETON
@@ -100,7 +103,11 @@ public class sTerrainManager : MonoBehaviour
             enemies.Add(nme);
         }
 
+        //Sun and Fog
+        RenderSettings.sun = sunLight;
+        RenderSettings.fogMode = FogMode.Exponential;
         RenderSettings.fogColor = fogColors[levelIndex];
+        RenderSettings.fogDensity = fogIntensities[levelIndex];
 
         DrawChunks();
         DrawAdjacentPlanes();        
@@ -229,7 +236,7 @@ public class sTerrainManager : MonoBehaviour
         int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
         //Early Return - No demolition at height zero
-        if (vertexMap[hitX, hitZ].height < 0.1f)
+        if (vertexMap[hitX, hitZ].height < 0.3f) //MAGIC NUMBER - height at which you can do demo
         {
             //print("No demolition at sea level!");
             Actions.OnHUDWarning.Invoke("NO DEFORMATION AT SEA LEVEL");

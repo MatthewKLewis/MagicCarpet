@@ -1,0 +1,8 @@
+* {
+    font-family: monospace;
+}
+
+#canvas {
+    display: block;
+    border: 1px solid red;
+}
