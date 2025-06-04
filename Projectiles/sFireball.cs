@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class sFireball : MonoBehaviour, IProjectile
 {
-    private sTerrainManager tM;
+    private GameManager gM;
 
     private float speed = 100f;
     private float lifeTime = 3f;
@@ -15,7 +15,7 @@ public class sFireball : MonoBehaviour, IProjectile
 
     private void Start()
     {
-        tM = sTerrainManager.instance;
+        gM = GameManager.instance;
         spawnTime = Time.time;
     }
 
@@ -51,7 +51,7 @@ public class sFireball : MonoBehaviour, IProjectile
             if (Time.time < spawnTime + 1f && other.GetComponent<sTerrainChunk>())
             {
                 //print("Fireball hit a terrain chunk!");
-                tM.ManageTerrainHit(transform.position, damage, Deformations.PockMark());
+                gM.ManageTerrainHit(transform.position, damage, Deformations.PockMark());
             }
 
             //Needed due to double hits

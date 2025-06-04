@@ -14,7 +14,8 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 {
     public OWNER_ID ownerID { get; set; } = OWNER_ID.NPC_1;
 
-    private GameManager gM;
+    private GameManager tM;
+    private GameManager gM = GameManager.instance;
 
     //Unity
     private CharacterController cC;
@@ -54,7 +55,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
     void Start()
     {
-        gM = GameManager.instance;
+        tM = GameManager.instance;
         cC = GetComponent<CharacterController>();
 
         homeBase = transform.position;
@@ -242,7 +243,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void SpawnManaReward()
     {
-        Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
+        //Instantiate(tM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
     }
 
     /*
@@ -270,7 +271,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         // TO THE AI ARE IN UPDATE
         // TODO - Change AI state based on current factors like Life, Mana, Castle Damage
 
-        while (gM.player)
+        while (tM.player)
         {
             yield return new WaitForSeconds(3);
 

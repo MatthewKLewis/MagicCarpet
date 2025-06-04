@@ -7,7 +7,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     public OWNER_ID ownerID { get; set; } = OWNER_ID.PLAYER;
 
     private GameManager gM;
-    private sTerrainManager tM;
+    private GameManager tM;
 
     //Unity
     private CharacterController cC;
@@ -85,7 +85,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     void Start()
     {
         gM = GameManager.instance;
-        tM = sTerrainManager.instance;
+        tM = GameManager.instance;
 
         cC = GetComponent<CharacterController>();
 
@@ -93,7 +93,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         windAudioSource.Play();
         guidanceLine.useWorldSpace = true;
 
-        wrapAt = tM.chunks.GetLength(0) * (tM.CHUNK_WIDTH - 1) * tM.TILE_WIDTH;
+        wrapAt = gM.chunks.GetLength(0) * (gM.CHUNK_WIDTH - 1) * gM.TILE_WIDTH;
 
         Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
         Actions.OnManaChange.Invoke(currentMana, maxMana);
@@ -257,11 +257,13 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             int manaCost = 1;
             if (currentMana < manaCost)
             {
-                Actions.OnHUDWarning("NOT ENOUGH MANYA");
+                Actions.OnHUDWarning("NOT ENOUGH MANA");
                 return;
             }
             currentMana -= manaCost;
             Actions.OnManaChange.Invoke(currentMana, maxMana);
+
+            print("Pow!");
 
             //Poll for enemy positions, find one in front
             GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
@@ -305,7 +307,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             Actions.OnManaChange.Invoke(currentMana, maxMana);
 
             //Mark projectile with ownerName!
-            Instantiate(gM.spikifierPrefab, cameraTransform.position, cameraTransform.rotation, null)
+            Instantiate(gM.castleSeedPrefab, cameraTransform.position, cameraTransform.rotation, null)
                 .GetComponent<IProjectile>().ownerID = ownerID;
         }
 

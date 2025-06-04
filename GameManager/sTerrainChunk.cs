@@ -7,7 +7,7 @@ public class sTerrainChunk : MonoBehaviour
 {
     [SerializeField] private Gradient vertexColorGradient;
 
-    private sTerrainManager tM;
+    private GameManager gM;
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
@@ -22,7 +22,7 @@ public class sTerrainChunk : MonoBehaviour
 
     private void Awake()
     {
-        tM = sTerrainManager.instance;
+        gM = GameManager.instance;
         meshFilter = GetComponent<MeshFilter>();
         mCollider = GetComponent<MeshCollider>();
     }
@@ -47,30 +47,30 @@ public class sTerrainChunk : MonoBehaviour
         uvTwos = new List<Vector2>();
 
         int index = 0;
-        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH - 1; z++) //FENCEPOST
+        for (int z = zOrigin; z < zOrigin + gM.CHUNK_WIDTH - 1; z++) //FENCEPOST
         {
-            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH - 1; x++)
+            for (int x = xOrigin; x < xOrigin + gM.CHUNK_WIDTH - 1; x++)
             {
                 //4 verts
-                vertices.Add(new Vector3(x, tM.vertexMap[x, z].height, z) * tM.TILE_WIDTH); //TODO - these "1s" would need to be TILE_WIDTH to work properly.
-                vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z].height, z) * tM.TILE_WIDTH);
-                vertices.Add(new Vector3(x, tM.vertexMap[x, z + 1].height, z + 1) * tM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z + 1].height, z + 1) * tM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * gM.TILE_WIDTH); //TODO - these "1s" would need to be TILE_WIDTH to work properly.
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * gM.TILE_WIDTH);
 
                 //4 colors
-                colors.Add(tM.vertexMap[x, z].color);
-                colors.Add(tM.vertexMap[x + 1, z].color);
-                colors.Add(tM.vertexMap[x, z + 1].color);
-                colors.Add(tM.vertexMap[x + 1, z + 1].color);
+                colors.Add(gM.vertexMap[x, z].color);
+                colors.Add(gM.vertexMap[x + 1, z].color);
+                colors.Add(gM.vertexMap[x, z + 1].color);
+                colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES);
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES);
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
-                if (tM.squareMap[x,z].triangleFlipped)
+                if (gM.squareMap[x,z].triangleFlipped)
                 {
                     triangles.Add(index + 0);
                     triangles.Add(index + 3);
@@ -118,30 +118,30 @@ public class sTerrainChunk : MonoBehaviour
         uvTwos = new List<Vector2>();
 
         int index = 0;
-        for (int z = zOrigin; z < zOrigin + tM.CHUNK_WIDTH - 1; z++) //FENCEPOST
+        for (int z = zOrigin; z < zOrigin + gM.CHUNK_WIDTH - 1; z++) //FENCEPOST
         {
-            for (int x = xOrigin; x < xOrigin + tM.CHUNK_WIDTH - 1; x++)
+            for (int x = xOrigin; x < xOrigin + gM.CHUNK_WIDTH - 1; x++)
             {
                 //4 verts
-                vertices.Add(new Vector3(x, tM.vertexMap[x, z].height, z) * tM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z].height, z) * tM.TILE_WIDTH);
-                vertices.Add(new Vector3(x, tM.vertexMap[x, z + 1].height, z + 1) * tM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, tM.vertexMap[x + 1, z + 1].height, z + 1) * tM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * gM.TILE_WIDTH);
 
                 //4 colors
-                colors.Add(tM.vertexMap[x, z].color);
-                colors.Add(tM.vertexMap[x + 1, z].color);
-                colors.Add(tM.vertexMap[x, z + 1].color);
-                colors.Add(tM.vertexMap[x + 1, z + 1].color);
+                colors.Add(gM.vertexMap[x, z].color);
+                colors.Add(gM.vertexMap[x + 1, z].color);
+                colors.Add(gM.vertexMap[x, z + 1].color);
+                colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES);
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((tM.squareMap[x, z].uvBasis / tM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES);
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
-                if (tM.squareMap[x, z].triangleFlipped)
+                if (gM.squareMap[x, z].triangleFlipped)
                 {
                     triangles.Add(index + 0);
                     triangles.Add(index + 3);

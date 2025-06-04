@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class sHUD : MonoBehaviour
 {
     private GameManager gM;
-    private sTerrainManager tM;
+    private GameManager tM;
 
     [Space(10)]
     [Header("Warning")]
@@ -64,7 +64,7 @@ public class sHUD : MonoBehaviour
     private void Start()
     {
         gM = GameManager.instance;
-        tM = sTerrainManager.instance;
+        tM = GameManager.instance;
 
         spellPanel.localScale = Vector3.zero;
         damageFrame.localScale = Vector3.zero;
@@ -79,7 +79,7 @@ public class sHUD : MonoBehaviour
             Vector3 playPos = gM.player.transform.position;
             Vector3 playRot = gM.player.transform.rotation.eulerAngles;
 
-            int fullWidth = tM.chunks.GetLength(0) * (tM.CHUNK_WIDTH - 1) * tM.TILE_WIDTH;
+            int fullWidth = gM.chunks.GetLength(0) * (gM.CHUNK_WIDTH - 1) * gM.TILE_WIDTH;
             miniMapImage.uvRect = new Rect(
                 (playPos.x - (fullWidth/2)) / fullWidth, 
                 (playPos.z - (fullWidth/2)) / fullWidth, 

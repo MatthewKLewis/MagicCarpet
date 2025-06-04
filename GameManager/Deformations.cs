@@ -3,11 +3,14 @@ using UnityEngine;
 
 public static class Deformations
 {
+    //Typical Colors
+    public static Color G = Color.gray;
+
     //First Row
     public static Vector2 BLANK = new Vector2(0, 0);
-    public static Vector2 CASTLE_FORWARD = new Vector2(1, 0);
-    public static Vector2 CASTLE_SIDE = new Vector2(2, 0);
-    public static Vector2 CASTLE_CORNER = new Vector2(3, 0);
+    public static Vector2 C_FORWARD = new Vector2(1, 0);
+    public static Vector2 C_SIDE = new Vector2(2, 0);
+    public static Vector2 C_CORNER = new Vector2(3, 0);
     //public static Vector2 aa = new Vector2(4, 0);
     //public static Vector2 aaa = new Vector2(5, 0);
     //public static Vector2 aaaa = new Vector2(6, 0);
@@ -37,20 +40,20 @@ public static class Deformations
             { 0, 0, 0, 0, 0 },
         };
         lodge.colorChanges = new Color[5, 5] {
-            { Color.red, Color.red, Color.red, Color.red, Color.red },
-            { Color.red, Color.red, Color.red, Color.red, Color.red },
-            { Color.red, Color.red, Color.red, Color.red, Color.red },
-            { Color.red, Color.red, Color.red, Color.red, Color.red },
-            { Color.red, Color.red, Color.red, Color.red, Color.red },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
         };
 
         //FENCESPANS - ALWAYS EVEN
         lodge.uvBasisRemaps = new Vector2[4, 4]
         {
-            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
-            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
-            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
-            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
+            {C_CORNER, C_FORWARD, C_FORWARD, C_CORNER},
+            {C_SIDE, BLANK, BLANK, C_SIDE},
+            {C_SIDE, BLANK, BLANK, C_SIDE},
+            {C_CORNER, C_FORWARD, C_FORWARD, C_CORNER},
         };
         lodge.triangleFlips = new bool[4, 4]
         {
@@ -76,26 +79,26 @@ public static class Deformations
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         castle.heightOffsets = new float[5, 5] {
             {0,0,0,0,0,},
-            {0,8,8,8,0,},
-            {0,8,8,8,0,},
-            {0,8,8,8,0,},
+            {0,4,4,4,0,},
+            {0,4,4,4,0,},
+            {0,4,4,4,0,},
             {0,0,0,0,0,},
         };
         castle.colorChanges = new Color[5, 5] {
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.orange, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
+            { G, G, G, G, G },
         };
 
         //FENCESPANS - ALWAYS EVEN
         castle.uvBasisRemaps = new Vector2[4, 4]
         {
-            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
-            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
-            {CASTLE_SIDE, BLANK, BLANK, CASTLE_SIDE},
-            {CASTLE_CORNER, CASTLE_FORWARD, CASTLE_FORWARD, CASTLE_CORNER},
+            {C_CORNER, C_FORWARD, C_FORWARD, C_CORNER},
+            {C_SIDE, BLANK, BLANK, C_SIDE},
+            {C_SIDE, BLANK, BLANK, C_SIDE},
+            {C_CORNER, C_FORWARD, C_FORWARD, C_CORNER},
         };
         castle.triangleFlips = new bool[4, 4]
         {
@@ -120,42 +123,42 @@ public static class Deformations
         //CAN THIS ALLOW NULLS RATHER THAN FLOATS? TO SKIP?
         castle.heightOffsets = new float[13, 13] {
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
-            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
-            { 0,0,0,0,0,6,6,6,0,0,0,0,0,},
+            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
+            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
+            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
-            { 0,6,6,6,0,0,0,0,0,6,6,6,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
         };
         castle.colorChanges = new Color[13, 13] {
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
-            { Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray, Color.gray,Color.gray,Color.gray,Color.gray,Color.gray, },
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
         };
 
         //FENCESPANS - ALWAYS EVEN
         castle.uvBasisRemaps = new Vector2[12, 12]
         {
+            {C_CORNER, C_FORWARD, C_FORWARD, C_CORNER, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
             {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
             {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
-            {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+            {C_CORNER, BLANK, BLANK, C_CORNER, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
             {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
             {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
             {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
@@ -168,10 +171,10 @@ public static class Deformations
         };
         castle.triangleFlips = new bool[12, 12]
         {
+            {true, false, false, false, false, false, false, false, false, false, false, false},
             {false, false, false, false, false, false, false, false, false, false, false, false},
             {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {false, false, false, true, false, false, false, false, false, false, false, false},
             {false, false, false, false, false, false, false, false, false, false, false, false},
             {false, false, false, false, false, false, false, false, false, false, false, false},
             {false, false, false, false, false, false, false, false, false, false, false, false},
@@ -203,8 +206,8 @@ public static class Deformations
             { -0.5f, -0.5f,},
         };
         pock.colorChanges = new Color[2, 2] {
-            { Color.gray1, Color.gray1},
-            { Color.gray1, Color.gray1},
+            { G, G},
+            { G, G},
         };
 
         //FENCESPANS

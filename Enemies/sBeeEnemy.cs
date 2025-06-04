@@ -10,7 +10,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
     [SerializeField] private AudioSource enemyAudioSource;
     [SerializeField] private LayerMask terrainMask;
 
-    //[SerializeField] private LayerMask terrainMask; //Floaty enemies also?
+    //[SerializeField] private LayerMask terrainMask; //Floaty enemies also? 
 
     //AI
     private AIState aiState = AIState.ROAMING;
@@ -38,12 +38,17 @@ public class sBeeEnemy : MonoBehaviour, IKillable
     [Range(0.1f, 1.0f)]
     [SerializeField] private float speedPenalty = 0.1f;
 
-    void Start()
+    private void Awake()
     {
         gM = GameManager.instance;
-        cC = GetComponent<CharacterController>();
+        cC = GetComponent<CharacterController>();        
+    }
+
+    void Start()
+    {
         homeBase = transform.position;
         StartCoroutine(ChangeAIState());
+        //print("Bee ready!");
     }
 
     private void OnDestroy()
@@ -202,7 +207,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
     private void SpawnManaReward()
     {
-        Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
+        //Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
     }
 
 
@@ -228,6 +233,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
     private IEnumerator ChangeAIState()
     {
         while (gM.player) {
+            //print(gameObject.name + " change AI state");
 
             yield return new WaitForSeconds(3);
 

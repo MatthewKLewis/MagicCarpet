@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class sCastleSeed : MonoBehaviour, IProjectile
 {
-    private sTerrainManager tM;
+    private GameManager gM;
 
     private float speed = 100f;
     private float lifeTime = 3f;
@@ -15,7 +15,7 @@ public class sCastleSeed : MonoBehaviour, IProjectile
 
     private void Start()
     {
-        tM = sTerrainManager.instance;
+        gM = GameManager.instance;
         spawnTime = Time.time;
     }
 
@@ -37,13 +37,13 @@ public class sCastleSeed : MonoBehaviour, IProjectile
         {
             if (other.GetComponent<sTerrainChunk>())
             {
-                if (tM.castleInfo[(int)ownerID].level == 0)
+                if (gM.castleInfo[(int)ownerID].level == 0)
                 {
-                    tM.CreateCastle(transform.position, ownerID);
+                    gM.CreateCastle(transform.position, ownerID);
                 }
                 else
                 {
-                    tM.UpgradeCastle(transform.position, ownerID);
+                    gM.UpgradeCastle(transform.position, ownerID);
                 }
             }
 
