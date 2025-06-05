@@ -37,6 +37,10 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     [Header("Carpet")]
     [SerializeField] private Transform carpetTransform;
 
+    [Space(4)]
+    [Header("Skydome")]
+    [SerializeField] private MeshRenderer skyDomeMR;
+
 
     //Multipliers
     private float moveFalloff = 0.98f; //now in Update, provide a target FPS in GameManager for stability!
@@ -402,6 +406,23 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         print(collision.gameObject.name);
         Actions.OnHUDWarning(collision.gameObject.name);
     }
+
+    //Effects
+    public void SetSkyDomeColor(Color color)
+    {
+        skyDomeMR.material.color = color;
+    }
+
+    public void SetRainEffect(bool isRaining)
+    {
+        //
+    }
+
+    public void SetSandstormEffect(bool isStorming)
+    {
+        //
+    }
+
 
     //private void OnControllerColliderHit(ControllerColliderHit hit)
     //{

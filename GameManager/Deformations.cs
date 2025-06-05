@@ -1,10 +1,13 @@
 using System;
 using UnityEngine;
 
+
+
 public static class Deformations
 {
     //Typical Colors
     public static Color G = Color.gray;
+    public static Color G1 = Color.gray1;
 
     //First Row
     public static Vector2 NIL = new Vector2(0, 0);
@@ -12,7 +15,7 @@ public static class Deformations
     public static Vector2 CSI = new Vector2(2, 0);
     public static Vector2 CCO = new Vector2(3, 0);
 
-    //public static Vector2 aa = new Vector2(4, 0);
+    public static Vector2 RUF = new Vector2(4, 0);
     //public static Vector2 aaa = new Vector2(5, 0);
     //public static Vector2 aaaa = new Vector2(6, 0);
     //public static Vector2 aaaaa = new Vector2(7, 0);
@@ -21,16 +24,17 @@ public static class Deformations
     public static Vector2 RUBBLE = new Vector2(0, 1);
     public static Vector2 WATER = new Vector2(1, 1);
 
-    /*
-    * 
-    * Neutral Buildings
-    * 
-    */
-    public static BuildingDeformation Lodge()
+
+    public static Deformation Lodge()
     {
-        BuildingDeformation lodge = new BuildingDeformation();
+        Deformation lodge = new Deformation();
 
         //INFORMATION
+        lodge.noAnimation = true;
+        lodge.runtime = false;
+        lodge.deformationType = DEFORMATION_TYPE.BUILDING;
+        lodge.ownerID = OWNER_ID.UNOWNED;
+
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         lodge.heightOffsets = new float[5, 5] {
@@ -66,17 +70,54 @@ public static class Deformations
         return lodge;
     }
 
-    /*
-     * 
-     * Player Castles
-     * 
-     */
-    public static BuildingDeformation CastleOrigin()
+    public static Deformation HugeSpike()
     {
-        BuildingDeformation castle = new BuildingDeformation();
+        Deformation spike = new Deformation();
 
         //INFORMATION
+        spike.noAnimation = false;
+        spike.runtime = true;
+        spike.deformationType = DEFORMATION_TYPE.BUILDING;
+        spike.ownerID = OWNER_ID.UNOWNED;
 
+        //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
+        spike.heightOffsets = new float[3, 3] {
+            { 0, 0, 0,},
+            { 0, 8, 0,},
+            { 0, 0, 0,},
+        };
+        spike.colorChanges = new Color[3, 3] {
+            { G, G, G,},
+            { G, G, G,},
+            { G, G, G,},
+        };
+
+        //FENCESPANS - ALWAYS EVEN
+        spike.uvBasisRemaps = new Vector2[2, 2]
+        {
+            {NIL, NIL,},
+            {NIL, NIL,},
+
+        };
+        spike.triangleFlips = new bool[2, 2]
+        {
+            {true, false,},
+            {false, true,},
+
+        };
+        return spike;
+    }
+
+    public static Deformation CastleOrigin(OWNER_ID owner)
+    {
+        Deformation castle = new Deformation();
+
+        //INFORMATION
+        castle.noAnimation = false;
+        castle.runtime = true;
+        castle.deformationType = DEFORMATION_TYPE.CASTLE;
+        castle.ownerID = owner;
+        
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         castle.heightOffsets = new float[5, 5] {
             {0,0,0,0,0,},
@@ -111,9 +152,15 @@ public static class Deformations
         return castle;
     }
 
-    public static BuildingDeformation CastleUpgrade_2()
+    public static Deformation CastleUpgrade_2(OWNER_ID owner)
     {
-        BuildingDeformation castle = new BuildingDeformation();
+        Deformation castle = new Deformation();
+
+        //INFORMATION
+        castle.noAnimation = false;
+        castle.runtime = true;
+        castle.ownerID = owner;
+        castle.deformationType = DEFORMATION_TYPE.CASTLE_UPGRADE;
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         //CAN THIS ALLOW NULLS RATHER THAN FLOATS? TO SKIP?
@@ -123,9 +170,9 @@ public static class Deformations
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
-            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
-            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
@@ -152,16 +199,16 @@ public static class Deformations
         castle.uvBasisRemaps = new Vector2[12, 12]
         {
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
-            {CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI},
-            {CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI},
+            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
+            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
             {NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL},
-            {NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL},
-            {NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL},
+            {NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL},
+            {NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL},
             {NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
-            {CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI},
-            {CSI, NIL, NIL, CSI, NIL, NIL, NIL, NIL, CSI, NIL, NIL, CSI},
+            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
+            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
 
         };
@@ -184,17 +231,15 @@ public static class Deformations
         return castle;
     }
 
-
-    /*
-     * 
-     * Destruction
-     * 
-     */
-    public static DestructionDeformation PockMark()
+    public static Deformation PockMark()
     {
-        DestructionDeformation pock = new DestructionDeformation();
+        Deformation pock = new Deformation();
 
+        //INFORMATION
         pock.noAnimation = true;
+        pock.runtime = true;
+        pock.deformationType = DEFORMATION_TYPE.DESTRUCTION;
+        pock.ownerID = OWNER_ID.UNOWNED;
 
         //FENCEPOSTS
         pock.heightOffsets = new float[2, 2] {
@@ -202,8 +247,8 @@ public static class Deformations
             { -0.5f, -0.5f,},
         };
         pock.colorChanges = new Color[2, 2] {
-            { G, G},
-            { G, G},
+            { G1, G1},
+            { G1, G1},
         };
 
         //FENCESPANS

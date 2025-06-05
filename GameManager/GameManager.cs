@@ -26,14 +26,13 @@ public class GameManager : MonoBehaviour
     public GameObject terrainChunkPrefab;
     [HideInInspector] public int CHUNK_WIDTH = 32; //Tiles on side of Chunk
 
-    //TODO - this applies to the gizmo, and to the chunk placement, but the actual tiles dont get bigger
     public int TILE_WIDTH = 2; //Meter size of tile
     public int TILE_SPRITES = 8; //Refers to texture atlas - the number of textures on a side of the atlas
     public float MAX_HEIGHT = 24.0f; //Max height of the terrain
 
     [Space(4)]
     [Header("Levels")]
-    [Range(0, 2)] //Update as needed
+    [Range(0, 3)] //Update as needed
     public int levelIndex = 0;
 
     [Space(4)]
@@ -53,7 +52,7 @@ public class GameManager : MonoBehaviour
     public sTerrainChunk[,] chunks;
     public Square[,] squareMap;
     public Vertex[,] vertexMap;
-    public Castle[] castleInfo = new Castle[10] {
+    public Castle[] castleInfo = new Castle[9] {
         new Castle(0, 0, 0, 0, OWNER_ID.NONE),
         new Castle(0, 0, 0, 0, OWNER_ID.PLAYER),
         new Castle(0, 0, 0, 0, OWNER_ID.NPC_1),
@@ -63,7 +62,6 @@ public class GameManager : MonoBehaviour
         new Castle(0, 0, 0, 0, OWNER_ID.NPC_5),
         new Castle(0, 0, 0, 0, OWNER_ID.NPC_6),
         new Castle(0, 0, 0, 0, OWNER_ID.NPC_7),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_8),
     };
 
     //Parent to put the terrain chunks in.
@@ -75,7 +73,7 @@ public class GameManager : MonoBehaviour
     [Space(4)]
     [Header("Enemies")]
     //put something here
-    [SerializeField] private List<GameObject> enemies;
+    public List<GameObject> enemies;
 
     [Space(10)]
     [Header("Player")]
@@ -165,8 +163,11 @@ public class GameManager : MonoBehaviour
         player = Instantiate(playerPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
         magicCamera = Instantiate(magicCameraPrefab, playerStartingPosition, Quaternion.Euler(Vector3.zero), null);
 
+        //Set SkyDome color equal to fog color
+        player.GetComponent<sPlayer>().SetSkyDomeColor(fogColors[levelIndex]);
+
         //Then enemies
-        Instantiate(beeEnemyPrefab, new Vector3(595, 16, 595), transform.rotation, null);
+        Instantiate(beeEnemyPrefab, new Vector3(992, 100, 1100), transform.rotation, null);
         GameObject[] enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (GameObject nme in enemyArray) { enemies.Add(nme); }
     }
@@ -211,7 +212,7 @@ public class GameManager : MonoBehaviour
         }
 
         //TODO - More random buildings?
-        AddRandomBuilding(100, 100, OWNER_ID.NPC_8, Deformations.Lodge());
+        AddRandomBuilding(100, 100, OWNER_ID.UNOWNED, Deformations.Lodge());
 
         //Divide into chunks and instantiate
         for (int z = 0; z < chunks.GetLength(0); z++) //chunks.GetLength(0) or 1
@@ -284,101 +285,143 @@ public class GameManager : MonoBehaviour
 
     /*
      * 
-     * Deformation and Damage
+     * Terrain
      * 
      */
-    public void ManageTerrainHit(Vector3 hitPoint, int damage, DestructionDeformation deformation)
+    public void AlterTerrain(Vector3 hitPoint, Deformation deformation, int damage = 0)
     {
         //Find the square based on the hit
         int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
         int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
 
-        //Early Return - No demolition at height zero
-        if (vertexMap[hitX, hitZ].height < 0.3f) //MAGIC NUMBER - height at which you can do demo
-        {
-            //print("No demolition at sea level!");
-            Actions.OnHUDWarning.Invoke("NO DEFORMATION AT SEA LEVEL");
-            return;
-        }
-
-        //Early Return - no deformation on a castle.
-        //Checks for castles at a radius of 5 (TODO - should be deformation's width + 5 maybe?)
-        //checks 25 squares for a castle ID before allowing
-        for (int i = -2; i <= 2; i++)
-        {
-            for (int j = -2; j <= 2; j++)
-            {
-                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
-                {
-                    Actions.OnHUDWarning.Invoke("NO DEFORMATION ON A CASTLE");
-                    return;
-                }
-            }
-        }
-
         //Find the chunk based on the tile
-        int chunkX = hitX / CHUNK_WIDTH;
+        int chunkX = hitX / CHUNK_WIDTH; 
         int chunkZ = hitZ / CHUNK_WIDTH;
 
-        //Early Return - No demo at borders MODULO AROUND 1025?
-        if (chunkX == 0 ||
-            chunkZ == 0 ||
-            chunkX == chunks.GetLength(1) - 1 ||
-            chunkZ == chunks.GetLength(0) - 1
-        )
+        if (damage != 0)
         {
-            //print("No demolition at borders!");
-            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT BORDERS");
-            return;
+            if (squareMap[hitX, hitZ].ownerID != 0)
+            {
+                print("TODO - damage to the castle of " + squareMap[hitX, hitZ].ownerID.ToString());
+            }
+            //Do damage script on building instead.
+            //If damage > currentHealth
+            //Destroy Building
         }
 
-        //Animate Terrain Coroutine
-        StartCoroutine(DeformTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+        Castle playerCastle;
+
+        switch (deformation.deformationType)
+        {
+            case DEFORMATION_TYPE.CASTLE:
+
+                //castle early returns
+                playerCastle = castleInfo[(int)deformation.ownerID];
+
+                //No new castles if one exists
+                if (playerCastle.level > 0) { Actions.OnHUDWarning.Invoke("ONLY ONE CASTLE PERMITTED"); return; }
+
+                if (NearAnotherBuilding(hitX, hitZ)) { return; }
+                if (AtBorderChunk(hitX, hitZ)) { return; }
+
+                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+                float castleBaseHeight = vertexMap[hitX, hitZ].height;
+                castleInfo[(int)deformation.ownerID].level = 1;
+                castleInfo[(int)deformation.ownerID].ownerID = deformation.ownerID;
+                castleInfo[(int)deformation.ownerID].xOrigin = hitX;
+                castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
+                castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
+
+                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+                break;
+
+            case DEFORMATION_TYPE.CASTLE_UPGRADE:
+
+                //castle early returns
+                playerCastle = castleInfo[(int)deformation.ownerID];
+
+                //not close enough to owner's castle origin MAGIC NUMBER - 
+                if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(playerCastle.xOrigin, 0, playerCastle.zOrigin)) > 20f)
+                {
+                    print(hitPoint);
+                    print(playerCastle.ToString());
+                    Actions.OnHUDWarning.Invoke("TOO FAR AWAY FROM CASTLE"); 
+                    return;
+                }
+
+                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+                castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
+
+                StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
+                break;
+
+            case DEFORMATION_TYPE.DESTRUCTION:
+
+                if (NearAnotherBuilding(hitX, hitZ)) { return; }
+                if (AtBorderChunk(hitX, hitZ)) { return; }
+
+                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+                break;
+
+            case DEFORMATION_TYPE.BUILDING:
+
+                if (NearAnotherBuilding(hitX, hitZ)) { return; }
+                if (AtBorderChunk(hitX, hitZ)) { return; }
+
+                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+                break;
+
+            default:
+                Debug.LogError("deformation type not given!");
+                break;
+        }
+
     }
 
-    private IEnumerator DeformTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, DestructionDeformation deformation)
+    private IEnumerator AlterTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
     {
         //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
+        int offsetX = deformation.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = deformation.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
+        if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!");}
 
-        //TODO - THIS PROCEDES FROM 0 TO LENGTH, THEREFORE IT ALTERS TERRAIN
-        //       PROCEDING FROM THE HIT POINT FORWARD IN X AND Z (North and East) RATHER THAN OUT
-        //       FROM THE MIDDLE!
-
-        float animationSteps = 4f;
-        float overSeconds = 0.5f;
-
-        //SQUARE - UVS AND TRIFLIPS
-        for (int i = 0; i < deformation.uvBasisRemaps.GetLength(0); i++)
+        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
+        for (int i = -offsetZ; i < deformation.uvBasisRemaps.GetLength(0) - offsetZ; i++)
         {
-            for (int j = 0; j < deformation.uvBasisRemaps.GetLength(1); j++)
+            for (int j = -offsetX; j < deformation.uvBasisRemaps.GetLength(1) - offsetX; j++)
             {
-                //rendering
-                squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j, i];
-                squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j, i];
+                //info
+                squareMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
+
+                //texture and geometry
+                squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j+offsetX, i+offsetZ];
+                squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j + offsetX, i + offsetZ];
             }
         }
 
-        //VERTEX - COLORS
-        for (int i = 0; i < deformation.colorChanges.GetLength(0); i++)
+        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
+        for (int i = -offsetZ; i < deformation.colorChanges.GetLength(0) - offsetZ; i++)
         {
-            for (int j = 0; j < deformation.colorChanges.GetLength(0); j++)
+            for (int j = -offsetX; j < deformation.colorChanges.GetLength(0) - offsetX; j++)
             {
-                //rendering
-                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j, i];
+                //TODO - flatten base for castle origins, upgrades
+                //vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
+
+                //change vertex color
+                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j + offsetX, i+ offsetZ];
             }
         }
-
-        //NEVER FLATTEN BEFORE DEFORMATIONS
 
         if (deformation.noAnimation)
         {
-            //HEIGHTS (over time)
-            for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
+            //VERTEX - HEIGHTS (over time)
+            for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
             {
-                for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
+                for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
                 {
-                    vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i] / animationSteps;
+                    vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j + offsetX, i + offsetZ];
                 }
+
             }
 
             yield return null; //single frame break to avoid lag spike?
@@ -391,19 +434,20 @@ public class GameManager : MonoBehaviour
                     chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
                 }
             }
-            yield return null; //END
         }
-        else //the deformation IS animated
+        else
         {
             //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
+            float animationSteps = 4f; //MAGIC NUMBER - probably will keep it this way though.
+            float overSeconds = 0.5f;
             for (int s = 0; s < animationSteps; s++)
             {
-                //HEIGHTS (over time)
-                for (int i = 0; i < deformation.heightOffsets.GetLength(0); i++)
+                //VERTEX - HEIGHTS (over time)
+                for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
                 {
-                    for (int j = 0; j < deformation.heightOffsets.GetLength(0); j++)
+                    for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
                     {
-                        vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j, i] / animationSteps;
+                        vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j + offsetX, i + offsetZ] / animationSteps;
                     }
                 }
 
@@ -420,259 +464,7 @@ public class GameManager : MonoBehaviour
                 yield return new WaitForSeconds(overSeconds / animationSteps); //END
             }
         }
-    }
 
-
-    /*
-     * 
-     * Building and Expansion
-     * 
-     */
-    public void CreateCastle(Vector3 hitPoint, OWNER_ID ownerID)
-    {
-        //Find the square based on the hit
-        int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
-        int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
-
-        //Find the chunk based on the tile
-        int chunkX = hitX / CHUNK_WIDTH;
-        int chunkZ = hitZ / CHUNK_WIDTH;
-
-        //Early Return - no duplicate castles
-        if (castleInfo[(int)ownerID].level > 0)
-        {
-            Actions.OnHUDWarning.Invoke("YOU ALREADY HAVE A CASTLE");
-            return;
-        }
-
-        //Checks for castles at a radius of 5 (TODO - should be deformation's width + 5 maybe?)
-        //checks 25 squares for a castle ID before allowing
-        for (int i = -2; i <= 2; i++)
-        {
-            for (int j = -2; j <= 2; j++)
-            {
-                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
-                {
-                    Actions.OnHUDWarning.Invoke("CASTLE NEAR CASTLE");
-                    return;
-                }
-            }
-        }
-
-        //Early Return - No demo at borders MODULO AROUND 1025?
-        if (chunkX == 0 ||
-            chunkZ == 0 ||
-            chunkX == chunks.GetLength(1) - 1 ||
-            chunkZ == chunks.GetLength(0) - 1
-        )
-        {
-            //print("No demolition at borders!");
-            Actions.OnHUDWarning.Invoke("NO DEMOLITION AT BORDERS");
-            return;
-        }
-
-        //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
-        float castleBaseHeight = vertexMap[hitX, hitZ].height;
-        castleInfo[(int)ownerID].level = 1;
-        castleInfo[(int)ownerID].ownerID = ownerID;
-        castleInfo[(int)ownerID].xOrigin = hitX;
-        castleInfo[(int)ownerID].yOrigin = castleBaseHeight;
-        castleInfo[(int)ownerID].zOrigin = hitZ;
-
-        print(castleInfo[(int)ownerID].ToString());
-
-        //TODO - get the flag height reight!
-        Instantiate(
-            castleFlagPrefab, 
-            new Vector3(hitX * TILE_WIDTH, castleBaseHeight + (4f * TILE_WIDTH), hitZ * TILE_WIDTH), //MAGIC NUMBER - FLAG HEIGHT
-            transform.rotation, 
-            transform
-        );
-
-        //Animate Terrain Coroutine
-        StartCoroutine(BuildCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleOrigin()));
-    }
-
-    public void UpgradeCastle(Vector3 hitPoint, OWNER_ID ownerID)
-    {
-        //Get Char Castle
-        Castle castle = castleInfo[(int)ownerID];
-
-        //Find the square based on the hit
-        int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
-        int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
-
-        //Early Return - Too far away MAGIC NUMBER - FLOAT DISTANCE
-        if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(castle.xOrigin, 0, castle.zOrigin)) > 10f)
-        {
-            Actions.OnHUDWarning.Invoke("YOUR CASTLE IS TOO FAR AWAY");
-            return;
-        }
-
-        //Origin and chunk are based on what is stored in the castleInfo array
-        int originX = castleInfo[(int)ownerID].xOrigin;
-        int originZ = castleInfo[(int)ownerID].zOrigin;
-
-        //Find the chunk based on the tile
-        int chunkX = originX / CHUNK_WIDTH;
-        int chunkZ = originZ / CHUNK_WIDTH;
-
-        //PASSED ALL CHECKS - UPDATE INFO
-        castleInfo[(int)ownerID].level = castleInfo[(int)ownerID].level + 1;
-
-        switch (castleInfo[(int)ownerID].level)
-        {
-            case 2:
-                print("Upgrade to 2");
-                StartCoroutine(UpgradeCastleCoroutine(originX, originZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
-                break;
-            case 3:
-                print("Upgrade to 3");
-                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
-                break;
-            case 4:
-                print("Upgrade to 4");
-                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
-                break;
-            case 5:
-                print("Upgrade to 5");
-                //StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
-                break;
-        }
-    }
-
-    private IEnumerator BuildCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID, BuildingDeformation building)
-    {
-        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
-        int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
-        int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
-        if (offsetX % 2 != 0) { Debug.LogError("Building vertex offset not even!"); yield break; }
-
-        print(hitX + ", " + offsetX);
-        print(hitZ + ", " + offsetZ);
-
-        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
-        for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
-        {
-            for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
-            {
-                //info
-                squareMap[hitX + j, hitZ + i].ownerID = ownerID;
-
-                //texture and geometry
-                squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j+offsetX, i+offsetZ];
-                squareMap[hitX + j, hitZ + i].triangleFlipped = building.triangleFlips[j + offsetX, i + offsetZ];
-            }
-        }
-
-        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
-        for (int i = -offsetZ; i < building.colorChanges.GetLength(0) - offsetZ; i++)
-        {
-            for (int j = -offsetX; j < building.colorChanges.GetLength(0) - offsetX; j++)
-            {
-                //simplest height averager - make it all the height of the origin
-                //TODO - average instead?
-                vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
-
-                //change vertex color
-                vertexMap[hitX + j, hitZ + i].color = building.colorChanges[j + offsetX, i+ offsetZ];
-            }
-        }
-
-        //ALWAYS ANIMATE BUILDINGS!
-        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
-        float animationSteps = 4f;
-        float overSeconds = 0.5f;
-        for (int s = 0; s < animationSteps; s++)
-        {
-            //VERTEX - HEIGHTS (over time)
-            for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
-            {
-                for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
-                {
-                    vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ] / animationSteps;
-                }
-            }
-
-            yield return null; //single frame break to avoid lag spike?
-
-            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW!
-            for (int i = -1; i <= 1; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
-                    chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
-                }
-            }
-            yield return new WaitForSeconds(overSeconds / animationSteps); //END
-        }        
-    }
-
-    private IEnumerator UpgradeCastleCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, OWNER_ID ownerID, BuildingDeformation building)
-    {
-        //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
-        int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
-        int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
-
-        //Warning needed?
-        //if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even: " + offsetX); yield break; }
-
-        print(hitX + ", " + offsetX);
-        print(hitZ + ", " + offsetZ);
-
-        //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
-        for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
-        {
-            for (int j = -offsetX; j < building.uvBasisRemaps.GetLength(1) - offsetX; j++)
-            {
-                //info
-                squareMap[hitX + j, hitZ + i].ownerID = ownerID;
-
-                //texture and geometry
-                squareMap[hitX + j, hitZ + i].uvBasis = building.uvBasisRemaps[j + offsetX, i + offsetZ];
-                squareMap[hitX + j, hitZ + i].triangleFlipped = building.triangleFlips[j + offsetX, i + offsetZ];
-            }
-        }
-
-        //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
-        for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
-        {
-            for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
-            {
-                vertexMap[hitX + j, hitZ + i].height = castleInfo[(int)ownerID].yOrigin;                
-
-                //change vertex color
-                vertexMap[hitX + j, hitZ + i].color = building.colorChanges[j + offsetX, i + offsetZ];
-            }
-        }
-
-        //ALWAYS ANIMATE BUILDINGS!
-        //The number of draw calls will be steps(4) * chunks(9) = 36 calls in 1 second. 9 per quarter second.
-        float animationSteps = 4f;
-        float overSeconds = 0.5f;
-        for (int s = 0; s < animationSteps; s++)
-        {
-            //VERTEX - HEIGHTS (over time)
-            for (int i = -offsetZ; i < building.heightOffsets.GetLength(0) - offsetZ; i++)
-            {
-                for (int j = -offsetX; j < building.heightOffsets.GetLength(0) - offsetX; j++)
-                {
-                    vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ] / animationSteps;
-                }
-            }
-
-            yield return null; //single frame break to avoid lag spike?
-
-            //TODO - UNOPTIMIZED, CALLS ALL 9 POSSIBLE CHUNKS TO REDRAW!
-            for (int i = -1; i <= 1; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
-                    chunks[chunkX + j, chunkZ + i].StartDrawTerrainCoroutine();
-                }
-            }
-            yield return new WaitForSeconds(overSeconds / animationSteps); //END
-        }
     }
 
     /*
@@ -752,7 +544,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        //TODO - Start level
+        //TODO - think about whether we're changing scenes or reloading terrain
         if (sceneIndex > 1)
         {
             //Hide mouse, spawn world
@@ -798,7 +590,7 @@ public class GameManager : MonoBehaviour
      * DrawChunks time random building creation
      * 
      */
-    private void AddRandomBuilding(int hitX, int hitZ, OWNER_ID ownerID, BuildingDeformation building)
+    private void AddRandomBuilding(int hitX, int hitZ, OWNER_ID ownerID, Deformation building)
     {
         //TODO - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
         int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
@@ -823,7 +615,7 @@ public class GameManager : MonoBehaviour
         {
             for (int j = -offsetX; j < building.colorChanges.GetLength(0) - offsetX; j++)
             {
-                //TODO - no average as it stands
+                //TODO - average?
                 vertexMap[hitX + j, hitZ + i].height += building.heightOffsets[j + offsetX, i + offsetZ];
 
                 //change vertex color
@@ -832,5 +624,38 @@ public class GameManager : MonoBehaviour
         }
 
         //NO NEED TO REDRAW, IT WILL DRAW AT THE END!        
+    }
+
+    private bool NearAnotherBuilding(int hitX, int hitZ)
+    {
+        //No Castles near other castles
+        //TODO - this should just compare castleInfo to castleInfo!
+        for (int i = -2; i <= 2; i++)
+        {
+            for (int j = -2; j <= 2; j++)
+            {
+                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
+                {
+                    Actions.OnHUDWarning.Invoke("DEFORMATION NEAR BUILDING");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private bool AtBorderChunk(int chunkX, int chunkZ)
+    {
+        //No deformations at border chunks
+        if (chunkX == 0 ||
+            chunkZ == 0 ||
+            chunkX == chunks.GetLength(1) - 1 ||
+            chunkZ == chunks.GetLength(0) - 1
+        )
+        {
+            Actions.OnHUDWarning.Invoke("NO DEFORMATION AT BORDERS");
+            return true;
+        }
+        return false;
     }
 }

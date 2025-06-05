@@ -182,9 +182,9 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
     public bool TakeDamage(int damage)
     {
-        print("Ow! " + this.gameObject.name + " now has " + currentHealth + " / " + maxHealth);
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        print("Ow! " + this.gameObject.name + " now has " + currentHealth + " / " + maxHealth);
 
         speedPenalty = 0.05f;
 

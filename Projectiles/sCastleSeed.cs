@@ -37,14 +37,13 @@ public class sCastleSeed : MonoBehaviour, IProjectile
         {
             if (other.GetComponent<sTerrainChunk>())
             {
-                if (gM.castleInfo[(int)ownerID].level == 0)
+                int casterCastleLevel = gM.castleInfo[(int)ownerID].level;
+                switch (casterCastleLevel)
                 {
-                    gM.CreateCastle(transform.position, ownerID);
-                }
-                else
-                {
-                    gM.UpgradeCastle(transform.position, ownerID);
-                }
+                    case 0: gM.AlterTerrain(transform.position, Deformations.CastleOrigin(ownerID)); break;
+                    case 1: gM.AlterTerrain(transform.position, Deformations.CastleUpgrade_2(ownerID)); break;
+                    default: print("Cant find player's castle level / upgrade above 2!"); break;
+                }                
             }
 
             // If the other component is a projectile spawner with the same ID as

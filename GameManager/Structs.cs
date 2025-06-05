@@ -1,5 +1,29 @@
 using UnityEngine;
 
+#region TERRAIN CHUNK STRUCTS
+public struct Square
+{
+    public Vector2 uvBasis;
+    public bool triangleFlipped;
+    public OWNER_ID ownerID;
+
+    public override string ToString()
+    {
+        return $"Square:\n" +
+               $"  Triangle Flipped: {triangleFlipped}";
+    }
+}
+
+public struct Vertex
+{
+    public float height;
+    public Color color;
+}
+#endregion
+
+
+#region CASTLE STRUCTS
+
 public enum OWNER_ID
 {
     NONE = 0,
@@ -12,7 +36,7 @@ public enum OWNER_ID
     NPC_5 = 6,
     NPC_6 = 7,
     NPC_7 = 8,
-    NPC_8 = 9,
+    UNOWNED = 9,
 }
 
 public struct Castle
@@ -38,53 +62,25 @@ public struct Castle
     }
 }
 
-public struct Square
-{
-    public Vector2 uvBasis;
-    public bool triangleFlipped;
-    public OWNER_ID ownerID;
+#endregion
 
-    public override string ToString()
-    {
-        return $"Square:\n" +
-               $"  Triangle Flipped: {triangleFlipped}";
-    }
+
+#region DEFORMATION STRUCTS
+public enum DEFORMATION_TYPE
+{
+    CASTLE = 0,
+    DESTRUCTION = 1,
+    BUILDING = 2,
+    CASTLE_UPGRADE = 3,
 }
 
-public struct Vertex
+public struct Deformation
 {
-    public float height;
-    public Color color;
-}
-
-public struct DestructionDeformation
-{
-    //Pre-process
-    public bool noAnimation;
-
-    //Vertex based
-    public float[,] heightOffsets;
-    public Color[,] colorChanges;
-
-    //Square based
-    public Vector2[,] uvBasisRemaps;
-    public bool[,] triangleFlips;
-
-    public override string ToString()
-    {
-        return $"Deformation(\n" +
-               $"  heightOffsets: {heightOffsets[0, 0]},\n" +
-               $"  colorChanges: {colorChanges[0, 0]},\n" +
-               $"  uvBasisRemaps: {uvBasisRemaps[0, 0]},\n" +
-               $"  triangleFlips: {triangleFlips[0, 0]}\n" +
-               $")";
-    }
-}
-
-public struct BuildingDeformation
-{
-
     //Informatation
+    public bool noAnimation;
+    public bool runtime;
+
+    public DEFORMATION_TYPE deformationType;
     public OWNER_ID ownerID;
 
     //Vertex based
@@ -106,3 +102,5 @@ public struct BuildingDeformation
                $")";
     }
 }
+
+#endregion

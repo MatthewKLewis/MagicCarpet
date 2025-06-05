@@ -269,7 +269,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
     {
         // THIS ONLY MARKS A NEW AI STATE FOR THE ENEMY, THE BEHAVIORS RELEVANT
         // TO THE AI ARE IN UPDATE
-        // TODO - Change AI state based on current factors like Life, Mana, Castle Damage
+        // TODO - Change AI state based on Castle Damage
 
         while (tM.player)
         {

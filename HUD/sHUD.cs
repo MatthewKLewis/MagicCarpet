@@ -24,6 +24,8 @@ public class sHUD : MonoBehaviour
     [SerializeField] private RectTransform playerIndicator;
     [SerializeField] private RectTransform miniMapTransform;
     [SerializeField] private RawImage miniMapImage;
+    [SerializeField] private GameObject enemyIndicatorPrefab;
+    private List<GameObject> enemyIndicatorList;
 
     [Space(10)]
     [Header("Stats")]
@@ -66,6 +68,14 @@ public class sHUD : MonoBehaviour
         gM = GameManager.instance;
         tM = GameManager.instance;
 
+        enemyIndicatorList = new List<GameObject>();
+        for (int i = 0; i < 12; i++)
+        {
+            GameObject gO = Instantiate(enemyIndicatorPrefab, miniMapTransform);
+            gO.SetActive(false);
+            enemyIndicatorList.Add(gO);
+        }
+
         spellPanel.localScale = Vector3.zero;
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
@@ -80,6 +90,26 @@ public class sHUD : MonoBehaviour
         {
             Vector3 playPos = gM.player.transform.position;
             Vector3 playRot = gM.player.transform.rotation.eulerAngles;
+
+            for (int i = 0; i < enemyIndicatorList.Count; i++)
+            {
+                if (i < gM.enemies.Count)
+                {
+                    if (gM.enemies[i])
+                    {
+                        enemyIndicatorList[i].SetActive(true);
+
+                        Vector3 distFromPlayer = gM.enemies[i].transform.position - gM.player.transform.position;
+                        enemyIndicatorList[i].transform.localPosition = new Vector3(
+                            distFromPlayer.x / 8, // MAGIC NUMBER - WHY IS IT 8? CHUNK / TILE*TILE?
+                            distFromPlayer.z / 8, // TEXTURE WIDTH IS 256, TILE SIZE 2, 0,0 IS CENTER, 
+                            0
+                        );
+                    }
+                    else { enemyIndicatorList[i].SetActive(false); }
+                }
+                else { enemyIndicatorList[i].SetActive(false); }
+            }
 
             int fullWidth = gM.chunks.GetLength(0) * (gM.CHUNK_WIDTH - 1) * gM.TILE_WIDTH;
             miniMapImage.uvRect = new Rect(
