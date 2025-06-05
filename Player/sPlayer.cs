@@ -74,12 +74,12 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void Awake()
     {
-        //
+        //Actions
     }
 
     private void OnDestroy()
     {
-        //
+        //Actions
     }
 
     void Start()
@@ -262,8 +262,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             }
             currentMana -= manaCost;
             Actions.OnManaChange.Invoke(currentMana, maxMana);
-
-            print("Pow!");
 
             //Poll for enemy positions, find one in front
             GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);

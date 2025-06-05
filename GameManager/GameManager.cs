@@ -478,7 +478,7 @@ public class GameManager : MonoBehaviour
         //TODO - get the flag height reight!
         Instantiate(
             castleFlagPrefab, 
-            new Vector3(hitX * TILE_WIDTH, castleBaseHeight + (6.5f * TILE_WIDTH), hitZ * TILE_WIDTH), //MAGIC NUMBER - FLAG HEIGHT
+            new Vector3(hitX * TILE_WIDTH, castleBaseHeight + (4f * TILE_WIDTH), hitZ * TILE_WIDTH), //MAGIC NUMBER - FLAG HEIGHT
             transform.rotation, 
             transform
         );
@@ -518,7 +518,7 @@ public class GameManager : MonoBehaviour
         {
             case 2:
                 print("Upgrade to 2");
-                StartCoroutine(UpgradeCastleCoroutine(hitX, hitZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
+                StartCoroutine(UpgradeCastleCoroutine(originX, originZ, chunkX, chunkZ, ownerID, Deformations.CastleUpgrade_2()));
                 break;
             case 3:
                 print("Upgrade to 3");
@@ -541,6 +541,9 @@ public class GameManager : MonoBehaviour
         int offsetX = building.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
         int offsetZ = building.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
         if (offsetX % 2 != 0) { Debug.LogError("Building vertex offset not even!"); yield break; }
+
+        print(hitX + ", " + offsetX);
+        print(hitZ + ", " + offsetZ);
 
         //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
         for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
@@ -607,6 +610,9 @@ public class GameManager : MonoBehaviour
 
         //Warning needed?
         //if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even: " + offsetX); yield break; }
+
+        print(hitX + ", " + offsetX);
+        print(hitZ + ", " + offsetZ);
 
         //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
         for (int i = -offsetZ; i < building.uvBasisRemaps.GetLength(0) - offsetZ; i++)
