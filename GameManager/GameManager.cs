@@ -37,11 +37,17 @@ public class GameManager : MonoBehaviour
     public int levelIndex = 0;
 
     [Space(4)]
-    [Header("Level Info")]
+    [Header("Level Geography")]
     public List<Texture2D> levelTextures;
     [SerializeField] private List<Gradient> vertexColorGradients;
+
+    [Space(4)]
+    [Header("Level Lighting")]
+    [SerializeField] private Light sunLight;
     [SerializeField] private List<Color> fogColors;
     [SerializeField] private List<float> fogIntensities;
+    [SerializeField] private List<Color> ambientColors;
+    [SerializeField] private List<float> sunIntensities;
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
     public sTerrainChunk[,] chunks;
@@ -70,10 +76,6 @@ public class GameManager : MonoBehaviour
     [Header("Enemies")]
     //put something here
     [SerializeField] private List<GameObject> enemies;
-
-    [Space(4)]
-    [Header("Sun")]
-    [SerializeField] private Light sunLight;
 
     [Space(10)]
     [Header("Player")]
@@ -124,11 +126,9 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = 60;
 
         //Sun and Fog
-        //RenderSettings.sun = sunLight;
+        RenderSettings.ambientLight = Color.white;
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Exponential;
-        RenderSettings.fogColor = fogColors[levelIndex];
-        RenderSettings.fogDensity = fogIntensities[levelIndex];
     }
 
     void Start()
@@ -150,6 +150,12 @@ public class GameManager : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        //Light and Fog
+        RenderSettings.ambientLight = ambientColors[levelIndex];
+        sunLight.intensity = sunIntensities[levelIndex];
+        RenderSettings.fogColor = fogColors[levelIndex];
+        RenderSettings.fogDensity = fogIntensities[levelIndex];
 
         //Terrain first
         DrawChunks();

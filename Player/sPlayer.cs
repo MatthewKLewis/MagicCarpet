@@ -247,7 +247,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
         {
             gM.LoadLevel(0);
-        }
+        }        
     }
 
     private void Shoot(int mouseButton = 0)

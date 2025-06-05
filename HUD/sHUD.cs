@@ -69,6 +69,8 @@ public class sHUD : MonoBehaviour
         spellPanel.localScale = Vector3.zero;
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
+
+        miniMapImage.texture = gM.levelTextures[gM.levelIndex];
     }
 
     private void Update()
