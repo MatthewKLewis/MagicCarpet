@@ -33,10 +33,16 @@ public class sHUD : MonoBehaviour
     [SerializeField] private RectTransform manaBar;
     [SerializeField] private Transform damageFrame;
 
+    [Space(10)]
+    [Header("Castle")]
+    [SerializeField] private Transform castleBarsParent;
+
 
     private void Awake()
     {
         Actions.OnHealthChange += HandleHealthChange;
+        Actions.OnCastleHealthChange += HandleCastleHealthChange;
+
         Actions.OnManaChange += HandleManaChange;
 
         Actions.OnSpellPanelToggle += HandleSpellPanelToggle;
@@ -51,6 +57,8 @@ public class sHUD : MonoBehaviour
     private void OnDestroy()
     {
         Actions.OnHealthChange -= HandleHealthChange;
+        Actions.OnCastleHealthChange -= HandleCastleHealthChange;
+
         Actions.OnManaChange -= HandleManaChange;
 
         Actions.OnManaChange -= HandleManaChange;
@@ -80,7 +88,7 @@ public class sHUD : MonoBehaviour
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
 
-        miniMapImage.texture = gM.levelTextures[gM.levelIndex];
+        miniMapImage.texture = gM.levelTextures[gM.levelIndex];        
     }
 
     private void Update()
@@ -174,7 +182,20 @@ public class sHUD : MonoBehaviour
 
     private void HandleWarning(string text) { StartCoroutine(HandleWarningCoroutine(text)); }
 
-    private IEnumerator HandleWarningCoroutine(string text) 
+    private void HandleCastleHealthChange(OWNER_ID ownerID, int health, int maxHealth)
+    {
+        int index = 0;
+        foreach (Transform cB in castleBarsParent)
+        {
+            if (index == (int)ownerID)
+            {
+                cB.localScale = new Vector3(1, ((float)health / (float)maxHealth), 1);
+;           }
+            index++;
+        }
+    }
+
+    private IEnumerator HandleWarningCoroutine(string text)
     {
         warningText.text = text;
         warningTextPanel.localScale = Vector3.one;

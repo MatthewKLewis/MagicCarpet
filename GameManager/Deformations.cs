@@ -14,8 +14,8 @@ public static class Deformations
     public static Vector2 CFO = new Vector2(1, 0);
     public static Vector2 CSI = new Vector2(2, 0);
     public static Vector2 CCO = new Vector2(3, 0);
-
     public static Vector2 RUF = new Vector2(4, 0);
+
     //public static Vector2 aaa = new Vector2(5, 0);
     //public static Vector2 aaaa = new Vector2(6, 0);
     //public static Vector2 aaaaa = new Vector2(7, 0);
@@ -33,7 +33,7 @@ public static class Deformations
         lodge.noAnimation = true;
         lodge.runtime = false;
         lodge.deformationType = DEFORMATION_TYPE.BUILDING;
-        lodge.ownerID = OWNER_ID.UNOWNED;
+        lodge.ownerID = OWNER_ID.CITIZENS;
 
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
@@ -78,7 +78,7 @@ public static class Deformations
         spike.noAnimation = false;
         spike.runtime = true;
         spike.deformationType = DEFORMATION_TYPE.BUILDING;
-        spike.ownerID = OWNER_ID.UNOWNED;
+        spike.ownerID = OWNER_ID.CITIZENS;
 
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
         spike.heightOffsets = new float[3, 3] {
@@ -122,7 +122,7 @@ public static class Deformations
         castle.heightOffsets = new float[5, 5] {
             {0,0,0,0,0,},
             {0,4,4,4,0,},
-            {0,4,4,4,0,},
+            {0,4,5,4,0,},
             {0,4,4,4,0,},
             {0,0,0,0,0,},
         };
@@ -167,15 +167,15 @@ public static class Deformations
         castle.heightOffsets = new float[13, 13] {
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,5,4,0,0,0,0,0,4,5,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
-            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
-            { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
+            { 0,4,5,4,0,0,0,0,0,4,5,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
         };

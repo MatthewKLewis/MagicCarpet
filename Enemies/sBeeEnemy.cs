@@ -207,7 +207,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
     private void SpawnManaReward()
     {
-        //Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
+        Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
     }
 
 

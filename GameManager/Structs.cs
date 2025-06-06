@@ -26,28 +26,29 @@ public struct Vertex
 
 public enum OWNER_ID
 {
-    NONE = 0,
-    PLAYER = 1,
-    //
-    NPC_1 = 2,
-    NPC_2 = 3,
-    NPC_3 = 4,
-    NPC_4 = 5,
-    NPC_5 = 6,
-    NPC_6 = 7,
-    NPC_7 = 8,
-    UNOWNED = 9,
+    PLAYER,
+    NPC_1,
+    NPC_2,
+    NPC_3,
+    NPC_4,
+    NPC_5,
+    NPC_6,
+    NPC_7,
+    CITIZENS,
+    UNOWNED,
 }
 
 public struct Castle
 {
-    public Castle(int x, float y, int z, int l, OWNER_ID owner)
+    public Castle(int x, float y, int z, int l, OWNER_ID owner, int h, int maxH)
     {
         xOrigin = x;
         yOrigin = y;
         zOrigin = z;
         level = l;
         ownerID = owner;
+        health = h;
+        maxHealth = maxH;
     }
 
     public OWNER_ID ownerID;
@@ -55,6 +56,8 @@ public struct Castle
     public float yOrigin;
     public int zOrigin;
     public int level;
+    public int health;
+    public int maxHealth;
 
     public override string ToString()
     {

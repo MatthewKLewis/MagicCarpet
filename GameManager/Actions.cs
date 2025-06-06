@@ -38,6 +38,11 @@ public static class Actions
     public static Action<int, int, bool> OnHealthChange;
 
     /// <summary>
+    /// Owner ID, Current Health, Max Health
+    /// </summary>
+    public static Action<OWNER_ID, int, int> OnCastleHealthChange;
+
+    /// <summary>
     /// Current Mana, Max Mana
     /// </summary>
     public static Action<int, int> OnManaChange;

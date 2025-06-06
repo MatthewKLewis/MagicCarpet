@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class sFireball : MonoBehaviour, IProjectile
 {
+    //TODO - POOL THESE PROJECTILES!
+
     private GameManager gM;
 
     private float speed = 100f;
@@ -23,6 +25,9 @@ public class sFireball : MonoBehaviour, IProjectile
     {
         //Move at 100mps
         transform.position += transform.forward * speed * Time.deltaTime;
+
+        //TODO - Raycast forward, check for hit in next frame, run the trigger enter
+        //logic. USE HAS HIT!
 
         //Die after 5 seconds
         if (Time.time > spawnTime + lifeTime)

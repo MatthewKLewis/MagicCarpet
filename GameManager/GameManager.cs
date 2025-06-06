@@ -52,21 +52,21 @@ public class GameManager : MonoBehaviour
     public sTerrainChunk[,] chunks;
     public Square[,] squareMap;
     public Vertex[,] vertexMap;
-    public Castle[] castleInfo = new Castle[9] {
-        new Castle(0, 0, 0, 0, OWNER_ID.NONE),
-        new Castle(0, 0, 0, 0, OWNER_ID.PLAYER),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_1),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_2),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_3),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_4),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_5),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_6),
-        new Castle(0, 0, 0, 0, OWNER_ID.NPC_7),
+
+    public Castle[] castleInfo = new Castle[8] {
+        new Castle(0, 0, 0, 0, OWNER_ID.PLAYER, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_1, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_2, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_3, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_4, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_5, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_6, 10, 10),
+        new Castle(0, 0, 0, 0, OWNER_ID.NPC_7, 10, 10),
     };
 
     //Parent to put the terrain chunks in.
     [Space(4)]
-    [Header("Chunk Parents - THESE MUST BE RE-ASSIGNED IN EVERY SCENE")]
+    [Header("Chunk Parents")]
     [SerializeField] private Transform chunkParent;
     [SerializeField] private Transform adjacentChunksParent;
 
@@ -82,12 +82,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject magicCameraPrefab;
     [HideInInspector] public GameObject magicCamera;
     [SerializeField] private Vector3 playerStartingPosition;
-
-    /*
-     * 
-     * Prefabs for all scripts to access:
-     * 
-     */
 
     [Space(10)]
     [Header("Common Prefabs")]
@@ -206,6 +200,7 @@ public class GameManager : MonoBehaviour
                     vertexMap[x, z + 1].height,
                     vertexMap[x + 1, z + 1].height
                 );
+                sq.ownerID = OWNER_ID.UNOWNED;
                 sq.triangleFlipped = false;
                 squareMap[x, z] = sq;
             }
@@ -291,22 +286,39 @@ public class GameManager : MonoBehaviour
     public void AlterTerrain(Vector3 hitPoint, Deformation deformation, int damage = 0)
     {
         //Find the square based on the hit
-        int hitX = Mathf.FloorToInt(hitPoint.x / TILE_WIDTH);
-        int hitZ = Mathf.FloorToInt(hitPoint.z / TILE_WIDTH);
+        int hitX = Mathf.RoundToInt(hitPoint.x / TILE_WIDTH);
+        int hitZ = Mathf.RoundToInt(hitPoint.z / TILE_WIDTH);
 
         //Find the chunk based on the tile
         int chunkX = hitX / CHUNK_WIDTH; 
         int chunkZ = hitZ / CHUNK_WIDTH;
 
+        //Early return for height near zero
+        if (vertexMap[hitX, hitZ].height < 2f) {Actions.OnHUDWarning("NO DEFORM AT HEIGHT 0");  return; }
+
+        //Early return for damage without deform
         if (damage != 0)
         {
-            if (squareMap[hitX, hitZ].ownerID != 0)
+            //TODO - SOMETIMES THE HITX AND HITZ ARE A BIT OFF AND I DONT GET A OWNERID
+            print(squareMap[hitX, hitZ].ownerID);
+            if (squareMap[hitX, hitZ].ownerID != OWNER_ID.UNOWNED)
             {
-                print("TODO - damage to the castle of " + squareMap[hitX, hitZ].ownerID.ToString());
+                castleInfo[(int)squareMap[hitX, hitZ].ownerID].health = Mathf.Clamp(
+                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].health - damage, 
+                    0, 
+                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].maxHealth
+                );
+                Actions.OnCastleHealthChange(
+                    squareMap[hitX, hitZ].ownerID, 
+                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].health, 
+                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].maxHealth
+                );
+                if (castleInfo[(int)squareMap[hitX, hitZ].ownerID].health == 0)
+                {
+                    Actions.OnHUDWarning("TODO - Destroy castle");
+                }
+                return;
             }
-            //Do damage script on building instead.
-            //If damage > currentHealth
-            //Destroy Building
         }
 
         Castle playerCastle;
@@ -356,7 +368,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case DEFORMATION_TYPE.DESTRUCTION:
-
+                
                 if (NearAnotherBuilding(hitX, hitZ)) { return; }
                 if (AtBorderChunk(hitX, hitZ)) { return; }
 
@@ -375,7 +387,6 @@ public class GameManager : MonoBehaviour
                 Debug.LogError("deformation type not given!");
                 break;
         }
-
     }
 
     private IEnumerator AlterTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
@@ -414,14 +425,17 @@ public class GameManager : MonoBehaviour
 
         if (deformation.noAnimation)
         {
-            //VERTEX - HEIGHTS (over time)
+            //VERTEX - HEIGHTS
             for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
             {
                 for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
                 {
-                    vertexMap[hitX + j, hitZ + i].height += deformation.heightOffsets[j + offsetX, i + offsetZ];
+                    vertexMap[hitX + j, hitZ + i].height = Mathf.Clamp(
+                        vertexMap[hitX + j, hitZ + i].height + deformation.heightOffsets[j + offsetX, i + offsetZ],
+                        0f,
+                        MAX_HEIGHT
+                    );
                 }
-
             }
 
             yield return null; //single frame break to avoid lag spike?
@@ -498,6 +512,11 @@ public class GameManager : MonoBehaviour
         }
         return retGO;
     }
+
+    private OWNER_ID GetNearestCastleTo(int hitX, int hitZ)
+    {
+        return 0;
+    } 
 
     private void FilterEnemiesList()
     {
@@ -630,15 +649,12 @@ public class GameManager : MonoBehaviour
     {
         //No Castles near other castles
         //TODO - this should just compare castleInfo to castleInfo!
-        for (int i = -2; i <= 2; i++)
+        foreach (Castle castle in castleInfo)
         {
-            for (int j = -2; j <= 2; j++)
+            //MAGIC NUMBER - 
+            if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(castle.xOrigin, 0, castle.zOrigin)) < 5f)
             {
-                if (squareMap[hitX + j, hitZ + i].ownerID != OWNER_ID.NONE)
-                {
-                    Actions.OnHUDWarning.Invoke("DEFORMATION NEAR BUILDING");
-                    return true;
-                }
+                return true;
             }
         }
         return false;
