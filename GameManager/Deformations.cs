@@ -56,8 +56,8 @@ public static class Deformations
         lodge.uvBasisRemaps = new Vector2[4, 4]
         {
             {CCO, CFO, CFO, CCO},
-            {CSI, NIL, NIL, CSI},
-            {CSI, NIL, NIL, CSI},
+            {CSI, RUF, RUF, CSI},
+            {CSI, RUF, RUF, CSI},
             {CCO, CFO, CFO, CCO},
         };
         lodge.triangleFlips = new bool[4, 4]

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshCollider))]
 public class sTerrainChunk : MonoBehaviour
 {
-    [SerializeField] private Gradient vertexColorGradient;
-
     private GameManager gM;
+
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
@@ -47,15 +48,15 @@ public class sTerrainChunk : MonoBehaviour
         uvTwos = new List<Vector2>();
 
         int index = 0;
-        for (int z = zOrigin; z < zOrigin + gM.CHUNK_WIDTH - 1; z++) //FENCEPOST
+        for (int z = zOrigin; z < zOrigin + Constants.CHUNK_WIDTH - 1; z++) //FENCEPOST
         {
-            for (int x = xOrigin; x < xOrigin + gM.CHUNK_WIDTH - 1; x++)
+            for (int x = xOrigin; x < xOrigin + Constants.CHUNK_WIDTH - 1; x++)
             {
                 //4 verts
-                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -64,13 +65,13 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES);
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES);
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
-                if (gM.squareMap[x,z].triangleFlipped)
+                if (gM.squareMap[x, z].triangleFlipped)
                 {
                     triangles.Add(index + 0);
                     triangles.Add(index + 3);
@@ -107,6 +108,7 @@ public class sTerrainChunk : MonoBehaviour
         mCollider.sharedMesh = mesh;
     }
 
+
     public void StartDrawTerrainCoroutine() { StartCoroutine(DrawTerrainCoroutine()); }
     private IEnumerator DrawTerrainCoroutine()
     {
@@ -118,15 +120,15 @@ public class sTerrainChunk : MonoBehaviour
         uvTwos = new List<Vector2>();
 
         int index = 0;
-        for (int z = zOrigin; z < zOrigin + gM.CHUNK_WIDTH - 1; z++) //FENCEPOST
+        for (int z = zOrigin; z < zOrigin + Constants.CHUNK_WIDTH - 1; z++) //FENCEPOST
         {
-            for (int x = xOrigin; x < xOrigin + gM.CHUNK_WIDTH - 1; x++)
+            for (int x = xOrigin; x < xOrigin + Constants.CHUNK_WIDTH - 1; x++)
             {
                 //4 verts
-                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * gM.TILE_WIDTH);
-                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * gM.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z].height, z) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
+                vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -135,10 +137,10 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES);
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((gM.squareMap[x, z].uvBasis / gM.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES);
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0));
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0, 0.125f));
+                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
 
                 //6 tri-indexes
                 if (gM.squareMap[x, z].triangleFlipped)

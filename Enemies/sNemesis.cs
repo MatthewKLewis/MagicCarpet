@@ -2,12 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum AIState
+public enum AI_STATE
 {
-    ROAMING    = 0,
-    ATTACKING  = 1,
-    RETREATING = 2,
-    COLLECTING = 3,
+    ATTACKING,
+    RETREATING,
+    COLLECTING,
 }
 
 public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
@@ -24,7 +23,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
     [SerializeField] private Transform spellOrigin;
 
     //AI
-    private AIState aiState = AIState.ROAMING;
+    private AI_STATE aiState = AI_STATE.COLLECTING;
 
     //State
     private float distanceToGround;
@@ -43,13 +42,17 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
     //AI Info
     private float distanceToPlayer;
     private Vector3 homeBase;
-    private Vector3 roamTarget;
 
     //Prefabs
     private float timeLastShot = -0.5f;
     private float shotCooldown = 0.5f;
 
-    [Space(10)]
+    [Space(4)]
+    [Header("Collection")]
+    [SerializeField] private GameObject huntingTarget;
+    [SerializeField] private GameObject manaTarget;
+
+    [Space(4)]
     [Header("Wake and Dust")]
     [SerializeField] private sWakeAndDust wakeAndDust;
 
@@ -60,7 +63,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
         homeBase = transform.position;
 
-        StartCoroutine(ChangeAIState());
+        StartCoroutine(ChangeAI_STATE());
     }
 
     private void OnDestroy()
@@ -89,26 +92,23 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
             switch (aiState)
             {
-                case AIState.ROAMING:
-                    Roam_U();
-                    break;
-                case AIState.ATTACKING:
+                case AI_STATE.ATTACKING:
                     Attack_U();
                     break;
-                case AIState.RETREATING:
+                case AI_STATE.RETREATING:
                     Retreat_U();
                     break;
-                case AIState.COLLECTING:
-                    //Nothing?
+                case AI_STATE.COLLECTING:
+                    Collect_U();
                     break;
                 default:
-                    Roam_U();
+                    //
                     break;
             }        
         }
         else
         {
-            Roam_U(); //Just mill around if the player is dead.
+            Collect_U(); //Just mill around if the player is dead.
         }
 
         //Regen
@@ -118,22 +118,38 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
     }
 
-    private void Roam_U()
+    private void Collect_U()
     {
-        YawLookAt(homeBase);
-        Vector3 normalVectorToRoamTarget = (homeBase - transform.position).normalized;
+        if (huntingTarget)
+        {
+            float distanceToTarget = Vector3.Distance(huntingTarget.transform.position, transform.position);
 
-        //Y movement
-        yComponentOfMovement = -distanceToGround * Time.deltaTime;
+            YawLookAt(huntingTarget.transform.position);
+            Vector3 normalVectorToRoamTarget = (huntingTarget.transform.position - transform.position).normalized;
 
-        //Horizontal movement
-        Vector3 movement = new Vector3(normalVectorToRoamTarget.x, 0, normalVectorToRoamTarget.z) / 2f; //MAGIC NUMBER
-        movement.y = yComponentOfMovement;
+            //Y movement
+            yComponentOfMovement = -distanceToGround * Time.deltaTime;
 
-        //Send it!
-        cC.Move(movement);
+            //Horizontal movement
+            Vector3 movement = new Vector3(normalVectorToRoamTarget.x, 0, normalVectorToRoamTarget.z) / 2f; //MAGIC NUMBER
+            movement.y = yComponentOfMovement;
 
-        //Wake and Dust
+            //Send it!
+            cC.Move(movement);
+
+            //COMBAT
+            spellOrigin.LookAt(huntingTarget.transform);
+            if (distanceToTarget < 10f)
+            {
+                Shoot();
+            }
+        }
+        else
+        {
+            //Collecting with no hunting target? Just grab new
+            manaTarget = gM.GetNearestManaTo(transform.position);
+            huntingTarget = gM.GetNearestBeastTo(transform.position);
+        }
     }
 
     private void Retreat_U()
@@ -150,8 +166,6 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
         //Send it!
         cC.Move(movement);
-
-        //Wake and Dust
     }
 
     private void Attack_U()
@@ -265,7 +279,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
      * 
      */
 
-    private IEnumerator ChangeAIState()
+    private IEnumerator ChangeAI_STATE()
     {
         // THIS ONLY MARKS A NEW AI STATE FOR THE ENEMY, THE BEHAVIORS RELEVANT
         // TO THE AI ARE IN UPDATE
@@ -274,29 +288,40 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         while (tM.player)
         {
             yield return new WaitForSeconds(3);
-
             float healthPercent = currentHealth / maxHealth;
             if (healthPercent < 0.5f)
             {
-                //Actions.OnHUDWarning(this.gameObject.name + " is now retreating.");
-                aiState = AIState.RETREATING;
+                print(name + " is now retreating.");
+                aiState = AI_STATE.RETREATING;
             }
             else if (distanceToPlayer < 50f)
             {
-                //Actions.OnHUDWarning(this.gameObject.name + " is now attacking.");
-                aiState = AIState.ATTACKING;
+                print(name + " is now attacking.");
+                aiState = AI_STATE.ATTACKING;
             }
-            else if (Vector3.Distance(transform.position, homeBase) < 10f)
-            {
-                //Actions.OnHUDWarning(this.gameObject.name + " is now roaming.");
+            else 
+            {            
+                huntingTarget = gM.GetNearestBeastTo(transform.position);
+                manaTarget = gM.GetNearestManaTo(transform.position);
 
-                //TODO - Pick a roaming spot
+                if (huntingTarget)
+                {
+                    print(huntingTarget.name + " is his hunting target");
+                }
+                if (manaTarget)
+                {
+                    print(manaTarget.name + " is his mana target");
+                }
 
-                aiState = AIState.ROAMING;
-            }
-            else
-            {
-                //Actions.OnHUDWarning(this.gameObject.name + " didn't change his mind and is still " + aiState.ToString());
+                if (huntingTarget)
+                {
+                    aiState = AI_STATE.COLLECTING;
+                }
+                else
+                {
+                    //Nothing left to hunt, just go home
+                    aiState = AI_STATE.RETREATING;
+                }
             }
         }
     }

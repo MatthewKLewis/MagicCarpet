@@ -88,7 +88,7 @@ public class sHUD : MonoBehaviour
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
 
-        miniMapImage.texture = gM.levelTextures[gM.levelIndex];        
+        //miniMapImage.texture = gM.levelTextures[gM.levelIndex];        
     }
 
     private void Update()
@@ -119,7 +119,7 @@ public class sHUD : MonoBehaviour
                 else { enemyIndicatorList[i].SetActive(false); }
             }
 
-            int fullWidth = gM.chunks.GetLength(0) * (gM.CHUNK_WIDTH - 1) * gM.TILE_WIDTH;
+            int fullWidth = gM.chunks.GetLength(0) * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
             miniMapImage.uvRect = new Rect(
                 (playPos.x - (fullWidth/2)) / fullWidth, 
                 (playPos.z - (fullWidth/2)) / fullWidth, 

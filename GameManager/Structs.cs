@@ -1,16 +1,25 @@
 using UnityEngine;
 
 #region TERRAIN CHUNK STRUCTS
+
 public struct Square
 {
     public Vector2 uvBasis;
     public bool triangleFlipped;
     public OWNER_ID ownerID;
 
+    public Square(Vector2 uv, bool isTriFlipped, OWNER_ID owner)
+    {
+        uvBasis = uv;
+        triangleFlipped = isTriFlipped;
+        ownerID = owner;
+    }
+
     public override string ToString()
     {
-        return $"Square:\n" +
-               $"  Triangle Flipped: {triangleFlipped}";
+        return $"  UV Basis: ({uvBasis.x:F3}, {uvBasis.y:F3}) " +
+               $"  Triangle Flipped: {triangleFlipped} " +
+               $"  Owner ID: {ownerID}";
     }
 }
 
@@ -18,6 +27,12 @@ public struct Vertex
 {
     public float height;
     public Color color;
+
+    public Vertex(float h, Color col)
+    {
+        height = h;
+        color = col;
+    }
 }
 #endregion
 

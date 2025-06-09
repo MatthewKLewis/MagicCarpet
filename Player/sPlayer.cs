@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 {
     public OWNER_ID ownerID { get; set; } = OWNER_ID.PLAYER;
@@ -97,7 +98,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         windAudioSource.Play();
         guidanceLine.useWorldSpace = true;
 
-        wrapAt = gM.chunks.GetLength(0) * (gM.CHUNK_WIDTH - 1) * gM.TILE_WIDTH;
+        wrapAt = gM.chunks.GetLength(0) * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
 
         Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
         Actions.OnManaChange.Invoke(currentMana, maxMana);
@@ -268,7 +269,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             Actions.OnManaChange.Invoke(currentMana, maxMana);
 
             //Poll for enemy positions, find one in front
-            GameObject target = tM.GetNearestEnemyTo(transform.position, transform.forward);
+            GameObject target = tM.GetEnemyWithinSightCone(transform.position, transform.forward);
 
             if (target) //Auto-aim fireball
             {

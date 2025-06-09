@@ -13,7 +13,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
     //[SerializeField] private LayerMask terrainMask; //Floaty enemies also? 
 
     //AI
-    private AIState aiState = AIState.ROAMING;
+    private AI_STATE aiState = AI_STATE.RETREATING;
 
     //State
     private float distanceToGround;
@@ -77,20 +77,11 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
             switch (aiState)
             {
-                case AIState.ROAMING:
-                    Roam_U();
-                    break;
-                case AIState.ATTACKING:
+                case AI_STATE.ATTACKING:
                     Attack_U();
                     break;
-                case AIState.RETREATING:
+                case AI_STATE.RETREATING:
                     Retreat_U();
-                    break;
-                case AIState.COLLECTING:
-                    //Nothing?
-                    break;
-                default:
-                    Roam_U();
                     break;
             }
         }
@@ -201,13 +192,8 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
     private void Die()
     {
-        SpawnManaReward();
+        gM.SpawnManaFromPool(transform.position);
         Destroy(this.gameObject);
-    }
-
-    private void SpawnManaReward()
-    {
-        Instantiate(gM.manaOrbPrefab, transform.position + Vector3.up, transform.rotation, null);
     }
 
 
@@ -243,11 +229,11 @@ public class sBeeEnemy : MonoBehaviour, IKillable
 
             if (distanceToPlayer < 100f)
             {
-                aiState = AIState.ATTACKING;
+                aiState = AI_STATE.ATTACKING;
             }
             else
             {
-                aiState = AIState.RETREATING;
+                aiState = AI_STATE.RETREATING;
             }
         }
     }

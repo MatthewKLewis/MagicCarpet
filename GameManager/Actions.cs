@@ -52,4 +52,8 @@ public static class Actions
     /// </summary>
     public static Action<Vector3> OnPlayerWarp;
 
+
+    //LEVEL EDITOR
+    public static Action<bool> OnLevelEditorPanelToggle;
+
 }
