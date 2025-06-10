@@ -1,5 +1,4 @@
-﻿//using Newtonsoft.Json;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -9,9 +8,7 @@ using UnityEngine.SceneManagement;
  * The LevelEditorManager is the singleton manager for the level editor.
  * It creates TerrainChunks, and delegates terrain alteration
  * operations to them.
- * 
  */
-
 
 public class LevelEditorManager : MonoBehaviour
 {
@@ -30,8 +27,8 @@ public class LevelEditorManager : MonoBehaviour
     //[Space(4)]
     //[Header("Level Geography")]
     public List<Texture2D> levelTextures;
-    public Gradient levelColorGradient;
     public Vector3 sunlightVector = new Vector3(1f, 1f, 0f); //new Vector3(1f, 1f, 0f)
+    //public Gradient levelColorGradient;
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
     public sLevelEditorChunk[,] chunks;
@@ -79,6 +76,9 @@ public class LevelEditorManager : MonoBehaviour
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = false;
+
         transform.position = Vector3.zero;
         StartLevel();
     }
@@ -95,7 +95,17 @@ public class LevelEditorManager : MonoBehaviour
     public void Redraw()
     {
         DeleteAllChunks();
-        DrawChunks();
+
+        for (int z = 0; z < chunks.GetLength(0); z++) //chunks.GetLength(0) or 1
+        {
+            for (int x = 0; x < chunks.GetLength(1); x++) //chunks.GetLength(1) or 1
+            {
+                GameObject gO = Instantiate(terrainChunkPrefab, Vector3.zero, Quaternion.Euler(Vector3.zero), chunkParent);
+                gO.name = "Chunk: " + x + ", " + z;
+                chunks[x, z] = gO.GetComponent<sLevelEditorChunk>();
+                chunks[x, z].SetOrigin(x * (Constants.CHUNK_WIDTH - 1), z * (Constants.CHUNK_WIDTH - 1));
+            }
+        }
     }
 
     private void DrawChunks()
@@ -114,7 +124,7 @@ public class LevelEditorManager : MonoBehaviour
             {
                 //from image pixels
                 float pixelRValue = levelTextures[levelIndex].GetPixel(x, z).r;
-                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT) + (Random.Range(-0.05f, 0.05f));
+                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT);
             }
         }
 
@@ -135,21 +145,41 @@ public class LevelEditorManager : MonoBehaviour
                 Vector3 normalVector2 = Vector3.Cross(SW - NE, SW - SE).normalized;
                 Vector3 averageNormals = (normalVector1 + normalVector2) / 2f;
 
-                //get the dot product of the average of the 2 normals against WORLD UP
-                float dotP = Vector3.Dot(averageNormals, new Vector3(1f, 1f, 0f));
-                vertexMap[x,z].color = dotP * dotP * levelColorGradient.Evaluate(vertexMap[x, z].height / Constants.MAX_HEIGHT);
+                //get the dot product of the average of the 2 normals against the sunlight Vector
+                float dotP = Vector3.Dot(averageNormals, sunlightVector);
 
-                sq.uvBasis = Vector2.zero; //Random.Range(0,2) == 1 ? Vector2.one : Vector2.zero; 
+                //Generate pseudolighting
+                vertexMap[x,z].color = dotP * dotP * Color.white;
 
+                //Determine uvBasis by lots of thresholding and height measurement
+                //heights from 0-16, 16-32, 32-48, 48-64
+                if (SW.y < 16) {
+                    sq.uvBasis = 9;
+                }
+                else if (SW.y > 16 && SW.y < 32) { 
+                    sq.uvBasis = 12;
+                }
+                else if (SW.y > 32 && SW.y < 48) { 
+                    sq.uvBasis = 33;
+                }
+                else if (SW.y > 48 && SW.y < 64) { 
+                    sq.uvBasis = 36;
+                }
+                else {
+                    sq.uvBasis = 63;
+                }                
+
+                //No ownership to start with, maybe it gets painted on?
                 sq.ownerID = OWNER_ID.UNOWNED;
                 sq.triangleFlipped = false;
                 squareMap[x, z] = sq;
             }
         }
 
+        //Improve pseudolighting with averaging
         vertexMap = AverageVertexColorsByNeighbor(vertexMap);
 
-        //Always the same: Divide into chunks and instantiate
+        //Divide into chunks and instantiate
         for (int z = 0; z < chunks.GetLength(0); z++) //chunks.GetLength(0) or 1
         {
             for (int x = 0; x < chunks.GetLength(1); x++) //chunks.GetLength(1) or 1
@@ -170,6 +200,53 @@ public class LevelEditorManager : MonoBehaviour
         }
     }
 
+    public Vertex[,] AverageVertexColorsByNeighbor(Vertex[,] inputArray)
+    {
+        int width = inputArray.GetLength(0);
+        int height = inputArray.GetLength(1);
+        Vertex[,] averagedArray = inputArray;
+
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                Color sum = inputArray[i, j].color; // Include the current cell
+                int neighborCount = 1;
+
+                // Check and add top neighbor
+                if (i > 0)
+                {
+                    sum += inputArray[i - 1, j].color;
+                    neighborCount++;
+                }
+                // Check and add bottom neighbor
+                if (i < width - 1)
+                {
+                    sum += inputArray[i + 1, j].color;
+                    neighborCount++;
+                }
+                // Check and add left neighbor
+                if (j > 0)
+                {
+                    sum += inputArray[i, j - 1].color;
+                    neighborCount++;
+                }
+                // Check and add right neighbor
+                if (j < height - 1)
+                {
+                    sum += inputArray[i, j + 1].color;
+                    neighborCount++;
+                }
+
+                averagedArray[i, j].color = sum / neighborCount;
+            }
+        }
+        return averagedArray;
+    }
+
+
+    // ------------------------------
+
     public void AlterTerrain(Vector3 hitPoint, Deformation deformation, int damage = 0)
     {
         //Find the square based on the hit
@@ -183,51 +260,51 @@ public class LevelEditorManager : MonoBehaviour
         //Early return for borders
         if (AtBorderChunk(chunkX, chunkZ)) { Debug.LogError("NO DEFORM AT BORDERS!"); return; }
 
-        Castle playerCastle;
+        //Castle playerCastle;
 
         switch (deformation.deformationType)
         {
             case DEFORMATION_TYPE.CASTLE:
 
-                //castle early returns
-                playerCastle = castleInfo[(int)deformation.ownerID];
+                ////castle early returns
+                //playerCastle = castleInfo[(int)deformation.ownerID];
 
-                //No new castles if one exists
-                if (playerCastle.level > 0) { Debug.LogError("ONLY ONE CASTLE PERMITTED"); return; }
+                ////No new castles if one exists
+                //if (playerCastle.level > 0) { Debug.LogError("ONLY ONE CASTLE PERMITTED"); return; }
 
-                if (NearAnotherBuilding(hitX, hitZ)) { return; }
-                if (AtBorderChunk(hitX, hitZ)) { return; }
+                //if (NearAnotherBuilding(hitX, hitZ)) { return; }
+                //if (AtBorderChunk(hitX, hitZ)) { return; }
 
-                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
-                float castleBaseHeight = vertexMap[hitX, hitZ].height;
-                castleInfo[(int)deformation.ownerID].level = 1;
-                castleInfo[(int)deformation.ownerID].ownerID = deformation.ownerID;
-                castleInfo[(int)deformation.ownerID].xOrigin = hitX;
-                castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
-                castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
+                ////PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+                //float castleBaseHeight = vertexMap[hitX, hitZ].height;
+                //castleInfo[(int)deformation.ownerID].level = 1;
+                //castleInfo[(int)deformation.ownerID].ownerID = deformation.ownerID;
+                //castleInfo[(int)deformation.ownerID].xOrigin = hitX;
+                //castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
+                //castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
 
-                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
-                break;
+                //StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+                //break;
 
             case DEFORMATION_TYPE.CASTLE_UPGRADE:
 
-                //castle early returns
-                playerCastle = castleInfo[(int)deformation.ownerID];
+                ////castle early returns
+                //playerCastle = castleInfo[(int)deformation.ownerID];
 
-                //not close enough to owner's castle origin MAGIC NUMBER - 
-                if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(playerCastle.xOrigin, 0, playerCastle.zOrigin)) > 20f)
-                {
-                    print(hitPoint);
-                    print(playerCastle.ToString());
-                    Debug.LogError("TOO FAR AWAY FROM CASTLE");
-                    return;
-                }
+                ////not close enough to owner's castle origin MAGIC NUMBER - 
+                //if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(playerCastle.xOrigin, 0, playerCastle.zOrigin)) > 20f)
+                //{
+                //    print(hitPoint);
+                //    print(playerCastle.ToString());
+                //    Debug.LogError("TOO FAR AWAY FROM CASTLE");
+                //    return;
+                //}
 
-                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
-                castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
+                ////PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+                //castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
 
-                StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
-                break;
+                //StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
+                //break;
 
             case DEFORMATION_TYPE.DESTRUCTION:
 
@@ -258,6 +335,8 @@ public class LevelEditorManager : MonoBehaviour
         int offsetZ = deformation.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
         if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!"); }
 
+        float originHeight = vertexMap[hitX, hitZ].height;
+
         //VERTEX - HEIGHT AVERAGING, for all types BUT destruction
         if (deformation.deformationType != DEFORMATION_TYPE.DESTRUCTION)
         for (int i = -offsetZ; i < deformation.colorChanges.GetLength(0) - offsetZ; i++)
@@ -265,7 +344,7 @@ public class LevelEditorManager : MonoBehaviour
             for (int j = -offsetX; j < deformation.colorChanges.GetLength(0) - offsetX; j++)
             {
                 //Flatten base to the height of the center. TODO - Avg instead?
-                vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
+                vertexMap[hitX + j, hitZ + i].height = originHeight + deformation.heightOffsets[j+offsetX,i+offsetZ];
             }
         }
 
@@ -274,27 +353,51 @@ public class LevelEditorManager : MonoBehaviour
         {
             for (int j = -offsetX; j < deformation.uvBasisRemaps.GetLength(1) - offsetX; j++)
             {
-                //info
-                squareMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
+                //Shorthand
+                int mapXIndex = hitX + j;
+                int mapZIndex = hitZ + i;
+                int deformXIndex = j + offsetX;
+                int deformZIndex = i + offsetZ;
 
-                //texture and geometry
-                squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j + offsetX, i + offsetZ];
-                squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j + offsetX, i + offsetZ];
+                //GET INFO
+                Vector3 SW = new Vector3(mapXIndex, vertexMap[mapXIndex, mapZIndex].height, mapZIndex);
+                Vector3 SE = new Vector3(mapXIndex+1, vertexMap[mapXIndex+1, mapZIndex].height, mapZIndex);
+                Vector3 NW = new Vector3(mapXIndex, vertexMap[mapXIndex, mapZIndex+1].height, mapZIndex+1);
+                Vector3 NE = new Vector3(mapXIndex+1, vertexMap[mapXIndex+1, mapZIndex+1].height, mapZIndex+1);
+
+                Vector3 normalVector1 = Vector3.Cross(SW - NW, SW - NE).normalized;
+                Vector3 normalVector2 = Vector3.Cross(SW - NE, SW - SE).normalized;
+                Vector3 averageNormals = (normalVector1 + normalVector2) / 2f;
+                float dotP = Vector3.Dot(averageNormals, sunlightVector);
+                float dotPSq = dotP * dotP;
+
+                //Redo square
+                Square sq = new Square();
+                sq.uvBasis = deformation.uvBasisRemaps[deformXIndex, deformZIndex];
+                sq.ownerID = OWNER_ID.UNOWNED;
+                sq.triangleFlipped = deformation.triangleFlips[deformXIndex, deformZIndex];
+                squareMap[mapXIndex, mapZIndex] = sq;
+
+                //COLOR REDO
+                vertexMap[mapXIndex, mapZIndex].color = deformation.colorChanges[deformXIndex, deformZIndex];// * dotP;
+                //vertexMap[mapXIndex + 1, mapZIndex].color = deformation.colorChanges[deformXIndex, deformZIndex];// * dotP;
+                //vertexMap[mapXIndex, mapZIndex + 1].color = deformation.colorChanges[deformXIndex, deformZIndex];// * dotP;
+                //vertexMap[mapXIndex + 1, mapZIndex + 1].color = deformation.colorChanges[deformXIndex, deformZIndex];// * dotP;
             }
         }        
 
         //VERTEX - HEIGHTS
-        for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
-        {
-            for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
-            {
-                //COLOR 
-                //vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j + offsetX, i + offsetZ];
+        //for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
+        //{
+        //    for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
+        //    {
+        //        //COLOR 
+        //        vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j + offsetX, i + offsetZ];
 
-                //HEIGHT
-                vertexMap[hitX + j, hitZ + i].height = Mathf.Clamp(vertexMap[hitX + j, hitZ + i].height + deformation.heightOffsets[j + offsetX, i + offsetZ], 0f, Constants.MAX_HEIGHT);
-            }
-        }
+        //        //HEIGHT
+        //        vertexMap[hitX + j, hitZ + i].height = Mathf.Clamp(vertexMap[hitX + j, hitZ + i].height + deformation.heightOffsets[j + offsetX, i + offsetZ], 0f, Constants.MAX_HEIGHT);
+        //    }
+        //}
 
         yield return null; //single frame break to avoid lag spike?
 
@@ -307,6 +410,8 @@ public class LevelEditorManager : MonoBehaviour
             }
         }        
     }
+
+    //
 
     public GameObject GetNearestManaTo(Vector3 pos)
     {
@@ -387,49 +492,6 @@ public class LevelEditorManager : MonoBehaviour
         return false;
     }
 
-    public Vertex[,] AverageVertexColorsByNeighbor(Vertex[,] inputArray)
-    {
-        int width = inputArray.GetLength(0);
-        int height = inputArray.GetLength(1);
-        Vertex[,] averagedArray = inputArray;
-
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                Color sum = inputArray[i, j].color; // Include the current cell
-                int neighborCount = 1;
-
-                // Check and add top neighbor
-                if (i > 0)
-                {
-                    sum += inputArray[i - 1, j].color;
-                    neighborCount++;
-                }
-                // Check and add bottom neighbor
-                if (i < width - 1)
-                {
-                    sum += inputArray[i + 1, j].color;
-                    neighborCount++;
-                }
-                // Check and add left neighbor
-                if (j > 0)
-                {
-                    sum += inputArray[i, j - 1].color;
-                    neighborCount++;
-                }
-                // Check and add right neighbor
-                if (j < height - 1)
-                {
-                    sum += inputArray[i, j + 1].color;
-                    neighborCount++;
-                }
-
-                averagedArray[i, j].color = sum / neighborCount;
-            }
-        }
-        return averagedArray;
-    }
 
     public void SaveImageFromHeights()
     {
@@ -441,10 +503,9 @@ public class LevelEditorManager : MonoBehaviour
             {
                 heightsOwnershipAndUVBasis.SetPixel(x, z, 
                     new Color(
-                        vertexMap[x,z].height / Constants.MAX_HEIGHT, //RED
-                        (float)squareMap[x,z].ownerID,                //GREEN //Square value
-                        (float)squareMap[x,z].uvBasis.x,              //BLUE //Square value
-                        squareMap[x,z].triangleFlipped ? 0 : 1        //ALPHA
+                        vertexMap[x,z].height / Constants.MAX_HEIGHT,           //RED
+                        (float)squareMap[x,z].ownerID / Constants.MAX_HEIGHT,   //GREEN Square OWNER - TODO move square ownership to Vertex!
+                        (float)squareMap[x,z].uvBasis / Constants.MAX_HEIGHT    //BLUE  Square UVBASIS                    
                     )
                 );
             }

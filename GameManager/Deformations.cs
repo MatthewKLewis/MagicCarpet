@@ -8,21 +8,27 @@ public static class Deformations
     //Typical Colors
     public static Color G = Color.gray;
     public static Color G1 = Color.gray1;
+    public static Color O = Color.orange;
 
     //First Row
-    public static Vector2 NIL = new Vector2(0, 0);
-    public static Vector2 CFO = new Vector2(1, 0);
-    public static Vector2 CSI = new Vector2(2, 0);
-    public static Vector2 CCO = new Vector2(3, 0);
-    public static Vector2 RUF = new Vector2(4, 0);
-
-    //public static Vector2 aaa = new Vector2(5, 0);
-    //public static Vector2 aaaa = new Vector2(6, 0);
-    //public static Vector2 aaaaa = new Vector2(7, 0);
+    public static int NIL = 0;
+    public static int CCO = 1;
+    public static int CSI = 2;
+    public static int CFO = 3;
+    public static int RUF = 4;
+    public static int XXX = 5;
+    public static int YYY = 6;
+    public static int ZZZ = 7;
 
     //Second Row
-    public static Vector2 RUBBLE = new Vector2(0, 1);
-    public static Vector2 WATER = new Vector2(1, 1);
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
 
 
     public static Deformation Lodge()
@@ -47,13 +53,13 @@ public static class Deformations
         lodge.colorChanges = new Color[5, 5] {
             { G, G, G, G, G },
             { G, G, G, G, G },
-            { G, G, G, G, G },
+            { G, G, O, G, G },
             { G, G, G, G, G },
             { G, G, G, G, G },
         };
 
         //FENCESPANS - ALWAYS EVEN
-        lodge.uvBasisRemaps = new Vector2[4, 4]
+        lodge.uvBasisRemaps = new int[4, 4]
         {
             {CCO, CFO, CFO, CCO},
             {CSI, RUF, RUF, CSI},
@@ -63,8 +69,8 @@ public static class Deformations
         lodge.triangleFlips = new bool[4, 4]
         {
             {true, false, false, false},
-            {false, false, false, false},
-            {false, false, false, false},
+            {false, true, false, false},
+            {false, false, true, false},
             {false, false, false, true},
         };
         return lodge;
@@ -93,7 +99,7 @@ public static class Deformations
         };
 
         //FENCESPANS - ALWAYS EVEN
-        spike.uvBasisRemaps = new Vector2[2, 2]
+        spike.uvBasisRemaps = new int[2, 2]
         {
             {NIL, NIL,},
             {NIL, NIL,},
@@ -135,7 +141,7 @@ public static class Deformations
         };
 
         //FENCESPANS - ALWAYS EVEN
-        castle.uvBasisRemaps = new Vector2[4, 4]
+        castle.uvBasisRemaps = new int[4, 4]
         {
             {CCO, CFO, CFO, CCO},
             {CSI, NIL, NIL, CSI},
@@ -196,7 +202,7 @@ public static class Deformations
         };
 
         //FENCESPANS - ALWAYS EVEN
-        castle.uvBasisRemaps = new Vector2[12, 12]
+        castle.uvBasisRemaps = new int[12, 12]
         {
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
             {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
@@ -252,9 +258,9 @@ public static class Deformations
         };
 
         //FENCESPANS
-        pock.uvBasisRemaps = new Vector2[1, 1]
+        pock.uvBasisRemaps = new int[1, 1]
         {
-            {RUBBLE}
+            {NIL}
         };
         pock.triangleFlips = new bool[1, 1]
         {

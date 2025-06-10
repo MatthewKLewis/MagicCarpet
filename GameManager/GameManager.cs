@@ -29,8 +29,9 @@ public class GameManager : MonoBehaviour
 
     [Space(4)]
     [Header("Level Geography")]
-    [SerializeField] private Gradient levelColorGradient;
-    public List<Texture2D> levelTextures;
+    //[SerializeField] private Gradient levelColorGradient;
+    public List<Texture2D> levelHeightMapTex;
+    public List<Texture2D> levelVertexColorTex;
 
     [Space(4)]
     [Header("Level Lighting")]
@@ -182,56 +183,37 @@ public class GameManager : MonoBehaviour
 
     private void DrawChunks()
     {
-        if (levelTextures[levelIndex].width != levelTextures[levelIndex].height) { Debug.LogError("LEVEL TEXTURE NOT SQUARE!"); }
-        if (!isPowerofTwo(levelTextures[levelIndex].width - 1)) { Debug.LogError("LEVEL TEXTURE NOT POW2+1"); }
-
-        vertexMap = new Vertex[levelTextures[levelIndex].width, levelTextures[levelIndex].width]; // 1025,1025, or 513, 513
-        squareMap = new Square[levelTextures[levelIndex].width - 1, levelTextures[levelIndex].width - 1]; //1024,1024 or 512,512
-        chunks = new sTerrainChunk[(levelTextures[levelIndex].width - 1) / Constants.CHUNK_WIDTH, (levelTextures[levelIndex].width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
+        if (levelHeightMapTex[levelIndex].width != levelHeightMapTex[levelIndex].height) { Debug.LogError("LEVEL TEXTURE NOT SQUARE!"); }
+        if (!isPowerofTwo(levelHeightMapTex[levelIndex].width - 1)) { Debug.LogError("LEVEL TEXTURE NOT POW2+1"); }
+        vertexMap = new Vertex[levelHeightMapTex[levelIndex].width, levelHeightMapTex[levelIndex].width]; // 1025,1025, or 513, 513
+        squareMap = new Square[levelHeightMapTex[levelIndex].width - 1, levelHeightMapTex[levelIndex].width - 1]; //1024,1024 or 512,512
+        chunks = new sTerrainChunk[(levelHeightMapTex[levelIndex].width - 1) / Constants.CHUNK_WIDTH, (levelHeightMapTex[levelIndex].width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
 
         //VERTEX - FENCE POST
-        for (int z = 0; z < levelTextures[levelIndex].width; z++)
+        for (int z = 0; z < levelHeightMapTex[levelIndex].width; z++)
         {
-            for (int x = 0; x < levelTextures[levelIndex].width; x++)
+            for (int x = 0; x < levelHeightMapTex[levelIndex].width; x++)
             {
-                //from image pixels
-                float pixelRValue = levelTextures[levelIndex].GetPixel(x, z).r;
-                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT) + (Random.Range(-0.05f, 0.05f));
+                float pixelRValue = levelHeightMapTex[levelIndex].GetPixel(x, z).r; //R is height
+                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT);
+                vertexMap[x, z].color = levelVertexColorTex[levelIndex].GetPixel(x, z); //R is height
             }
         }
 
         //SQUARE - FENCE SPAN
-        for (int z = 0; z < levelTextures[levelIndex].width - 1; z++)
+        for (int z = 0; z < levelHeightMapTex[levelIndex].width - 1; z++)
         {
-            for (int x = 0; x < levelTextures[levelIndex].width - 1; x++)
+            for (int x = 0; x < levelHeightMapTex[levelIndex].width - 1; x++)
             {
                 Square sq = new Square();
-
-                Vector3 SW = new Vector3(x, vertexMap[x, z].height, z);
-                Vector3 SE = new Vector3(x + 1, vertexMap[x + 1, z].height, z);
-                Vector3 NW = new Vector3(x, vertexMap[x, z + 1].height, z + 1);
-                Vector3 NE = new Vector3(x + 1, vertexMap[x + 1, z + 1].height, z + 1);
-
-                //get the normal if the four verts are SE, SW, NE, NW
-                Vector3 normalVector1 = Vector3.Cross(SW - NW, SW - NE).normalized;
-                Vector3 normalVector2 = Vector3.Cross(SW - NE, SW - SE).normalized;
-                Vector3 averageNormals = (normalVector1 + normalVector2) / 2f;
-
-                //get the dot product of the average of the 2 normals against WORLD UP
-                float dotP = Vector3.Dot(averageNormals, new Vector3(1f, 1f, 0f));
-                vertexMap[x, z].color = dotP * dotP * levelColorGradient.Evaluate(vertexMap[x, z].height / Constants.MAX_HEIGHT);
-
-                sq.uvBasis = Vector2.zero; //Random.Range(0,2) == 1 ? Vector2.one : Vector2.zero; 
-
-                sq.ownerID = OWNER_ID.UNOWNED;
+                sq.uvBasis = (int)levelHeightMapTex[levelIndex].GetPixel(x,z).b; //BLUE IS UVBASIS
+                sq.ownerID = (OWNER_ID)levelHeightMapTex[levelIndex].GetPixel(x, z).g; //GREEN IS OWNERSHIP
                 sq.triangleFlipped = false;
                 squareMap[x, z] = sq;
             }
         }
 
-        vertexMap = AverageVertexColorsByNeighbor(vertexMap);
-
-        //Always the same: Divide into chunks and instantiate
+        //Divide into chunks and instantiate
         for (int z = 0; z < chunks.GetLength(0); z++) //chunks.GetLength(0) or 1
         {
             for (int x = 0; x < chunks.GetLength(1); x++) //chunks.GetLength(1) or 1

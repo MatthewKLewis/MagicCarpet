@@ -4,20 +4,20 @@ using UnityEngine;
 
 public struct Square
 {
-    public Vector2 uvBasis;
+    public int uvBasis;
     public bool triangleFlipped;
     public OWNER_ID ownerID;
 
-    public Square(Vector2 uv, bool isTriFlipped, OWNER_ID owner)
+    public Square(int uvB, bool isTriFlipped, OWNER_ID owner)
     {
-        uvBasis = uv;
+        uvBasis = uvB;
         triangleFlipped = isTriFlipped;
         ownerID = owner;
     }
 
     public override string ToString()
     {
-        return $"  UV Basis: ({uvBasis.x:F3}, {uvBasis.y:F3}) " +
+        return $"  UV Basis: ({uvBasis}) " +
                $"  Triangle Flipped: {triangleFlipped} " +
                $"  Owner ID: {ownerID}";
     }
@@ -106,7 +106,7 @@ public struct Deformation
     public Color[,] colorChanges;
 
     //Square based
-    public Vector2[,] uvBasisRemaps;
+    public int[,] uvBasisRemaps;
     public bool[,] triangleFlips;
 
     public override string ToString()

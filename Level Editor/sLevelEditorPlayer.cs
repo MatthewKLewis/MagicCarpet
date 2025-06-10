@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -22,9 +23,12 @@ public class sLevelEditorPlayer : MonoBehaviour
     [SerializeField] private Camera lECamera;
     [SerializeField] private Transform cursorPlane;
 
+    private int deformListIndex = 0;
+    private List<string> deforms;
 
     void Start()
     {
+        deforms = new List<string>() { "Lodge", "Pock", "LargeLodge", "Tent", "Castle"};
         lEM = LevelEditorManager.instance;
         cC = GetComponent<CharacterController>();
 
@@ -85,7 +89,25 @@ public class sLevelEditorPlayer : MonoBehaviour
             {
                 if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
                 {
-                    lEM.AlterTerrain(groundHit.point, Deformations.Lodge());
+                    switch (deforms[deformListIndex])
+                    {
+                        case "Lodge":
+                            print("+Lodge!");
+                            //lEM.AlterTerrain(groundHit.point, Deformations.Lodge());
+                            break;
+                        case "Pock":
+                            print("+Pock!");
+                            break;
+                        case "LargeLodge":
+                            print("+LargeLodge!");
+                            break;
+                        case "Tent":
+                            print("+Tent!");
+                            break;
+                        case "Castle":
+                            print("+Castle!");
+                            break;
+                    }
                 }                
             }
 
@@ -99,7 +121,7 @@ public class sLevelEditorPlayer : MonoBehaviour
 
                     cursorPlane.position = new Vector3(
                         hitX * Constants.TILE_WIDTH, 
-                        lEM.vertexMap[hitX,hitZ].height * Constants.TILE_WIDTH + 0.1f, 
+                        lEM.vertexMap[hitX,hitZ].height * Constants.TILE_WIDTH + 0.1f,
                         hitZ * Constants.TILE_WIDTH
                     );
 
@@ -109,7 +131,9 @@ public class sLevelEditorPlayer : MonoBehaviour
 
             if (Input.mouseScrollDelta.magnitude > 0.1f)
             {
-                //print(Input.mouseScrollDelta.magnitude);
+                int scroll = Mathf.RoundToInt(Input.mouseScrollDelta.y);
+                deformListIndex = Mathf.Clamp(deformListIndex + scroll, 0, deforms.Count - 1);
+                print(deforms[deformListIndex]);
             }
         }
     }

@@ -65,10 +65,10 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES);
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis));
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.right / Constants.TILE_SPRITES);
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.up / Constants.TILE_SPRITES);
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.one / Constants.TILE_SPRITES);
 
                 //6 tri-indexes
                 if (gM.squareMap[x, z].triangleFlipped)
@@ -137,10 +137,10 @@ public class sTerrainChunk : MonoBehaviour
                 colors.Add(gM.vertexMap[x + 1, z + 1].color);
 
                 //4 uv0s
-                uvs.Add(gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES);
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0));
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0, 0.125f));
-                uvs.Add((gM.squareMap[x, z].uvBasis / Constants.TILE_SPRITES) + new Vector2(0.125f, 0.125f));
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis));
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.right / Constants.TILE_SPRITES);
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.up / Constants.TILE_SPRITES);
+                uvs.Add(Constants.GetUVBasisFromUVIndex(gM.squareMap[x, z].uvBasis) + Vector2.one / Constants.TILE_SPRITES);
 
                 //6 tri-indexes
                 if (gM.squareMap[x, z].triangleFlipped)
