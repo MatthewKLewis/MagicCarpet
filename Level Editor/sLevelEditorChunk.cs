@@ -70,6 +70,12 @@ public class sLevelEditorChunk : MonoBehaviour
                 uvs.Add(Constants.GetUVBasisFromUVIndex(lEM.squareMap[x, z].uvBasis) + Vector2.up / Constants.TILE_SPRITES);
                 uvs.Add(Constants.GetUVBasisFromUVIndex(lEM.squareMap[x, z].uvBasis) + Vector2.one / Constants.TILE_SPRITES);
 
+                //4 uvTwos
+                uvTwos.Add(new Vector2(x, z) / 512); //MAGIC NUMBER - 512px?
+                uvTwos.Add(new Vector2(x + 1, z) / 512);
+                uvTwos.Add(new Vector2(x, z + 1) / 512);
+                uvTwos.Add(new Vector2(x + 1, z + 1) / 512);
+
                 //6 tri-indexes
                 if (lEM.squareMap[x, z].triangleFlipped)
                 {
@@ -99,7 +105,7 @@ public class sLevelEditorChunk : MonoBehaviour
         mesh.triangles = triangles.ToArray();
 
         mesh.uv = uvs.ToArray();
-        //mesh.uv2 = uvTwos.ToArray();
+        mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();

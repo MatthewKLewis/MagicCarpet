@@ -12,6 +12,7 @@ public class sTerrainChunk : MonoBehaviour
     private Mesh mesh;
     private MeshFilter meshFilter;
     private MeshCollider mCollider;
+    private MeshRenderer mRenderer;
 
     int xOrigin;
     int zOrigin;
@@ -21,19 +22,23 @@ public class sTerrainChunk : MonoBehaviour
     private List<int> triangles;
     private List<Color> colors;
 
+    private List<Vector3> normals;
+
     private void Awake()
     {
         gM = GameManager.instance;
         meshFilter = GetComponent<MeshFilter>();
+        mRenderer = GetComponent<MeshRenderer>();
         mCollider = GetComponent<MeshCollider>();
     }
 
     // This needs to be called before anything else 
     // it sets the X and Z origins of the Chunk
-    public void SetOrigin(int xO, int zO)
+    public void SetOrigin(int xO, int zO, Material mat)
     {
         xOrigin = xO;
         zOrigin = zO;
+        mRenderer.material = mat;
         DrawTerrain();
     }
 
@@ -46,6 +51,7 @@ public class sTerrainChunk : MonoBehaviour
         triangles = new List<int>();
         uvs = new List<Vector2>();
         uvTwos = new List<Vector2>();
+        normals = new List<Vector3>();
 
         int index = 0;
         for (int z = zOrigin; z < zOrigin + Constants.CHUNK_WIDTH - 1; z++) //FENCEPOST
@@ -57,6 +63,12 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
+
+                //two normals - one per vertex
+                //normals.Add(gM.vertexMap[x, z].normal);
+                //normals.Add(gM.vertexMap[x + 1, z].normal);
+                //normals.Add(gM.vertexMap[x, z + 1].normal);
+                //normals.Add(gM.vertexMap[x + 1, z + 1].normal);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -89,6 +101,7 @@ public class sTerrainChunk : MonoBehaviour
                     triangles.Add(index + 2);
                     triangles.Add(index + 3);
                 }
+
                 index += 4;
             }
         }
@@ -97,12 +110,15 @@ public class sTerrainChunk : MonoBehaviour
         mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.normals = normals.ToArray();
 
         mesh.uv = uvs.ToArray();
-        //mesh.uv2 = uvTwos.ToArray();
+        mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
+
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
+
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;
@@ -118,6 +134,7 @@ public class sTerrainChunk : MonoBehaviour
         triangles = new List<int>();
         uvs = new List<Vector2>();
         uvTwos = new List<Vector2>();
+        normals = new List<Vector3>();
 
         int index = 0;
         for (int z = zOrigin; z < zOrigin + Constants.CHUNK_WIDTH - 1; z++) //FENCEPOST
@@ -129,6 +146,12 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z].height, z) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
+
+                //two normals - one per vertex
+                //normals.Add(gM.vertexMap[x, z].normal);
+                //normals.Add(gM.vertexMap[x + 1, z].normal);
+                //normals.Add(gM.vertexMap[x, z + 1].normal);
+                //normals.Add(gM.vertexMap[x + 1, z + 1].normal);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -171,13 +194,15 @@ public class sTerrainChunk : MonoBehaviour
         mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.normals = normals.ToArray();
 
         mesh.uv = uvs.ToArray();
         mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
 
         mesh.RecalculateBounds();
-        mesh.RecalculateNormals();
+        mesh.RecalculateNormals(); 
+
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;

@@ -23,12 +23,20 @@ public class LevelEditorManager : MonoBehaviour
     [Header("Levels")]
     [Range(0, 3)] //Update as needed
     public int levelIndex = 0;
-    
-    //[Space(4)]
-    //[Header("Level Geography")]
+
+    [Space(4)]
+    [Header("Level Geography")]
     public List<Texture2D> levelTextures;
+    public Gradient levelColorGradient;
+    private Color32[] texturePixels;
     public Vector3 sunlightVector = new Vector3(1f, 1f, 0f); //new Vector3(1f, 1f, 0f)
-    //public Gradient levelColorGradient;
+
+    [Space(4)]
+    [Header("Biome Thresholds")]
+    private float CoastThreshold = 13.25f;
+    private float PiedmontThreshold = 26.25f;
+    private float FoothillThreshold = 39.25f;
+    private float MountainThreshold = 52.25f;
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
     public sLevelEditorChunk[,] chunks;
@@ -118,13 +126,14 @@ public class LevelEditorManager : MonoBehaviour
         chunks = new sLevelEditorChunk[(levelTextures[levelIndex].width - 1) / Constants.CHUNK_WIDTH, (levelTextures[levelIndex].width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
 
         //VERTEX - FENCE POST
+        texturePixels = levelTextures[levelIndex].GetPixels32();
         for (int z = 0; z < levelTextures[levelIndex].width; z++)
         {
             for (int x = 0; x < levelTextures[levelIndex].width; x++)
             {
-                //from image pixels
-                float pixelRValue = levelTextures[levelIndex].GetPixel(x, z).r;
-                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT);
+                vertexMap[x, z].height = texturePixels[x + (z* levelTextures[levelIndex].width)].r;
+                vertexMap[x, z].color = Color.black;
+                vertexMap[x, z].ownerID = OWNER_ID.UNOWNED;
             }
         }
 
@@ -134,44 +143,21 @@ public class LevelEditorManager : MonoBehaviour
             for (int x = 0; x < levelTextures[levelIndex].width - 1; x++)
             {
                 Square sq = new Square();
+                sq.uvBasis = 0;
 
-                Vector3 SW = new Vector3(x, vertexMap[x, z].height, z);
-                Vector3 SE = new Vector3(x+1, vertexMap[x+1, z].height, z);
-                Vector3 NW = new Vector3(x, vertexMap[x, z+1].height, z+1);
-                Vector3 NE = new Vector3(x+1, vertexMap[x+1, z+1].height, z+1);
+                ////get the normals at SE, SW, NE, NW
+                //Vector3 vecSW = new Vector3(x, vertexMap[x, z].height, z);
+                //Vector3 vecSE = new Vector3(x + 1, vertexMap[x + 1, z].height, z);
+                //Vector3 vecNW = new Vector3(x, vertexMap[x, z + 1].height, z + 1);
+                //Vector3 vecNE = new Vector3(x + 1, vertexMap[x + 1, z + 1].height, z + 1);
+                //Vector3 normalVector1 = Vector3.Cross(vecSW - vecNW, vecSW - vecNE).normalized;
+                //Vector3 normalVector2 = Vector3.Cross(vecSW - vecNE, vecSW - vecSE).normalized;
+                //Vector3 averageNormals = (normalVector1 + normalVector2) / 2f;
+                //vertexMap[x, z].normal = averageNormals;
 
-                //get the normal if the four verts are SE, SW, NE, NW
-                Vector3 normalVector1 = Vector3.Cross(SW - NW, SW - NE).normalized;
-                Vector3 normalVector2 = Vector3.Cross(SW - NE, SW - SE).normalized;
-                Vector3 averageNormals = (normalVector1 + normalVector2) / 2f;
-
-                //get the dot product of the average of the 2 normals against the sunlight Vector
-                float dotP = Vector3.Dot(averageNormals, sunlightVector);
-
-                //Generate pseudolighting
-                vertexMap[x,z].color = dotP * dotP * Color.white;
-
-                //Determine uvBasis by lots of thresholding and height measurement
-                //heights from 0-16, 16-32, 32-48, 48-64
-                if (SW.y < 16) {
-                    sq.uvBasis = 9;
-                }
-                else if (SW.y > 16 && SW.y < 32) { 
-                    sq.uvBasis = 12;
-                }
-                else if (SW.y > 32 && SW.y < 48) { 
-                    sq.uvBasis = 33;
-                }
-                else if (SW.y > 48 && SW.y < 64) { 
-                    sq.uvBasis = 36;
-                }
-                else {
-                    sq.uvBasis = 63;
-                }                
-
-                //No ownership to start with, maybe it gets painted on?
-                sq.ownerID = OWNER_ID.UNOWNED;
+                //Triflips
                 sq.triangleFlipped = false;
+
                 squareMap[x, z] = sq;
             }
         }
@@ -243,7 +229,6 @@ public class LevelEditorManager : MonoBehaviour
         }
         return averagedArray;
     }
-
 
     // ------------------------------
 
@@ -344,6 +329,7 @@ public class LevelEditorManager : MonoBehaviour
             for (int j = -offsetX; j < deformation.colorChanges.GetLength(0) - offsetX; j++)
             {
                 //Flatten base to the height of the center. TODO - Avg instead?
+                vertexMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
                 vertexMap[hitX + j, hitZ + i].height = originHeight + deformation.heightOffsets[j+offsetX,i+offsetZ];
             }
         }
@@ -374,7 +360,6 @@ public class LevelEditorManager : MonoBehaviour
                 //Redo square
                 Square sq = new Square();
                 sq.uvBasis = deformation.uvBasisRemaps[deformXIndex, deformZIndex];
-                sq.ownerID = OWNER_ID.UNOWNED;
                 sq.triangleFlipped = deformation.triangleFlips[deformXIndex, deformZIndex];
                 squareMap[mapXIndex, mapZIndex] = sq;
 
@@ -411,8 +396,6 @@ public class LevelEditorManager : MonoBehaviour
         }        
     }
 
-    //
-
     public GameObject GetNearestManaTo(Vector3 pos)
     {
         GameObject retGO = null;
@@ -428,11 +411,6 @@ public class LevelEditorManager : MonoBehaviour
             }
         }
         return retGO;
-    }
-
-    private OWNER_ID GetNearestCastleTo(int hitX, int hitZ)
-    {
-        return 0;
     }
 
     private bool isPowerofTwo(int n)
@@ -503,9 +481,9 @@ public class LevelEditorManager : MonoBehaviour
             {
                 heightsOwnershipAndUVBasis.SetPixel(x, z, 
                     new Color(
-                        vertexMap[x,z].height / Constants.MAX_HEIGHT,           //RED
-                        (float)squareMap[x,z].ownerID / Constants.MAX_HEIGHT,   //GREEN Square OWNER - TODO move square ownership to Vertex!
-                        (float)squareMap[x,z].uvBasis / Constants.MAX_HEIGHT    //BLUE  Square UVBASIS                    
+                        vertexMap[x,z].height / 256,           //RED VERTEX HEIGHT
+                        (float)vertexMap[x,z].ownerID / 256,   //GREEN SQUARE OWNER
+                        (float)squareMap[x,z].uvBasis / 256    //BLUE  SQUARE UVBASIS (int)                    
                     )
                 );
             }
@@ -518,18 +496,48 @@ public class LevelEditorManager : MonoBehaviour
         }
         byte[] bytes = heightsOwnershipAndUVBasis.EncodeToPNG();
         File.WriteAllBytes(dirPath + "ImageHOU" + ".png", bytes);
-
-        print("Saving image 2...");
-        Texture2D colors = new Texture2D(vertexMap.GetLength(0), vertexMap.GetLength(1), TextureFormat.RGB24, false);
-        for (int z = 0; z < vertexMap.GetLength(1); z++)
-        {
-            for (int x = 0; x < vertexMap.GetLength(0); x++)
-            {
-                colors.SetPixel(x, z, vertexMap[x, z].color);
-            }
-        }
-
-        bytes = colors.EncodeToPNG();
-        File.WriteAllBytes(dirPath + "ImageVC" + ".png", bytes);
     }
 }
+
+//#region COAST, PIED, FOOT, MOUNT
+//if (sq.averageHeight < CoastThreshold) { sq.uvBasis = 4; }
+//else if (Mathf.Approximately(sq.averageHeight, CoastThreshold))
+//{
+//    if (vecSW.y > vecSE.y && vecSW.y > vecNW.y && vecSW.y > vecNE.y) { sq.uvBasis = 0; }
+//    else if (vecSE.y > vecSW.y && vecSE.y > vecNW.y && vecSE.y > vecNE.y) { sq.uvBasis = 1; sq.triangleFlipped = true; }
+//    else if (vecNW.y > vecSE.y && vecNW.y > vecSW.y && vecNW.y > vecNE.y) { sq.uvBasis = 8; sq.triangleFlipped = true; }
+//    else if (vecNE.y > vecSE.y && vecNE.y > vecSW.y && vecNE.y > vecSW.y) { sq.uvBasis = 9; }
+//    else sq.uvBasis = 0;
+//}
+//else if (sq.averageHeight > CoastThreshold && sq.averageHeight < PiedmontThreshold) sq.uvBasis = 16;
+
+//else if (Mathf.Approximately(sq.averageHeight, PiedmontThreshold))
+//{
+//    if (vecSW.y > vecSE.y && vecSW.y > vecNW.y && vecSW.y > vecNE.y) { sq.uvBasis = 2; }
+//    else if (vecSE.y > vecSW.y && vecSE.y > vecNW.y && vecSE.y > vecNE.y) { sq.uvBasis = 3; sq.triangleFlipped = true; }
+//    else if (vecNW.y > vecSE.y && vecNW.y > vecSW.y && vecNW.y > vecNE.y) { sq.uvBasis = 10; sq.triangleFlipped = true; }
+//    else if (vecNE.y > vecSE.y && vecNE.y > vecSW.y && vecNE.y > vecSW.y) { sq.uvBasis = 11; }
+//    else sq.uvBasis = 2;
+//}
+//else if (sq.averageHeight > PiedmontThreshold && sq.averageHeight < FoothillThreshold) sq.uvBasis = 18;
+
+//else if (Mathf.Approximately(sq.averageHeight, FoothillThreshold))
+//{
+//    if (vecSW.y > vecSE.y && vecSW.y > vecNW.y && vecSW.y > vecNE.y) { sq.uvBasis = 24; }
+//    else if (vecSE.y > vecSW.y && vecSE.y > vecNW.y && vecSE.y > vecNE.y) { sq.uvBasis = 25; sq.triangleFlipped = true; }
+//    else if (vecNW.y > vecSE.y && vecNW.y > vecSW.y && vecNW.y > vecNE.y) { sq.uvBasis = 32; sq.triangleFlipped = true; }
+//    else if (vecNE.y > vecSE.y && vecNE.y > vecSW.y && vecNE.y > vecSW.y) { sq.uvBasis = 33; }
+//    else sq.uvBasis = 24;
+//}
+//else if (sq.averageHeight > FoothillThreshold && sq.averageHeight < MountainThreshold) sq.uvBasis = 40;
+
+//else if (Mathf.Approximately(sq.averageHeight, MountainThreshold))
+//{
+//    if (vecSW.y > vecSE.y && vecSW.y > vecNW.y && vecSW.y > vecNE.y) { sq.uvBasis = 26; }
+//    else if (vecSE.y > vecSW.y && vecSE.y > vecNW.y && vecSE.y > vecNE.y) { sq.uvBasis = 27; sq.triangleFlipped = true; }
+//    else if (vecNW.y > vecSE.y && vecNW.y > vecSW.y && vecNW.y > vecNE.y) { sq.uvBasis = 34; sq.triangleFlipped = true; }
+//    else if (vecNE.y > vecSE.y && vecNE.y > vecSW.y && vecNE.y > vecSW.y) { sq.uvBasis = 35; }
+//    else sq.uvBasis = 26;
+//}
+//else if (sq.averageHeight > MountainThreshold) sq.uvBasis = 42;
+//#endregion

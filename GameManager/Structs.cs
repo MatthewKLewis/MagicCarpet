@@ -1,25 +1,21 @@
 using UnityEngine;
 
 #region TERRAIN CHUNK STRUCTS
-
 public struct Square
 {
-    public int uvBasis;
     public bool triangleFlipped;
-    public OWNER_ID ownerID;
+    public int uvBasis;
 
     public Square(int uvB, bool isTriFlipped, OWNER_ID owner)
     {
         uvBasis = uvB;
         triangleFlipped = isTriFlipped;
-        ownerID = owner;
     }
 
     public override string ToString()
     {
         return $"  UV Basis: ({uvBasis}) " +
-               $"  Triangle Flipped: {triangleFlipped} " +
-               $"  Owner ID: {ownerID}";
+               $"  Triangle Flipped: {triangleFlipped} ";
     }
 }
 
@@ -27,11 +23,15 @@ public struct Vertex
 {
     public float height;
     public Color color;
+    //public Vector3 normal;
+    public OWNER_ID ownerID;
 
-    public Vertex(float h, Color col)
+    public Vertex(float h, Color col, OWNER_ID ownId) //, Vector3 norm)
     {
         height = h;
         color = col;
+        //normal = norm;
+        ownerID = ownId;
     }
 }
 #endregion
@@ -41,6 +41,7 @@ public struct Vertex
 
 public enum OWNER_ID
 {
+    UNOWNED,
     PLAYER,
     NPC_1,
     NPC_2,
@@ -50,7 +51,6 @@ public enum OWNER_ID
     NPC_6,
     NPC_7,
     CITIZENS,
-    UNOWNED,
 }
 
 public struct Castle

@@ -116,12 +116,12 @@ public class sLevelEditorPlayer : MonoBehaviour
                 if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
                 {
                     //Find the square based on the hit
-                    int hitX = Mathf.RoundToInt(groundHit.point.x / Constants.TILE_WIDTH);
-                    int hitZ = Mathf.RoundToInt(groundHit.point.z / Constants.TILE_WIDTH);
+                    int hitX = Mathf.FloorToInt(groundHit.point.x / Constants.TILE_WIDTH);
+                    int hitZ = Mathf.FloorToInt(groundHit.point.z / Constants.TILE_WIDTH);
 
                     cursorPlane.position = new Vector3(
                         hitX * Constants.TILE_WIDTH, 
-                        lEM.vertexMap[hitX,hitZ].height * Constants.TILE_WIDTH + 0.1f,
+                        lEM.vertexMap[hitX, hitZ].height * Constants.TILE_WIDTH + 0.1f,
                         hitZ * Constants.TILE_WIDTH
                     );
 

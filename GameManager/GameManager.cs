@@ -24,14 +24,14 @@ public class GameManager : MonoBehaviour
 
     [Space(4)]
     [Header("Levels")]
-    [Range(0, 3)] //Update as needed
+    [Range(0, 5)] //Update as needed
     public int levelIndex = 0;
 
     [Space(4)]
     [Header("Level Geography")]
-    //[SerializeField] private Gradient levelColorGradient;
+    private float heightMapMultiplier = 0.2f;
     public List<Texture2D> levelHeightMapTex;
-    public List<Texture2D> levelVertexColorTex;
+    //public List<Texture2D> levelVertexColorTex;
 
     [Space(4)]
     [Header("Level Lighting")]
@@ -39,6 +39,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<float> fogIntensities;
     [SerializeField] private List<Color> ambientColors;
     [SerializeField] private List<float> sunIntensities;
+    [SerializeField] private List<Material> materialsList;
+
 
     [Space(4)]
     [Header("Mana Pool")]
@@ -86,6 +88,7 @@ public class GameManager : MonoBehaviour
     public GameObject fireBallPrefab;
     public GameObject castleSeedPrefab;
     public GameObject smallExplosionEffectPrefab;
+    public GameObject foliagePrefab;
 
     [Space(10)]
     [Header("NPC Prefabs")]
@@ -150,6 +153,7 @@ public class GameManager : MonoBehaviour
 
         //Terrain first   
         DrawChunks();
+        DrawFoliage();
         DrawAdjacentPlanes();
 
         //Then mana pool
@@ -189,14 +193,23 @@ public class GameManager : MonoBehaviour
         squareMap = new Square[levelHeightMapTex[levelIndex].width - 1, levelHeightMapTex[levelIndex].width - 1]; //1024,1024 or 512,512
         chunks = new sTerrainChunk[(levelHeightMapTex[levelIndex].width - 1) / Constants.CHUNK_WIDTH, (levelHeightMapTex[levelIndex].width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
 
-        //VERTEX - FENCE POST
+        Color32[] hOUPixels = levelHeightMapTex[levelIndex].GetPixels32();
         for (int z = 0; z < levelHeightMapTex[levelIndex].width; z++)
         {
             for (int x = 0; x < levelHeightMapTex[levelIndex].width; x++)
             {
-                float pixelRValue = levelHeightMapTex[levelIndex].GetPixel(x, z).r; //R is height
-                vertexMap[x, z].height = (pixelRValue * Constants.MAX_HEIGHT);
-                vertexMap[x, z].color = levelVertexColorTex[levelIndex].GetPixel(x, z); //R is height
+                int height = hOUPixels[x + (z * levelHeightMapTex[levelIndex].width)].r;
+                int ownerID = hOUPixels[x + (z * levelHeightMapTex[levelIndex].width)].g;
+
+                //The height is determined by the R channel, halved
+                vertexMap[x, z].height = height * heightMapMultiplier;
+
+                //The vertex colors control whether the square is UV or Triplanar rendered, so Black (triplanar) if the owner is 0, White otherwise
+                vertexMap[x, z].color = ownerID == 0 ? Color.black : Color.white;
+
+                //If a square is owned, it renders with UV rather than triplanar. The Blue value holds the index of the UVmap to draw
+                vertexMap[x, z].ownerID = (OWNER_ID)ownerID;
+
             }
         }
 
@@ -205,10 +218,14 @@ public class GameManager : MonoBehaviour
         {
             for (int x = 0; x < levelHeightMapTex[levelIndex].width - 1; x++)
             {
+
                 Square sq = new Square();
-                sq.uvBasis = (int)levelHeightMapTex[levelIndex].GetPixel(x,z).b; //BLUE IS UVBASIS
-                sq.ownerID = (OWNER_ID)levelHeightMapTex[levelIndex].GetPixel(x, z).g; //GREEN IS OWNERSHIP
                 sq.triangleFlipped = false;
+
+                //The UV index of the square is determined by the Blue channel
+                int uv = hOUPixels[x + (z * levelHeightMapTex[levelIndex].width)].b;
+                sq.uvBasis = uv;
+
                 squareMap[x, z] = sq;
             }
         }
@@ -221,9 +238,14 @@ public class GameManager : MonoBehaviour
                 GameObject gO = Instantiate(terrainChunkPrefab, Vector3.zero, Quaternion.Euler(Vector3.zero), chunkParent);
                 gO.name = "Chunk: " + x + ", " + z;
                 chunks[x, z] = gO.GetComponent<sTerrainChunk>();
-                chunks[x, z].SetOrigin(x * (Constants.CHUNK_WIDTH - 1), z * (Constants.CHUNK_WIDTH - 1));
+                chunks[x, z].SetOrigin(x * (Constants.CHUNK_WIDTH - 1), z * (Constants.CHUNK_WIDTH - 1), materialsList[levelIndex]);
             }
         }
+    }
+
+    private void DrawFoliage()
+    {
+        Instantiate(foliagePrefab, new Vector3(364, 4, 209), transform.rotation, transform);
     }
 
     private void DrawAdjacentPlanes()
@@ -259,8 +281,8 @@ public class GameManager : MonoBehaviour
     public void AlterTerrain(Vector3 hitPoint, Deformation deformation, int damage = 0)
     {
         //Find the square based on the hit
-        int hitX = Mathf.RoundToInt(hitPoint.x / Constants.TILE_WIDTH);
-        int hitZ = Mathf.RoundToInt(hitPoint.z / Constants.TILE_WIDTH);
+        int hitX = Mathf.FloorToInt(hitPoint.x / Constants.TILE_WIDTH);
+        int hitZ = Mathf.FloorToInt(hitPoint.z / Constants.TILE_WIDTH);
 
         //Find the chunk based on the tile
         int chunkX = hitX / Constants.CHUNK_WIDTH; 
@@ -273,23 +295,9 @@ public class GameManager : MonoBehaviour
         if (damage != 0)
         {
             //TODO - SOMETIMES THE HITX AND HITZ ARE A BIT OFF AND I DONT GET A OWNERID
-            print(squareMap[hitX, hitZ].ownerID);
-            if (squareMap[hitX, hitZ].ownerID != OWNER_ID.UNOWNED)
+            if (vertexMap[hitX, hitZ].ownerID != OWNER_ID.UNOWNED)
             {
-                castleInfo[(int)squareMap[hitX, hitZ].ownerID].health = Mathf.Clamp(
-                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].health - damage, 
-                    0, 
-                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].maxHealth
-                );
-                Actions.OnCastleHealthChange(
-                    squareMap[hitX, hitZ].ownerID, 
-                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].health, 
-                    castleInfo[(int)squareMap[hitX, hitZ].ownerID].maxHealth
-                );
-                if (castleInfo[(int)squareMap[hitX, hitZ].ownerID].health == 0)
-                {
-                    Actions.OnHUDWarning("TODO - Destroy castle");
-                }
+                //Put damage on the castle object
                 return;
             }
         }
@@ -375,7 +383,7 @@ public class GameManager : MonoBehaviour
             for (int j = -offsetX; j < deformation.uvBasisRemaps.GetLength(1) - offsetX; j++)
             {
                 //info
-                squareMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
+                
 
                 //texture and geometry
                 squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j+offsetX, i+offsetZ];
@@ -392,6 +400,7 @@ public class GameManager : MonoBehaviour
                 //vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
 
                 //change vertex color
+                vertexMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
                 vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j + offsetX, i+ offsetZ];
             }
         }

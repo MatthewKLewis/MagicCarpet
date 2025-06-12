@@ -6,19 +6,16 @@ using UnityEngine;
 public static class Deformations
 {
     //Typical Colors
-    public static Color G = Color.gray;
-    public static Color G1 = Color.gray1;
-    public static Color O = Color.orange;
+    public static Color G = Color.gray; //needed?
+    public static Color W = Color.white;
 
     //First Row
     public static int NIL = 0;
     public static int CCO = 1;
-    public static int CSI = 2;
-    public static int CFO = 3;
+    public static int CFO = 2;
+    public static int CSI = 3;
     public static int RUF = 4;
-    public static int XXX = 5;
-    public static int YYY = 6;
-    public static int ZZZ = 7;
+    public static int RUB = 4;
 
     //Second Row
     //
@@ -51,19 +48,19 @@ public static class Deformations
             { 0, 0, 0, 0, 0 },
         };
         lodge.colorChanges = new Color[5, 5] {
-            { G, G, G, G, G },
-            { G, G, G, G, G },
-            { G, G, O, G, G },
-            { G, G, G, G, G },
-            { G, G, G, G, G },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
         };
 
         //FENCESPANS - ALWAYS EVEN
         lodge.uvBasisRemaps = new int[4, 4]
         {
             {CCO, CFO, CFO, CCO},
-            {CSI, RUF, RUF, CSI},
-            {CSI, RUF, RUF, CSI},
+            {CFO, RUF, RUF, CFO},
+            {CFO, RUF, RUF, CFO},
             {CCO, CFO, CFO, CCO},
         };
         lodge.triangleFlips = new bool[4, 4]
@@ -93,9 +90,9 @@ public static class Deformations
             { 0, 0, 0,},
         };
         spike.colorChanges = new Color[3, 3] {
-            { G, G, G,},
-            { G, G, G,},
-            { G, G, G,},
+            { W, W, W,},
+            { W, W, W,},
+            { W, W, W,},
         };
 
         //FENCESPANS - ALWAYS EVEN
@@ -133,19 +130,19 @@ public static class Deformations
             {0,0,0,0,0,},
         };
         castle.colorChanges = new Color[5, 5] {
-            { G, G, G, G, G },
-            { G, G, G, G, G },
-            { G, G, G, G, G },
-            { G, G, G, G, G },
-            { G, G, G, G, G },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
+            { W, W, W, W, W },
         };
 
         //FENCESPANS - ALWAYS EVEN
         castle.uvBasisRemaps = new int[4, 4]
         {
             {CCO, CFO, CFO, CCO},
-            {CSI, NIL, NIL, CSI},
-            {CSI, NIL, NIL, CSI},
+            {CFO, NIL, NIL, CFO},
+            {CFO, NIL, NIL, CFO},
             {CCO, CFO, CFO, CCO},
         };
         castle.triangleFlips = new bool[4, 4]
@@ -186,52 +183,52 @@ public static class Deformations
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
         };
         castle.colorChanges = new Color[13, 13] {
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
-            {G,G,G,G,G,G,G,G,G,G,G,G,G,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
+            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
         };
 
         //FENCESPANS - ALWAYS EVEN
         castle.uvBasisRemaps = new int[12, 12]
         {
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
-            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
-            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
+            {CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO},
+            {CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
             {NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL},
-            {NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL},
-            {NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL},
+            {NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL},
+            {NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL},
             {NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
-            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
-            {CSI, RUF, RUF, CSI, NIL, NIL, NIL, NIL, CSI, RUF, RUF, CSI},
+            {CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO},
+            {CFO, RUF, RUF, CFO, NIL, NIL, NIL, NIL, CFO, RUF, RUF, CFO},
             {CCO, CFO, CFO, CCO, NIL, NIL, NIL, NIL, CCO, CFO, CFO, CCO},
 
         };
         castle.triangleFlips = new bool[12, 12]
         {
-            {true, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, true, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false},
+            {true, false, false, false, false, false, false, false, true, false, false, false},
+            {false, true, false, false, false, false, false, false, false, true, false, false},
+            {false, false, true, false, false, false, false, false, false, false, true, false},
+            {false, false, false, true, false, false, false, false, false, false, false, true},
+            {false, false, false, false, true, false, false, false, false, false, false, false},
+            {false, false, false, false, false, true, false, false, false, false, false, false},
+            {false, false, false, false, false, false, true, false, false, false, false, false},
+            {false, false, false, false, false, false, false, true, false, false, false, false},
+            {true, false, false, false, false, false, false, false, true, false, false, false},
+            {false, true, false, false, false, false, false, false, false, true, false, false},
+            {false, false, true, false, false, false, false, false, false, false, true, false},
+            {false, false, false, true, false, false, false, false, false, false, false, true},
 
         };
         return castle;
@@ -253,19 +250,13 @@ public static class Deformations
             { -0.5f, -0.5f,},
         };
         pock.colorChanges = new Color[2, 2] {
-            { G1, G1},
-            { G1, G1},
+            { W, W },
+            { W, W },
         };
 
         //FENCESPANS
-        pock.uvBasisRemaps = new int[1, 1]
-        {
-            {NIL}
-        };
-        pock.triangleFlips = new bool[1, 1]
-        {
-            {true}
-        };
+        pock.uvBasisRemaps = new int[0, 0] {};
+        pock.triangleFlips = new bool[0,0] {};
         return pock;
     }
 }
