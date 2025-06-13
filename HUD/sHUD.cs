@@ -197,9 +197,11 @@ public class sHUD : MonoBehaviour
 
     private IEnumerator HandleWarningCoroutine(string text)
     {
+        WaitForSeconds waitOne = new WaitForSeconds(1);
+
         warningText.text = text;
         warningTextPanel.localScale = Vector3.one;
-        yield return new WaitForSeconds(1f);
+        yield return waitOne;
         warningText.text = "";
         warningTextPanel.localScale = Vector3.zero;
     }

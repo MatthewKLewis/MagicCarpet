@@ -177,7 +177,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         yComponentOfMovement = -distanceToGround * Time.deltaTime;
 
         //Horizontal movement
-        //TODO - Flocking / Simpler separation pushes
+        //TODO - Flocking / Simple separation pushes
         Vector3 movement = Vector3.zero;
         if (distanceToPlayer > 10f)
         {
@@ -281,13 +281,15 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
     private IEnumerator ChangeAI_STATE()
     {
+        WaitForSeconds waitThree = new WaitForSeconds(3);
+
         // THIS ONLY MARKS A NEW AI STATE FOR THE ENEMY, THE BEHAVIORS RELEVANT
         // TO THE AI ARE IN UPDATE
         // TODO - Change AI state based on Castle Damage
 
         while (tM.player)
         {
-            yield return new WaitForSeconds(3);
+            yield return waitThree;
             float healthPercent = currentHealth / maxHealth;
             if (healthPercent < 0.5f)
             {

@@ -34,13 +34,10 @@ public class sMagicCamera : MonoBehaviour
     {
         if (target)
         {
-            transform.rotation = target.rotation;
-            //transform.position = target.position;
-            transform.position = new Vector3(
-                target.position.x, 
-                Mathf.Lerp(transform.position.y, target.position.y, followFactor), 
-                target.position.z)
-            ;
+            transform.SetPositionAndRotation(
+                new Vector3(target.position.x, Mathf.Lerp(transform.position.y, target.position.y, followFactor), target.position.z), 
+                target.rotation
+            );
         }
     }
 

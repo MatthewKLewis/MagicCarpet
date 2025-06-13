@@ -29,7 +29,6 @@ public class sLookAt : MonoBehaviour
             if (gM.player)
             {
                 target = gM.player.GetComponent<sPlayer>().cameraTransform;
-
             }
         }
     }

@@ -136,7 +136,7 @@ public class sBeeEnemy : MonoBehaviour, IKillable
         yComponentOfMovement = -distanceToGround * Time.deltaTime;
 
         //Horizontal movement
-        //TODO - Flocking / Simpler separation pushes
+        //TODO - Flocking / Simple separation pushes
         Vector3 movement = Vector3.zero;
         if (distanceToPlayer > 2f)
         {
@@ -218,10 +218,12 @@ public class sBeeEnemy : MonoBehaviour, IKillable
      */
     private IEnumerator ChangeAIState()
     {
+        WaitForSeconds waitThree = new WaitForSeconds(3);
+
         while (gM.player) {
             //print(gameObject.name + " change AI state");
 
-            yield return new WaitForSeconds(3);
+            yield return waitThree;
 
             //Just changing the speed penalties of the
             //Bees might help to break up their grouping

@@ -64,11 +64,11 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
 
-                //two normals - one per vertex
-                //normals.Add(gM.vertexMap[x, z].normal);
-                //normals.Add(gM.vertexMap[x + 1, z].normal);
-                //normals.Add(gM.vertexMap[x, z + 1].normal);
-                //normals.Add(gM.vertexMap[x + 1, z + 1].normal);
+                //4 normals
+                normals.Add(gM.vertexMap[x, z].normal);
+                normals.Add(gM.vertexMap[x + 1, z].normal);
+                normals.Add(gM.vertexMap[x, z + 1].normal);
+                normals.Add(gM.vertexMap[x + 1, z + 1].normal);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -110,15 +110,13 @@ public class sTerrainChunk : MonoBehaviour
         mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        mesh.normals = normals.ToArray();
-
         mesh.uv = uvs.ToArray();
         mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
+        mesh.normals = normals.ToArray();
 
+        //Dont recalc normals
         mesh.RecalculateBounds();
-        mesh.RecalculateNormals();
-
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;
@@ -147,11 +145,11 @@ public class sTerrainChunk : MonoBehaviour
                 vertices.Add(new Vector3(x, gM.vertexMap[x, z + 1].height, z + 1) * Constants.TILE_WIDTH);
                 vertices.Add(new Vector3(x + 1, gM.vertexMap[x + 1, z + 1].height, z + 1) * Constants.TILE_WIDTH);
 
-                //two normals - one per vertex
-                //normals.Add(gM.vertexMap[x, z].normal);
-                //normals.Add(gM.vertexMap[x + 1, z].normal);
-                //normals.Add(gM.vertexMap[x, z + 1].normal);
-                //normals.Add(gM.vertexMap[x + 1, z + 1].normal);
+                //4 normals
+                normals.Add(gM.vertexMap[x, z].normal);
+                normals.Add(gM.vertexMap[x + 1, z].normal);
+                normals.Add(gM.vertexMap[x, z + 1].normal);
+                normals.Add(gM.vertexMap[x + 1, z + 1].normal);
 
                 //4 colors
                 colors.Add(gM.vertexMap[x, z].color);
@@ -195,14 +193,12 @@ public class sTerrainChunk : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.normals = normals.ToArray();
-
         mesh.uv = uvs.ToArray();
         mesh.uv2 = uvTwos.ToArray();
         mesh.colors = colors.ToArray();
 
+        //Dont recalc normals
         mesh.RecalculateBounds();
-        mesh.RecalculateNormals(); 
-
         mesh.Optimize();
         meshFilter.mesh = mesh;
         mCollider.sharedMesh = mesh;

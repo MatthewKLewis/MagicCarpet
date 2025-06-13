@@ -6,7 +6,7 @@ using UnityEngine;
 public static class Deformations
 {
     //Typical Colors
-    public static Color G = Color.gray; //needed?
+    public static Color B = Color.black;
     public static Color W = Color.white;
 
     //First Row
@@ -173,9 +173,9 @@ public static class Deformations
             { 0,4,5,4,0,0,0,0,0,4,5,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-            { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
+            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
+            { 0,0,0,0,0,4,5,4,0,0,0,0,0,},
+            { 0,0,0,0,0,4,4,4,0,0,0,0,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,4,5,4,0,0,0,0,0,4,5,4,0,},
@@ -250,8 +250,8 @@ public static class Deformations
             { -0.5f, -0.5f,},
         };
         pock.colorChanges = new Color[2, 2] {
-            { W, W },
-            { W, W },
+            { B, B },
+            { B, B },
         };
 
         //FENCESPANS

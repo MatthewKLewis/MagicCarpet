@@ -443,7 +443,6 @@ public class LevelEditorManager : MonoBehaviour
     private bool NearAnotherBuilding(int hitX, int hitZ)
     {
         //No Castles near other castles
-        //TODO - this should just compare castleInfo to castleInfo!
         foreach (Castle castle in castleInfo)
         {
             //MAGIC NUMBER - 

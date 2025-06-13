@@ -23,14 +23,14 @@ public struct Vertex
 {
     public float height;
     public Color color;
-    //public Vector3 normal;
+    public Vector3 normal;
     public OWNER_ID ownerID;
 
-    public Vertex(float h, Color col, OWNER_ID ownId) //, Vector3 norm)
+    public Vertex(float h, Color col, OWNER_ID ownId, Vector3 norm)
     {
         height = h;
         color = col;
-        //normal = norm;
+        normal = norm;
         ownerID = ownId;
     }
 }
