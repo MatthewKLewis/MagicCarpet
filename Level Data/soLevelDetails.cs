@@ -10,7 +10,6 @@ public class soLevelDetails : ScriptableObject
     public Texture2D ownershipTexture;
     public Texture2D uvBasisTexture;
     public Texture2D triFlipsTexture;
-
     public float heightMapMultiplier;
 
     [Header("Material")]
@@ -23,5 +22,9 @@ public class soLevelDetails : ScriptableObject
     [Header("Light")]
     public Color ambientLightColor;
 
+    [Header("Player")]
+    public Vector3 playerStartLocation;
+    public bool playRainEffect;
+    public bool playSandstormEffect;
 
 }

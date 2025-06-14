@@ -13,7 +13,7 @@ public class sLookAt : MonoBehaviour
     private GameManager gM;
     private Transform target = null;
 
-    private void Start()
+    private void Awake()
     {
         gM = GameManager.instance;
     }

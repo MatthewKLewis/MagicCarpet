@@ -8,7 +8,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     public OWNER_ID ownerID { get; set; } = OWNER_ID.PLAYER;
 
     private GameManager gM;
-    private GameManager tM;
+    private SessionManager sM;
 
     //Unity
     private CharacterController cC;
@@ -79,6 +79,10 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void Awake()
     {
+        gM = GameManager.instance;
+        sM = SessionManager.instance;
+        cC = GetComponent<CharacterController>();
+
         //Actions
     }
 
@@ -89,17 +93,11 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     void Start()
     {
-        gM = GameManager.instance;
-        tM = GameManager.instance;
-
-        cC = GetComponent<CharacterController>();
-
         freelookFrozen = false;
         windAudioSource.Play();
         guidanceLine.useWorldSpace = true;
 
         wrapAt = gM.chunks.GetLength(0) * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
-
         Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
         Actions.OnManaChange.Invoke(currentMana, maxMana);
     }
@@ -194,13 +192,16 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             float distanceToGround = 0;
             if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
             {
-                //Match carpet rotation to ground plane rotation?
-                Vector3 gpAngle = Vector3.ProjectOnPlane(transform.forward, groundHit.normal); //cameraGimbal.forward
-                carpetTransform.rotation = Quaternion.Lerp(carpetTransform.rotation, Quaternion.LookRotation(gpAngle, groundHit.normal), 0.05f); //normal angle
 
                 Debug.DrawRay(cameraTransform.position, Vector3.down, Color.red, 0.2f);
                 distanceToGround = groundHit.distance;
-                //print(distanceToGround);            
+
+                //Match carpet rotation to ground plane rotation, if distance is less than 2 meters
+                //if (distanceToGround < 2f)
+                //{
+                //    Vector3 gpAngle = Vector3.ProjectOnPlane(transform.forward, groundHit.normal); //cameraGimbal.forward
+                //    carpetTransform.rotation = Quaternion.Lerp(carpetTransform.rotation, Quaternion.LookRotation(gpAngle, groundHit.normal), 0.05f); //normal angle
+                //}
             }
 
             //Falloff
@@ -222,21 +223,24 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
             //Adding the X and Z inputs
             xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
+            yComponentOfMovement += transformedInputs.y;
             zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
 
-            yComponentOfMovement += transformedInputs.y;
+            //Upwards movement?
+            //if (Input.GetKey(KeyCode.Space))
+            //{
+            //    yComponentOfMovement = 1f;
+            //}
 
             //Clamping horizontal movement
             Vector3 movement = new Vector3(xComponentOfMovement, yComponentOfMovement, zComponentOfMovement) * speed;
-
-            //movement.y = yComponentOfMovement;
 
             //Send it!
             cC.enabled = true;
             cC.Move(movement);
 
             //Wake and Dust
-            wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
+            wakeAndDust.GenerateWakeOrDust_U(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
 
             //Regen
             RegenHealthAndMana();
@@ -251,7 +255,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         //Quit, even when dead
         if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
         {
-            gM.LoadLevel(0);
+            sM.LoadLevel(0);
         }        
     }
 
@@ -259,21 +263,10 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     {
         if (mouseButton == 0) //FIREBALL
         {
-            int manaCost = 1;
-            if (currentMana < manaCost)
+            if (DecrementManaIfEnough(1))
             {
-                Actions.OnHUDWarning("NOT ENOUGH MANA");
-                return;
-            }
-            currentMana -= manaCost;
-            Actions.OnManaChange.Invoke(currentMana, maxMana);
-
-            //Poll for enemy positions, find one in front
-            GameObject target = tM.GetEnemyWithinSightCone(transform.position, transform.forward);
-
-            if (target) //Auto-aim fireball
-            {
-                if (target.TryGetComponent(out IKillable script))
+                GameObject target = gM.GetEnemyWithinSightCone(transform.position, transform.forward);
+                if (target) //Auto-aimed fireball
                 {
                     //Mark projectile with ownerName!
                     Instantiate(
@@ -286,40 +279,38 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
                     playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
                     playerAudioSource.PlayOneShot(fireBallClip);
                 }
-            }
-            else //Non auto-aim fireball
-            {
-                playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
-                playerAudioSource.PlayOneShot(fireBallClip);
+                else //Non auto-aim fireball
+                {
+                    playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
+                    playerAudioSource.PlayOneShot(fireBallClip);
 
-                //Mark projectile with ownerName!
-                Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
-                    .GetComponent<IProjectile>().ownerID = ownerID;
+                    //Mark projectile with ownerName!
+                    Instantiate(gM.fireBallPrefab, cameraTransform.position, cameraTransform.rotation, null)
+                        .GetComponent<IProjectile>().ownerID = ownerID;
+                }
             }
         }
         else if (mouseButton == 1) //CASTLESEED
         {
-            int manaCost = 1;
-            if (currentMana < manaCost)
+            if (DecrementManaIfEnough(1))
             {
-                Actions.OnHUDWarning("NOT ENOUGH MANA");
-                return;
+                //Mark projectile with ownerName!
+                Instantiate(gM.castleSeedPrefab, cameraTransform.position, cameraTransform.rotation, null)
+                    .GetComponent<IProjectile>().ownerID = ownerID;
             }
-
-            currentMana -= manaCost;
-            Actions.OnManaChange.Invoke(currentMana, maxMana);
-
-            //Mark projectile with ownerName!
-            Instantiate(gM.castleSeedPrefab, cameraTransform.position, cameraTransform.rotation, null)
-                .GetComponent<IProjectile>().ownerID = ownerID;
         }
-
     }
 
-    private bool HasManaToCast(int manaCost)
+    private bool DecrementManaIfEnough(int manaCost)
     {
-        //TODO - rather than checking with 4 lines everywhere
-        return false;
+        if (currentMana < manaCost)
+        {
+            Actions.OnHUDWarning("NOT ENOUGH MANA");
+            return false;
+        }
+        currentMana -= manaCost;
+        Actions.OnManaChange.Invoke(currentMana, maxMana);
+        return true;
     }
 
     private void SwingScymitar()
@@ -423,7 +414,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     {
         //
     }
-
 
     //private void OnControllerColliderHit(ControllerColliderHit hit)
     //{

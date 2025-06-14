@@ -11,14 +11,19 @@ public class sCritter : MonoBehaviour, IKillable
     public int maxHealth { get; set; } = 3;
     public bool isDead { get; set; } = false;
 
+    private void Awake()
+    {
+        gM = GameManager.instance;        
+    }
+
     void Start()
     {
-        gM = GameManager.instance;
+        //
     }
 
     void Update()
     {
-        
+        //
     }
 
     public bool TakeDamage(int damage)
@@ -39,12 +44,7 @@ public class sCritter : MonoBehaviour, IKillable
 
     private void Die()
     {
-        SpawnManaReward();
+        gM.SpawnManaFromPool(transform.position);
         Destroy(this.gameObject);
-    }
-
-    private void SpawnManaReward()
-    {
-        Instantiate(gM.manaOrbPrefab, transform.position, transform.rotation, null);
     }
 }

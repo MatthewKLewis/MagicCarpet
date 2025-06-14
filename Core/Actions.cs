@@ -53,6 +53,9 @@ public static class Actions
     public static Action<Vector3> OnPlayerWarp;
 
 
+    public static Action<int> OnLevelExit;
+
+
     //LEVEL EDITOR
     public static Action<bool> OnLevelEditorPanelToggle;
 

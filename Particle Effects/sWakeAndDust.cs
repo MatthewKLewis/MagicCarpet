@@ -7,8 +7,8 @@ public class sWakeAndDust : MonoBehaviour
     [SerializeField] private ParticleSystem wakeSystem;
     [SerializeField] private ParticleSystem dustSystem;
 
-    // Wake is called once per frame, in sPlayer FixedUpdate (is this bad?)
-    public void GenerateWakeOrDust(float speed, float groundHeight, float distToGround)
+    // Wake is called once per frame, in sPlayer Update
+    public void GenerateWakeOrDust_U(float speed, float groundHeight, float distToGround)
     {
         //print(groundHeight + ", " + distToGround);
         if (speed > 2f && distToGround < 3f)

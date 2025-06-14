@@ -115,7 +115,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         RegenHealthAndMana();
 
         //FX
-        wakeAndDust.GenerateWakeOrDust(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
+        wakeAndDust.GenerateWakeOrDust_U(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
     }
 
     private void Collect_U()

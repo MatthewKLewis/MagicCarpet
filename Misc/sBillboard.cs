@@ -12,7 +12,7 @@ public class sBillboard : MonoBehaviour
 {
 	private GameManager gM;
 
-    private void Start()
+    private void Awake()
     {
         gM = GameManager.instance;
     }

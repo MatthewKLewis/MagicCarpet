@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class Deformations
 {
-    //Typical Colors
+    //Black and White, for brevity.
     public static Color B = Color.black;
     public static Color W = Color.white;
 
@@ -15,18 +15,8 @@ public static class Deformations
     public static int CFO = 2;
     public static int CSI = 3;
     public static int RUF = 4;
-    public static int RUB = 4;
-
+    public static int RUB = 5;
     //Second Row
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-
 
     public static Deformation Lodge()
     {

@@ -5,15 +5,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /*
- * 
- * The Terrain Manager is the singleton manager for terrain generation.
- * It creates TerrainChunks, and delegates terrain alteration
- * operations to them.
- * 
+ * TODO - write new summary
+ * TODO - Use comparetag rather than tag == "enemy"
  */
-
-//TODO - Use comparetag rather than tag == "enemy" e.g.
-//GetComponent is less efficient than SerializeField & plug-in.
 
 public class GameManager : MonoBehaviour
 {
@@ -21,9 +15,7 @@ public class GameManager : MonoBehaviour
 
     [Space(4)]
     [Header("Levels")]
-    [Range(0, 5)] //Update as needed
-    public int levelIndex = 0;
-    public List<soLevelDetails> levelDetails;
+    public soLevelDetails levelDetails;
 
     //CHUNK DATA
     [Space(4)]
@@ -95,7 +87,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        //SINGLETON
+        //SINGLETON, one per LEVEL
         if (instance != null)
         {
             Destroy(gameObject);
@@ -103,7 +95,6 @@ public class GameManager : MonoBehaviour
         else
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
@@ -121,16 +112,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         transform.position = Vector3.zero;
-
-        //ALLOWS GAME TO START FROM ANY SCENE LOAD
-        if (SceneManager.GetActiveScene().buildIndex > 1)
-        {
-            StartLevel();
-        }
-        else
-        {
-            Debug.LogWarning("Non playable level");
-        }
+        StartLevel();        
     }
 
     private void StartLevel()
@@ -139,9 +121,9 @@ public class GameManager : MonoBehaviour
         Cursor.visible = false;
 
         //Light and Fog
-        RenderSettings.ambientLight = levelDetails[levelIndex].ambientLightColor;
-        RenderSettings.fogColor = levelDetails[levelIndex].fogColor;
-        RenderSettings.fogDensity = levelDetails[levelIndex].fogIntensity;
+        RenderSettings.ambientLight = levelDetails.ambientLightColor;
+        RenderSettings.fogColor = levelDetails.fogColor;
+        RenderSettings.fogDensity = levelDetails.fogIntensity;
 
         //Terrain first   
         DrawChunks();
@@ -161,7 +143,7 @@ public class GameManager : MonoBehaviour
         magicCamera = Instantiate(magicCameraPrefab, playerStartingPosition, transform.rotation, null);
 
         //Set SkyDome color equal to fog color
-        player.GetComponent<sPlayer>().SetSkyDomeColor(levelDetails[levelIndex].fogColor);
+        player.GetComponent<sPlayer>().SetSkyDomeColor(levelDetails.fogColor);
 
         //Then enemies
         //Instantiate(beeEnemyPrefab, new Vector3(1000, 100, 1000), transform.rotation, null);
@@ -179,27 +161,27 @@ public class GameManager : MonoBehaviour
 
     private void DrawChunks()
     {
-        if (levelDetails[levelIndex].heightTexture.width != levelDetails[levelIndex].heightTexture.height) { Debug.LogError("LEVEL TEXTURE NOT SQUARE!"); }
-        if (!isPowerofTwo(levelDetails[levelIndex].heightTexture.width - 1)) { Debug.LogError("LEVEL TEXTURE NOT POW2+1"); }
-        vertexMap = new Vertex[levelDetails[levelIndex].heightTexture.width, levelDetails[levelIndex].heightTexture.width]; // 1025,1025, or 513, 513
-        squareMap = new Square[levelDetails[levelIndex].heightTexture.width - 1, levelDetails[levelIndex].heightTexture.width - 1]; //1024,1024 or 512,512
-        chunks = new sTerrainChunk[(levelDetails[levelIndex].heightTexture.width - 1) / Constants.CHUNK_WIDTH, (levelDetails[levelIndex].heightTexture.width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
+        if (levelDetails.heightTexture.width != levelDetails.heightTexture.height) { Debug.LogError("LEVEL TEXTURE NOT SQUARE!"); }
+        if (!isPowerofTwo(levelDetails.heightTexture.width - 1)) { Debug.LogError("LEVEL TEXTURE NOT POW2+1"); }
+        vertexMap = new Vertex[levelDetails.heightTexture.width, levelDetails.heightTexture.width]; // 1025,1025, or 513, 513
+        squareMap = new Square[levelDetails.heightTexture.width - 1, levelDetails.heightTexture.width - 1]; //1024,1024 or 512,512
+        chunks = new sTerrainChunk[(levelDetails.heightTexture.width - 1) / Constants.CHUNK_WIDTH, (levelDetails.heightTexture.width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
 
         //Extract Pixels
-        Color32[] heightPixels = levelDetails[levelIndex].heightTexture.GetPixels32();
-        Color32[] ownershipPixels = levelDetails[levelIndex].ownershipTexture.GetPixels32();
-        Color32[] uvBasisPixels = levelDetails[levelIndex].uvBasisTexture.GetPixels32();
+        Color32[] heightPixels = levelDetails.heightTexture.GetPixels32();
+        Color32[] ownershipPixels = levelDetails.ownershipTexture.GetPixels32();
+        Color32[] uvBasisPixels = levelDetails.uvBasisTexture.GetPixels32();
 
         //VERTEX - FENCE POST
-        for (int z = 0; z < levelDetails[levelIndex].heightTexture.width; z++)
+        for (int z = 0; z < levelDetails.heightTexture.width; z++)
         {
-            for (int x = 0; x < levelDetails[levelIndex].heightTexture.width; x++)
+            for (int x = 0; x < levelDetails.heightTexture.width; x++)
             {
-                int height = heightPixels[x + (z * levelDetails[levelIndex].heightTexture.width)].r;
-                int ownerID = ownershipPixels[x + (z * levelDetails[levelIndex].ownershipTexture.width)].r;
+                int height = heightPixels[x + (z * levelDetails.heightTexture.width)].r;
+                int ownerID = ownershipPixels[x + (z * levelDetails.ownershipTexture.width)].r;
 
                 //The height
-                vertexMap[x, z].height = height * levelDetails[levelIndex].heightMapMultiplier;
+                vertexMap[x, z].height = height * levelDetails.heightMapMultiplier;
 
                 //The vertex colors control whether the square is UV or Triplanar rendered, so Black (triplanar) if the owner is 0, White otherwise
                 vertexMap[x, z].color = ownerID == 0 ? Color.black : Color.white;
@@ -211,9 +193,9 @@ public class GameManager : MonoBehaviour
         }
 
         //SQUARE - FENCE SPAN
-        for (int z = 0; z < levelDetails[levelIndex].heightTexture.width - 1; z++)
+        for (int z = 0; z < levelDetails.heightTexture.width - 1; z++)
         {
-            for (int x = 0; x < levelDetails[levelIndex].heightTexture.width - 1; x++)
+            for (int x = 0; x < levelDetails.heightTexture.width - 1; x++)
             {
 
                 Square sq = new Square();
@@ -231,7 +213,7 @@ public class GameManager : MonoBehaviour
                 vertexMap[x, z].normal = averageNormal;
 
                 //The UV index of the square is determined from another texture
-                int uv = uvBasisPixels[x + (z * levelDetails[levelIndex].uvBasisTexture.width)].r;
+                int uv = uvBasisPixels[x + (z * levelDetails.uvBasisTexture.width)].r;
                 sq.uvBasis = uv;
 
                 squareMap[x, z] = sq;
@@ -248,14 +230,14 @@ public class GameManager : MonoBehaviour
                 GameObject gO = Instantiate(terrainChunkPrefab, Vector3.zero, Quaternion.Euler(Vector3.zero), chunkParent);
                 gO.name = "Chunk: " + x + ", " + z;
                 chunks[x, z] = gO.GetComponent<sTerrainChunk>();
-                chunks[x, z].SetOrigin(x * (Constants.CHUNK_WIDTH - 1), z * (Constants.CHUNK_WIDTH - 1), levelDetails[levelIndex].chunkMaterial);
+                chunks[x, z].SetOrigin(x * (Constants.CHUNK_WIDTH - 1), z * (Constants.CHUNK_WIDTH - 1), levelDetails.chunkMaterial);
             }
         }
     }
 
     private void DrawFoliage()
     {
-        Instantiate(foliagePrefab, new Vector3(364, 4, 209), transform.rotation, transform);
+        //Instantiate(foliagePrefab, new Vector3(364, 4, 209), transform.rotation, transform);
     }
 
     private void DrawAdjacentPlanes()
@@ -476,6 +458,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    //UTILITY
+    //UTILITY
+    //UTILITY
+
     public GameObject GetEnemyWithinSightCone(Vector3 pos, Vector3 fwd)
     {
         FilterEnemiesList();
@@ -564,65 +550,6 @@ public class GameManager : MonoBehaviour
         return Mathf.Pow(2, logValue) == n;
     }
 
-    public void LoadLevel(int level)
-    {
-        StartCoroutine(GoToSceneAsync(level));
-    }
-
-    IEnumerator GoToSceneAsync(int sceneIndex)
-    {
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneIndex);
-
-        while (!operation.isDone)
-        {
-            print(operation.progress);
-            //float progressValue = Mathf.Clamp01(operation.progress / 0.9f);
-            yield return null;
-        }
-
-        //TODO - think about whether we're changing scenes or reloading terrain
-        if (sceneIndex > 1)
-        {
-            //Hide mouse, spawn world
-            StartLevel();
-        }
-        else
-        {
-            //Show mouse, spawn nothing
-            Cursor.lockState = CursorLockMode.Confined;
-            Cursor.visible = true;
-        }
-    }
-
-    public void SpawnManaFromPool(Vector3 pos)
-    {
-        GameObject manaGO = manaPool.Dequeue();
-        manaGO.SetActive(true);
-        manaGO.transform.position = pos;
-        manaPool.Enqueue(manaGO);
-    }
-
-    public void QuitGame()
-    {
-        Application.Quit();
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (SceneManager.GetActiveScene().buildIndex > 1)
-        {
-            int fullWidth = 32 * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
-
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(
-                    new Vector3(1, 0, 1) * fullWidth / 2,
-                    new Vector3(1, 0, 1) * fullWidth
-                );
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(playerStartingPosition, 2f);
-        }
-    }
-
     private bool NearAnotherBuilding(int hitX, int hitZ)
     {
         //No Castles near other castles
@@ -651,4 +578,29 @@ public class GameManager : MonoBehaviour
         }
         return false;
     }
+
+    public void SpawnManaFromPool(Vector3 pos)
+    {
+        GameObject manaGO = manaPool.Dequeue();
+        manaGO.SetActive(true);
+        manaGO.transform.position = pos;
+        manaPool.Enqueue(manaGO);
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (SceneManager.GetActiveScene().buildIndex > 1)
+        {
+            int fullWidth = 32 * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireCube(
+                    new Vector3(1, 0, 1) * fullWidth / 2,
+                    new Vector3(1, 0, 1) * fullWidth
+                );
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(playerStartingPosition, 2f);
+        }
+    }
+
 }

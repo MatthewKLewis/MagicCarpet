@@ -4,20 +4,20 @@ using UnityEngine;
 
 public class sTitleScreen : MonoBehaviour
 {
-    private GameManager gM;
+    private SessionManager sM;
 
     void Start()
     {
-        gM = GameManager.instance;
+        sM = SessionManager.instance;
     }
 
     public void HandlePlayButton()
     {
-        gM.LoadLevel(1);
+        sM.LoadLevel(1);
     }
 
     public void HandleQuitButton()
     {
-        gM.QuitGame();
+        sM.QuitGame();
     }
 }

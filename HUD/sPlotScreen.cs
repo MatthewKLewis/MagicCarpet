@@ -28,7 +28,7 @@ public class sPlotScreen : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Space))
         {
             //Scene 2 is Level_1
-            GameManager.instance.LoadLevel(2);
+            SessionManager.instance.LoadLevel(2);
         }
     }
 

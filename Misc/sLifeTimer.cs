@@ -5,7 +5,7 @@ public class sLifeTimer : MonoBehaviour
     [SerializeField] private float lifeTime;
     private float lifeStart;
 
-    void OnEnable()
+    private void Start()
     {
         lifeStart = Time.time;
     }

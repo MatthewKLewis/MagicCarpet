@@ -8,8 +8,13 @@ using UnityEngine.UI;
 public class sHUD : MonoBehaviour
 {
     private GameManager gM;
-    private GameManager tM;
 
+    [Space(10)]
+    [Header("Loading Screen")]
+    [SerializeField] private Image loadingImage;
+    [SerializeField] private Transform loadingScreen;
+    private bool levelDone = false;
+    
     [Space(10)]
     [Header("Warning")]
     [SerializeField] private Transform warningTextPanel;
@@ -40,42 +45,33 @@ public class sHUD : MonoBehaviour
 
     private void Awake()
     {
+        gM = GameManager.instance;
+
         Actions.OnHealthChange += HandleHealthChange;
         Actions.OnCastleHealthChange += HandleCastleHealthChange;
-
         Actions.OnManaChange += HandleManaChange;
-
         Actions.OnSpellPanelToggle += HandleSpellPanelToggle;
-
         Actions.OnEnemyDeath += HandleEnemyDeath;
-
         Actions.OnHUDWarning += HandleWarning;
-
-        Actions.OnPlayerWarp += HandleWarp;
+        Actions.OnPlayerWarp += HandleWarp; 
+        Actions.OnLevelExit += FadeInLoadingScreen; 
     }
 
     private void OnDestroy()
     {
         Actions.OnHealthChange -= HandleHealthChange;
         Actions.OnCastleHealthChange -= HandleCastleHealthChange;
-
         Actions.OnManaChange -= HandleManaChange;
-
         Actions.OnManaChange -= HandleManaChange;
         Actions.OnSpellPanelToggle -= HandleSpellPanelToggle;
-
         Actions.OnEnemyDeath -= HandleEnemyDeath;
-
         Actions.OnHUDWarning -= HandleWarning;
-
         Actions.OnPlayerWarp -= HandleWarp;
+        Actions.OnLevelExit -= FadeInLoadingScreen;
     }
 
     private void Start()
     {
-        gM = GameManager.instance;
-        tM = GameManager.instance;
-
         enemyIndicatorList = new List<GameObject>();
         for (int i = 0; i < 12; i++)
         {
@@ -88,46 +84,7 @@ public class sHUD : MonoBehaviour
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
 
-        //miniMapImage.texture = gM.levelTextures[gM.levelIndex];        
-    }
-
-    private void Update()
-    {
-        //Move the player indicator
-        if (gM.player)
-        {
-            Vector3 playPos = gM.player.transform.position;
-            Vector3 playRot = gM.player.transform.rotation.eulerAngles;
-
-            for (int i = 0; i < enemyIndicatorList.Count; i++)
-            {
-                if (i < gM.enemies.Count)
-                {
-                    if (gM.enemies[i])
-                    {
-                        enemyIndicatorList[i].SetActive(true);
-
-                        Vector3 distFromPlayer = gM.enemies[i].transform.position - gM.player.transform.position;
-                        enemyIndicatorList[i].transform.localPosition = new Vector3(
-                            distFromPlayer.x / 8, // MAGIC NUMBER - WHY IS IT 8? CHUNK / TILE*TILE?
-                            distFromPlayer.z / 8, // TEXTURE WIDTH IS 256, TILE SIZE 2, 0,0 IS CENTER, 
-                            0
-                        );
-                    }
-                    else { enemyIndicatorList[i].SetActive(false); }
-                }
-                else { enemyIndicatorList[i].SetActive(false); }
-            }
-
-            int fullWidth = gM.chunks.GetLength(0) * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
-            miniMapImage.uvRect = new Rect(
-                (playPos.x - (fullWidth/2)) / fullWidth, 
-                (playPos.z - (fullWidth/2)) / fullWidth, 
-                3, 
-                3
-            );
-            miniMapTransform.localRotation = Quaternion.Euler(new Vector3(0, 0, playRot.y));
-        }
+        FadeOutLoadingScreen(0);
     }
 
     private void HandleHealthChange(int currentHealth, int maxHealth, bool isDamage)
@@ -204,5 +161,33 @@ public class sHUD : MonoBehaviour
         yield return waitOne;
         warningText.text = "";
         warningTextPanel.localScale = Vector3.zero;
+    }
+
+    //LOADING SCREEN
+    //LOADING SCREEN
+    //LOADING SCREEN
+
+    private void FadeInLoadingScreen(int _l) { StartCoroutine(FadeInLoadingScreenCoroutine()); }
+    private IEnumerator FadeInLoadingScreenCoroutine()
+    {
+        //Run on end - screen alpha goes from 100 to 0.
+        if (levelDone) yield break; //Don't do this coroutine twice.
+        for (int i = 0; i <= 100; i++)
+        {
+            loadingImage.color = new Color(0, 0, 0, i / 100f);
+            yield return null;
+        }
+        levelDone = true;
+    }
+
+    private void FadeOutLoadingScreen(int _l) { StartCoroutine(FadeOutLoadingScreenCoroutine()); }
+    private IEnumerator FadeOutLoadingScreenCoroutine()
+    {
+        //Run on start - screen alpha goes from 100 to 0.
+        for (int i = 100; i >= 0; i--)
+        {
+            loadingImage.color = new Color(0, 0, 0, i / 100f);
+            yield return null;
+        }
     }
 }
