@@ -27,6 +27,7 @@ public class sMagicCamera : MonoBehaviour
 
     private void Start()
     {
+        //TODO - Magic camera is instantiated by gM after player, so this doesn't fail
         target = gM.player.GetComponent<sPlayer>().cameraTransform;
     }
 
@@ -43,7 +44,7 @@ public class sMagicCamera : MonoBehaviour
 
     private void HandlePlayerDeath()
     {
-        return;
+        target = null;
     }
 
     public void ChangeTarget(Transform newTarget)

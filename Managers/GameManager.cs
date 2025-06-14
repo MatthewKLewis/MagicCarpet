@@ -1,4 +1,3 @@
-//using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 /*
  * TODO - write new summary
- * TODO - Use comparetag rather than tag == "enemy"
  */
 
 public class GameManager : MonoBehaviour
@@ -82,8 +80,7 @@ public class GameManager : MonoBehaviour
     public AudioClip fireBallClip;
     public AudioClip painClip;
     public AudioClip manaCollectClip;
-
-    //TODO - Move all component assignment into AWAKE!
+    public AudioClip stoneScrapeClip;
 
     private void Awake()
     {
@@ -98,10 +95,10 @@ public class GameManager : MonoBehaviour
         }
 
         // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
-        QualitySettings.vSyncCount = 1;
+        //QualitySettings.vSyncCount = 1;
 
         // Limit framerate
-        Application.targetFrameRate = 60;
+        //Application.targetFrameRate = 60;
 
         //Sun and Fog
         RenderSettings.ambientLight = Color.white;
@@ -138,19 +135,25 @@ public class GameManager : MonoBehaviour
             manaPool.Enqueue(manaGO);
         }
 
-        //Then player
-        player = Instantiate(playerPrefab, playerStartingPosition, transform.rotation, null);
-        magicCamera = Instantiate(magicCameraPrefab, playerStartingPosition, transform.rotation, null);
+        //Then player (if not in level editor)
+        if (SceneManager.GetActiveScene().name != "Level_Editor")
+        {
+            player = Instantiate(playerPrefab, playerStartingPosition, transform.rotation, null);
+            magicCamera = Instantiate(magicCameraPrefab, playerStartingPosition, transform.rotation, null);
 
-        //Set SkyDome color equal to fog color
-        player.GetComponent<sPlayer>().SetSkyDomeColor(levelDetails.fogColor);
+            //Set SkyDome color equal to fog color
+            player.GetComponent<sPlayer>().SetSkyDomeColor(levelDetails.fogColor);
+        }
+
 
         //Then enemies
-        //Instantiate(beeEnemyPrefab, new Vector3(1000, 100, 1000), transform.rotation, null);
-        //Instantiate(beeEnemyPrefab, new Vector3(800, 100, 900), transform.rotation, null);
-        //Instantiate(beeEnemyPrefab, new Vector3(1100, 100, 700), transform.rotation, null);
-        //Instantiate(beeEnemyPrefab, new Vector3(400, 100, 1100), transform.rotation, null);
+        Instantiate(beeEnemyPrefab, new Vector3(1200, 100, 1200), transform.rotation, null);
+        Instantiate(beeEnemyPrefab, new Vector3(800, 100, 900), transform.rotation, null);
+        Instantiate(beeEnemyPrefab, new Vector3(1100, 100, 700), transform.rotation, null);
+        Instantiate(beeEnemyPrefab, new Vector3(400, 100, 1100), transform.rotation, null);
+
         //Instantiate(nemesisPrefab, new Vector3(800, 100, 800), transform.rotation, null);
+        //Instantiate(nemesisPrefab, new Vector3(600, 100, 800), transform.rotation, null);
 
         GameObject[] beastsArray = GameObject.FindGameObjectsWithTag("Beast");
         foreach (GameObject beast in beastsArray) { enemies.Add(beast); }
@@ -317,6 +320,7 @@ public class GameManager : MonoBehaviour
                 castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
                 castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
 
+                AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
                 StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
                 break;
 
@@ -337,6 +341,7 @@ public class GameManager : MonoBehaviour
                 //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
                 castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
 
+                AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
                 StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
                 break;
 
@@ -365,8 +370,8 @@ public class GameManager : MonoBehaviour
     private IEnumerator AlterTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
     {
         //TEST - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
-        int offsetX = deformation.colorChanges.GetLength(0) / 2; //ALWAYS EVEN
-        int offsetZ = deformation.colorChanges.GetLength(1) / 2; //ALWAYS EVEN
+        int offsetX = deformation.heightOffsets.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = deformation.heightOffsets.GetLength(1) / 2; //ALWAYS EVEN
 
         //if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!");}
 
@@ -385,9 +390,9 @@ public class GameManager : MonoBehaviour
         }
 
         //VERTEX MAP MODIFICATIONS - COLOR and HEIGHT AVERAGING
-        for (int i = -offsetZ; i < deformation.colorChanges.GetLength(0) - offsetZ; i++)
+        for (int i = -offsetZ; i < deformation.heightOffsets.GetLength(0) - offsetZ; i++)
         {
-            for (int j = -offsetX; j < deformation.colorChanges.GetLength(0) - offsetX; j++)
+            for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
             {
                 //TODO - test pre-build height averaging.
                 if (deformation.deformationType == DEFORMATION_TYPE.CASTLE)
@@ -401,7 +406,8 @@ public class GameManager : MonoBehaviour
 
                 //change vertex color
                 vertexMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
-                vertexMap[hitX + j, hitZ + i].color = deformation.colorChanges[j + offsetX, i+ offsetZ];
+                vertexMap[hitX + j, hitZ + i].color = 
+                    (deformation.deformationType == DEFORMATION_TYPE.DESTRUCTION) ? Color.black : Color.white;
             }
         }
 
@@ -502,7 +508,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < enemies.Count; i++)
         {
             float distanceBetween = Vector3.Distance(pos, enemies[i].transform.position);
-            if (enemies[i].tag == "Beast" && distanceBetween < distanceAway)
+            if (enemies[i].CompareTag("Beast") && distanceBetween < distanceAway)
             {
                 retGO = enemies[i];
             }

@@ -103,7 +103,6 @@ public struct Deformation
 
     //Vertex based
     public float[,] heightOffsets;
-    public Color[,] colorChanges;
 
     //Square based
     public int[,] uvBasisRemaps;
@@ -111,10 +110,8 @@ public struct Deformation
 
     public override string ToString()
     {
-
         return $"Deformation(\n" +
                $"  heightOffsets: {heightOffsets[0, 0]},\n" +
-               $"  colorChanges: {colorChanges[0, 0]},\n" +
                $"  uvBasisRemaps: {uvBasisRemaps[0, 0]},\n" +
                $"  triangleFlips: {triangleFlips[0, 0]}\n" +
                $")";

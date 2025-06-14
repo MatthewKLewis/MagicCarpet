@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class sLevelEditorPlayer : MonoBehaviour
 {
-    private LevelEditorManager lEM;
+    private GameManager gM;
     private CharacterController cC;
 
     //State
@@ -21,22 +21,24 @@ public class sLevelEditorPlayer : MonoBehaviour
     private RaycastHit groundHit;
     [SerializeField] private LayerMask terrainMask;
     [SerializeField] private Camera lECamera;
-    [SerializeField] private Transform cursorPlane;
 
-    private int deformListIndex = 0;
-    private List<string> deforms;
+    [Space(4)]
+    [Header("Cursor")]
+    [SerializeField] private Transform cursorPlane;
+    private int cursorPlaneScale = 1;
+
+    private void Awake()
+    {
+        gM = GameManager.instance;
+        cC = GetComponent<CharacterController>();
+    }
 
     void Start()
     {
-        deforms = new List<string>() { "Lodge", "Pock", "LargeLodge", "Tent", "Castle"};
-        lEM = LevelEditorManager.instance;
-        cC = GetComponent<CharacterController>();
-
         cursorPlane.parent = null; //detach cursor
         cursorPlane.rotation = Quaternion.Euler(Vector3.zero);
     }
 
-    // Update is called once per frame
     void Update()
     {
         #region MOVEMENT
@@ -72,7 +74,7 @@ public class sLevelEditorPlayer : MonoBehaviour
             Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
             freelookFrozen = true;
-            Actions.OnLevelEditorPanelToggle.Invoke(true);
+            Actions.OnSpellPanelToggle.Invoke(true);
         }
 
         if (Input.GetKeyUp(KeyCode.LeftControl))
@@ -80,60 +82,50 @@ public class sLevelEditorPlayer : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             freelookFrozen = false;
-            Actions.OnLevelEditorPanelToggle.Invoke(false);
+            Actions.OnSpellPanelToggle.Invoke(false);
         }
 
         if (!freelookFrozen)
         {
+            //Move 3D Cursor
+            if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
+            {
+                //Find the square based on the hit
+                int hitX = Mathf.FloorToInt(groundHit.point.x / Constants.TILE_WIDTH);
+                int hitZ = Mathf.FloorToInt(groundHit.point.z / Constants.TILE_WIDTH);
+
+                cursorPlane.position = new Vector3(
+                    hitX * Constants.TILE_WIDTH,
+                    groundHit.point.y + 0.25f,
+                    hitZ * Constants.TILE_WIDTH
+                );
+            }
+
+            //Left Click
             if (Input.GetMouseButtonDown(0))
             {
                 if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
                 {
-                    switch (deforms[deformListIndex])
-                    {
-                        case "Lodge":
-                            print("+Lodge!");
-                            //lEM.AlterTerrain(groundHit.point, Deformations.Lodge());
-                            break;
-                        case "Pock":
-                            print("+Pock!");
-                            break;
-                        case "LargeLodge":
-                            print("+LargeLodge!");
-                            break;
-                        case "Tent":
-                            print("+Tent!");
-                            break;
-                        case "Castle":
-                            print("+Castle!");
-                            break;
-                    }
+                    print(groundHit.point);
+                    gM.AlterTerrain(groundHit.point, Deformations.Lodge());
                 }                
             }
 
+            //Right Click
             if (Input.GetMouseButtonDown(1))
             {
-                if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
-                {
-                    //Find the square based on the hit
-                    int hitX = Mathf.FloorToInt(groundHit.point.x / Constants.TILE_WIDTH);
-                    int hitZ = Mathf.FloorToInt(groundHit.point.z / Constants.TILE_WIDTH);
-
-                    cursorPlane.position = new Vector3(
-                        hitX * Constants.TILE_WIDTH, 
-                        lEM.vertexMap[hitX, hitZ].height * Constants.TILE_WIDTH + 0.1f,
-                        hitZ * Constants.TILE_WIDTH
-                    );
-
-                    print(hitX + ", " + hitZ + ":  " + lEM.squareMap[hitX, hitZ].ToString()+ "  Height: " + lEM.vertexMap[hitX,hitZ].height);
-                }
+                //
             }
 
+            //Scroll Wheel
             if (Input.mouseScrollDelta.magnitude > 0.1f)
             {
-                int scroll = Mathf.RoundToInt(Input.mouseScrollDelta.y);
-                deformListIndex = Mathf.Clamp(deformListIndex + scroll, 0, deforms.Count - 1);
-                print(deforms[deformListIndex]);
+                if (Input.mouseScrollDelta.y > 0.5f) { cursorPlaneScale++; }
+                else if (Input.mouseScrollDelta.y < 0.5f) { cursorPlaneScale--; }
+                else { return; }
+
+                cursorPlaneScale = Mathf.Clamp(cursorPlaneScale, 1, 20);
+                cursorPlane.localScale = Vector3.one * cursorPlaneScale;
             }
         }
     }

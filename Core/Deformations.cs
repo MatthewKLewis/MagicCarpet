@@ -28,37 +28,34 @@ public static class Deformations
         lodge.deformationType = DEFORMATION_TYPE.BUILDING;
         lodge.ownerID = OWNER_ID.CITIZENS;
 
-
         //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
-        lodge.heightOffsets = new float[5, 5] {
-            { 0, 0, 0, 0, 0 },
-            { 0, 4, 4, 4, 0 },
-            { 0, 4, 4, 4, 0 },
-            { 0, 4, 4, 4, 0 },
-            { 0, 0, 0, 0, 0 },
-        };
-        lodge.colorChanges = new Color[5, 5] {
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
+        lodge.heightOffsets = new float[6, 6] {
+            { 0, 0, 0, 0, 0, 0 },
+            { 0, 4, 4, 4, 4, 0 },
+            { 0, 4, 4, 4, 4, 0 },
+            { 0, 4, 4, 4, 4, 0 },
+            { 0, 4, 4, 4, 4, 0 },
+            { 0, 0, 0, 0, 0, 0 },
         };
 
         //FENCESPANS - ALWAYS EVEN
-        lodge.uvBasisRemaps = new int[4, 4]
+        lodge.uvBasisRemaps = new int[5, 5]
         {
-            {CCO, CFO, CFO, CCO},
-            {CFO, RUF, RUF, CFO},
-            {CFO, RUF, RUF, CFO},
-            {CCO, CFO, CFO, CCO},
+            {CFO, CFO, CFO, CFO, CFO},
+            {CFO, CFO, CFO, CFO, CFO},
+            {CFO, CFO, CFO, CFO, CFO},
+            {CFO, CFO, CFO, CFO, CFO},
+            {CFO, CFO, CFO, CFO, CFO},
+
         };
-        lodge.triangleFlips = new bool[4, 4]
+        lodge.triangleFlips = new bool[5, 5]
         {
-            {true, false, false, false},
-            {false, true, false, false},
-            {false, false, true, false},
-            {false, false, false, true},
+            {true, false, false, false, false},
+            {false, true, false, false, false},
+            {false, false, true, false, false},
+            {false, false, false, true, false},
+            {false, false, false, false, true},
+
         };
         return lodge;
     }
@@ -78,11 +75,6 @@ public static class Deformations
             { 0, 0, 0,},
             { 0, 8, 0,},
             { 0, 0, 0,},
-        };
-        spike.colorChanges = new Color[3, 3] {
-            { W, W, W,},
-            { W, W, W,},
-            { W, W, W,},
         };
 
         //FENCESPANS - ALWAYS EVEN
@@ -118,13 +110,6 @@ public static class Deformations
             {0,4,5,4,0,},
             {0,4,4,4,0,},
             {0,0,0,0,0,},
-        };
-        castle.colorChanges = new Color[5, 5] {
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
-            { W, W, W, W, W },
         };
 
         //FENCESPANS - ALWAYS EVEN
@@ -171,21 +156,6 @@ public static class Deformations
             { 0,4,5,4,0,0,0,0,0,4,5,4,0,},
             { 0,4,4,4,0,0,0,0,0,4,4,4,0,},
             { 0,0,0,0,0,0,0,0,0,0,0,0,0,},
-        };
-        castle.colorChanges = new Color[13, 13] {
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
-            {W,W,W,W,W,W,W,W,W,W,W,W,W,},
         };
 
         //FENCESPANS - ALWAYS EVEN
@@ -239,10 +209,10 @@ public static class Deformations
             { -0.5f, -0.5f,},
             { -0.5f, -0.5f,},
         };
-        pock.colorChanges = new Color[2, 2] {
-            { B, B },
-            { B, B },
-        };
+        //pock.colorChanges = new Color[2, 2] {
+        //    { B, B },
+        //    { B, B },
+        //};
 
         //FENCESPANS
         pock.uvBasisRemaps = new int[0, 0] {};

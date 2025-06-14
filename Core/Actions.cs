@@ -10,7 +10,7 @@ public static class Actions
     public static Action<float, float> OnExperienceGain;
     public static Action OnPlayerDeath;
 
-    //TERRAIN  ---------------------------
+    //TERRAIN  ----------------------------------
 
     /// <summary>
     /// isOpen
@@ -18,7 +18,7 @@ public static class Actions
     //   public static Action<CASTLE_ID> OnCastleCreation;
 
 
-    //HUD --------------------------------
+    //HUD --------------------------------------
 
     /// <summary>
     /// isOpen
@@ -30,7 +30,7 @@ public static class Actions
     /// </summary>
     public static Action<string> OnHUDWarning;
 
-    //Player -----------------------------
+    //Player -----------------------------------
 
     /// <summary>
     /// Current Health, Max Health, isDamage
@@ -52,11 +52,9 @@ public static class Actions
     /// </summary>
     public static Action<Vector3> OnPlayerWarp;
 
-
     public static Action<int> OnLevelExit;
 
 
-    //LEVEL EDITOR
-    public static Action<bool> OnLevelEditorPanelToggle;
-
+    //LEVEL EDITOR ------------------------------
+    //
 }

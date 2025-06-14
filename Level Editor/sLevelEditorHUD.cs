@@ -2,25 +2,21 @@ using UnityEngine;
 
 public class sLevelEditorHUD : MonoBehaviour
 {
-    LevelEditorManager lEM;
-
     [SerializeField] private Transform topPanel;
     [SerializeField] private Transform botPanel;
 
     private void Awake()
     {
-        Actions.OnLevelEditorPanelToggle += HandlePanelToggle;
+        Actions.OnSpellPanelToggle += HandlePanelToggle;
     }
 
     private void OnDestroy()
     {
-        Actions.OnLevelEditorPanelToggle -= HandlePanelToggle;
+        Actions.OnSpellPanelToggle -= HandlePanelToggle;
     }
 
     void Start()
     {
-        lEM = LevelEditorManager.instance;
-
         topPanel.localScale = Vector3.zero;
         botPanel.localScale = Vector3.zero;
     }
@@ -28,14 +24,13 @@ public class sLevelEditorHUD : MonoBehaviour
     public void HandleSaveButtonClick()
     {
         print("Saving a Level... ");
-        lEM.SaveImageFromHeights();
-        
+        SaveManager.Save();
     }
 
     public void HandleLoadButtonClick()
     {
         print("Loading a Level...");
-        lEM.Redraw();
+        print(SaveManager.Load());
     }
 
     public void HandlePanelToggle(bool show)

@@ -44,7 +44,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
 
     //Multipliers
-    private float moveFalloff = 0.98f; //now in Update, provide a target FPS in GameManager for stability!
+    private float moveFalloff = 0.99f; //now in Update, provide a target FPS in GameManager for stability!
     private float yawSensitivity = 4;
     private float pitchSensitivity = 5;
     private float rollSensitivity = 3;
@@ -63,7 +63,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     private int currentMana = 3;
     private int maxMana = 20;
     private float timeLastRegen = -1f;
-    private float regenCooldown = 1f;
+    private float regenCooldown = 3f;
 
     [Space(4)]
     [Header("Wake and Dust")]
@@ -104,6 +104,14 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     void Update()
     {
+        //Quit, even when dead
+        if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
+        {
+            sM.LoadLevel(0);
+        }  
+
+        if (isDead) return;
+
         //TODO - Optimize this with || 
         if (transform.position.x < 0f)
         {
@@ -130,133 +138,125 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
         }
 
-        if (!isDead)
+
+        //Spell Panel
+        if (Input.GetKeyDown(KeyCode.LeftControl))
         {
-            //Spell Panel
-            if (Input.GetKeyDown(KeyCode.LeftControl))
-            {
-                Cursor.lockState = CursorLockMode.Confined;
-                Cursor.visible = true;
-                freelookFrozen = true;
-                Actions.OnSpellPanelToggle.Invoke(true);
-            }
-            if (Input.GetKeyUp(KeyCode.LeftControl))
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-                freelookFrozen = false;
-                Actions.OnSpellPanelToggle.Invoke(false);
-            }
-
-            if (!freelookFrozen)
-            {
-                //Gather Inputs
-                Vector2 mouseChange = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
-
-                //Rotate Player Yaw
-                playerFacing += new Vector3(0, mouseChange.x, 0) * yawSensitivity;
-                transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
-
-                //Rotate Camera Pitch...
-                cameraPitch += -mouseChange.y * pitchSensitivity;
-                cameraPitch = Mathf.Clamp(cameraPitch, -viewLimits, viewLimits);
-
-                //...and Roll
-                cameraRoll += -mouseChange.x * rollSensitivity;
-                cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
-
-                if (Input.GetMouseButtonDown(0))
-                {
-                    Shoot(0);
-                }
-
-                if (Input.GetMouseButtonDown(1))
-                {
-                    Shoot(1);
-                }
-
-                if (Input.GetKey(KeyCode.G))
-                {
-                    SwingScymitar();
-                }
-            }
-            //Roll back to straight, even while menuing
-            cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
-
-            Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
-            cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
-
-
-            //GROUND DISTANCE
-            RaycastHit groundHit;
-            float distanceToGround = 0;
-            if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
-            {
-
-                Debug.DrawRay(cameraTransform.position, Vector3.down, Color.red, 0.2f);
-                distanceToGround = groundHit.distance;
-
-                //Match carpet rotation to ground plane rotation, if distance is less than 2 meters
-                //if (distanceToGround < 2f)
-                //{
-                //    Vector3 gpAngle = Vector3.ProjectOnPlane(transform.forward, groundHit.normal); //cameraGimbal.forward
-                //    carpetTransform.rotation = Quaternion.Lerp(carpetTransform.rotation, Quaternion.LookRotation(gpAngle, groundHit.normal), 0.05f); //normal angle
-                //}
-            }
-
-            //Falloff
-            xComponentOfMovement *= moveFalloff;
-            yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
-            zComponentOfMovement *= moveFalloff;
-
-            //Inputs
-            Vector3 inputVector = new Vector3(
-                Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
-                0, //NO INPUT FOR Y
-                Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
-            ).normalized * Time.deltaTime;
-
-            // TRANSFORM THE INPUTS ACCORDING TO EITHER 
-            // BASE TRANSFORM OR GROUNDPLANE TRANSFORM
-            //Vector3 transformedInputs = groundPlane.TransformDirection(inputVector); // Movement parallel to ground plane. 
-            Vector3 transformedInputs = transform.TransformDirection(inputVector); // "Bump" your way up hills
-
-            //Adding the X and Z inputs
-            xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
-            yComponentOfMovement += transformedInputs.y;
-            zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
-
-            //Upwards movement?
-            //if (Input.GetKey(KeyCode.Space))
-            //{
-            //    yComponentOfMovement = 1f;
-            //}
-
-            //Clamping horizontal movement
-            Vector3 movement = new Vector3(xComponentOfMovement, yComponentOfMovement, zComponentOfMovement) * speed;
-
-            //Send it!
-            cC.enabled = true;
-            cC.Move(movement);
-
-            //Wake and Dust
-            wakeAndDust.GenerateWakeOrDust_U(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
-
-            //Regen
-            RegenHealthAndMana();
-
-            //Sounds and FX
-            guidanceLine.SetPosition(0, transform.position);
-            guidanceLine.SetPosition(1, Vector3.zero);
-            windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
-            windAudioSource.panStereo = -cameraRoll / 45f;
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
+            freelookFrozen = true;
+            Actions.OnSpellPanelToggle.Invoke(true);
+        }
+        if (Input.GetKeyUp(KeyCode.LeftControl))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            freelookFrozen = false;
+            Actions.OnSpellPanelToggle.Invoke(false);
         }
 
-        //Quit, even when dead
-        if (Input.GetKeyDown(KeyCode.Escape) && !Application.isEditor)
+        if (!freelookFrozen)
         {
-            sM.LoadLevel(0);
-        }        
+            //Gather Inputs
+            Vector2 mouseChange = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+
+            //Rotate Player Yaw
+            playerFacing += new Vector3(0, mouseChange.x, 0) * yawSensitivity;
+            transform.localRotation = Quaternion.Euler(0, playerFacing.y, playerFacing.z);
+
+            //Rotate Camera Pitch...
+            cameraPitch += -mouseChange.y * pitchSensitivity;
+            cameraPitch = Mathf.Clamp(cameraPitch, -viewLimits, viewLimits);
+
+            //...and Roll
+            cameraRoll += -mouseChange.x * rollSensitivity;
+            cameraRoll = Mathf.Clamp(cameraRoll, -35, 35);
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                Shoot(0);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                Shoot(1);
+            }
+
+            if (Input.GetKey(KeyCode.G))
+            {
+                SwingScymitar();
+            }
+        }
+        //Roll back to straight, even while menuing
+        cameraRoll = Mathf.Lerp(cameraRoll, 0, Time.deltaTime * rollRecover);
+
+        Vector3 cameraFacing = new Vector3(cameraPitch, 0, cameraRoll);
+        cameraTransform.localRotation = Quaternion.Euler(cameraFacing);
+
+
+        //GROUND DISTANCE
+        RaycastHit groundHit;
+        float distanceToGround = 0;
+        if (Physics.Raycast(cameraTransform.position, Vector3.down, out groundHit, Mathf.Infinity, terrainMask))
+        {
+
+            Debug.DrawRay(cameraTransform.position, Vector3.down, Color.red, 0.2f);
+            distanceToGround = groundHit.distance;
+
+            //Match carpet rotation to ground plane rotation, if distance is less than 2 meters
+            //if (distanceToGround < 2f)
+            //{
+            //    Vector3 gpAngle = Vector3.ProjectOnPlane(transform.forward, groundHit.normal); //cameraGimbal.forward
+            //    carpetTransform.rotation = Quaternion.Lerp(carpetTransform.rotation, Quaternion.LookRotation(gpAngle, groundHit.normal), 0.05f); //normal angle
+            //}
+        }
+
+        //Falloff
+        xComponentOfMovement *= moveFalloff;
+        yComponentOfMovement = -distanceToGround * Time.deltaTime; //smooth gravity
+        zComponentOfMovement *= moveFalloff;
+
+        //Inputs
+        Vector3 inputVector = new Vector3(
+            Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0,
+            0, //NO INPUT FOR Y
+            Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0
+        ).normalized * Time.deltaTime;
+
+        // TRANSFORM THE INPUTS ACCORDING TO EITHER 
+        // BASE TRANSFORM OR GROUNDPLANE TRANSFORM
+        //Vector3 transformedInputs = groundPlane.TransformDirection(inputVector); // Movement parallel to ground plane. 
+        Vector3 transformedInputs = transform.TransformDirection(inputVector); // "Bump" your way up hills
+
+        //Adding the X and Z inputs
+        xComponentOfMovement = xComponentOfMovement + transformedInputs.x;
+        yComponentOfMovement += transformedInputs.y;
+        zComponentOfMovement = zComponentOfMovement + transformedInputs.z;
+
+        //Upwards movement?
+        //if (Input.GetKey(KeyCode.Space))
+        //{
+        //    yComponentOfMovement = 1f;
+        //}
+
+        //Clamping horizontal movement
+        Vector3 movement = new Vector3(xComponentOfMovement, yComponentOfMovement, zComponentOfMovement) * speed;
+
+        //Send it!
+        cC.enabled = true;
+        cC.Move(movement);
+
+        //Wake and Dust
+        wakeAndDust.GenerateWakeOrDust_U(cC.velocity.magnitude, groundHit.point.y, distanceToGround);
+
+        //Regen
+        RegenHealthAndMana();
+
+        //Sounds and FX
+        guidanceLine.SetPosition(0, transform.position);
+        guidanceLine.SetPosition(1, Vector3.zero);
+        windAudioSource.volume = Mathf.Clamp01(cC.velocity.magnitude / 50f);
+        windAudioSource.panStereo = -cameraRoll / 45f;      
     }
 
     private void Shoot(int mouseButton = 0)
@@ -357,6 +357,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     private void Die()
     {
         print("Player died!");
+        Actions.OnPlayerDeath.Invoke();
 
         //TODO
         //freelookFrozen = true;
@@ -385,7 +386,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.tag == "Mana")
+        if (other.gameObject.CompareTag("Mana"))
         {
             playerAudioSource.pitch = Random.Range(0.95f, 1.05f);
             playerAudioSource.PlayOneShot(gM.manaCollectClip);
@@ -417,7 +418,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
 
     //private void OnControllerColliderHit(ControllerColliderHit hit)
     //{
-    //    if (hit.gameObject.tag == "Obstacle")
+    //    if (hit.gameObject.CompareTag("Obstacle"))
     //    {
     //        xComponentOfMovement = -xComponentOfMovement * 0.5f;
     //        zComponentOfMovement = -zComponentOfMovement * 0.5f;

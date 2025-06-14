@@ -54,6 +54,8 @@ public class sHUD : MonoBehaviour
         Actions.OnEnemyDeath += HandleEnemyDeath;
         Actions.OnHUDWarning += HandleWarning;
         Actions.OnPlayerWarp += HandleWarp; 
+        Actions.OnPlayerDeath += HandlePlayerDeath; 
+
         Actions.OnLevelExit += FadeInLoadingScreen; 
     }
 
@@ -67,6 +69,8 @@ public class sHUD : MonoBehaviour
         Actions.OnEnemyDeath -= HandleEnemyDeath;
         Actions.OnHUDWarning -= HandleWarning;
         Actions.OnPlayerWarp -= HandleWarp;
+        Actions.OnPlayerDeath -= HandlePlayerDeath;
+
         Actions.OnLevelExit -= FadeInLoadingScreen;
     }
 
@@ -101,6 +105,11 @@ public class sHUD : MonoBehaviour
     private void HandleManaChange(int currentMana, int maxMana)
     {
         manaBar.localScale = new Vector2((float)currentMana / (float)maxMana, 1);
+    }
+
+    private void HandlePlayerDeath()
+    {
+        print("TODO - Show death screen");
     }
 
     private void HandleSpellPanelToggle(bool isOpen)
