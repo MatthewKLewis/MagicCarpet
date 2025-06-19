@@ -18,28 +18,19 @@ public static class Deformations
     public static int RUB = 5;
     //Second Row
 
-    public static Deformation Lodge()
-    {
-        Deformation lodge = new Deformation();
-
-        //INFORMATION
-        lodge.noAnimation = true;
-        lodge.runtime = false;
-        lodge.deformationType = DEFORMATION_TYPE.BUILDING;
-        lodge.ownerID = OWNER_ID.CITIZENS;
-
-        //FENCEPOSTS - ALWAYS ODD BECAUSE WE WANT A LOVELY PEAKY ROOF
-        lodge.heightOffsets = new float[6, 6] {
+    public static Deformation Lodge = new Deformation(
+        true,
+        true,
+        DEFORMATION_TYPE.BUILDING, 
+        OWNER_ID.CITIZENS, 
+        new float[6, 6] {
             { 0, 0, 0, 0, 0, 0 },
             { 0, 4, 4, 4, 4, 0 },
             { 0, 4, 4, 4, 4, 0 },
             { 0, 4, 4, 4, 4, 0 },
             { 0, 4, 4, 4, 4, 0 },
             { 0, 0, 0, 0, 0, 0 },
-        };
-
-        //FENCESPANS - ALWAYS EVEN
-        lodge.uvBasisRemaps = new int[5, 5]
+        }, new int[5, 5]
         {
             {CFO, CFO, CFO, CFO, CFO},
             {CFO, CFO, CFO, CFO, CFO},
@@ -47,8 +38,7 @@ public static class Deformations
             {CFO, CFO, CFO, CFO, CFO},
             {CFO, CFO, CFO, CFO, CFO},
 
-        };
-        lodge.triangleFlips = new bool[5, 5]
+        }, new bool[5, 5]
         {
             {true, false, false, false, false},
             {false, true, false, false, false},
@@ -56,9 +46,8 @@ public static class Deformations
             {false, false, false, true, false},
             {false, false, false, false, true},
 
-        };
-        return lodge;
-    }
+        }
+    );
 
     public static Deformation HugeSpike()
     {
@@ -66,7 +55,6 @@ public static class Deformations
 
         //INFORMATION
         spike.noAnimation = false;
-        spike.runtime = true;
         spike.deformationType = DEFORMATION_TYPE.BUILDING;
         spike.ownerID = OWNER_ID.CITIZENS;
 
@@ -99,7 +87,6 @@ public static class Deformations
 
         //INFORMATION
         castle.noAnimation = false;
-        castle.runtime = true;
         castle.deformationType = DEFORMATION_TYPE.CASTLE;
         castle.ownerID = owner;
         
@@ -136,7 +123,6 @@ public static class Deformations
 
         //INFORMATION
         castle.noAnimation = false;
-        castle.runtime = true;
         castle.ownerID = owner;
         castle.deformationType = DEFORMATION_TYPE.CASTLE_UPGRADE;
 
@@ -200,7 +186,6 @@ public static class Deformations
 
         //INFORMATION
         pock.noAnimation = true;
-        pock.runtime = true;
         pock.deformationType = DEFORMATION_TYPE.DESTRUCTION;
         pock.ownerID = OWNER_ID.UNOWNED;
 

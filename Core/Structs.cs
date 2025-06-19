@@ -1,6 +1,27 @@
 using UnityEngine;
 
-#region TERRAIN CHUNK STRUCTS
+public enum OWNER_ID
+{
+    UNOWNED,
+    PLAYER,
+    NPC_1,
+    NPC_2,
+    NPC_3,
+    NPC_4,
+    NPC_5,
+    NPC_6,
+    NPC_7,
+    CITIZENS,
+}
+
+public enum DEFORMATION_TYPE
+{
+    CASTLE = 0,
+    DESTRUCTION = 1,
+    BUILDING = 2,
+    CASTLE_UPGRADE = 3,
+}
+
 public struct Square
 {
     public bool triangleFlipped;
@@ -34,24 +55,6 @@ public struct Vertex
         ownerID = ownId;
     }
 }
-#endregion
-
-
-#region CASTLE STRUCTS
-
-public enum OWNER_ID
-{
-    UNOWNED,
-    PLAYER,
-    NPC_1,
-    NPC_2,
-    NPC_3,
-    NPC_4,
-    NPC_5,
-    NPC_6,
-    NPC_7,
-    CITIZENS,
-}
 
 public struct Castle
 {
@@ -80,23 +83,11 @@ public struct Castle
     }
 }
 
-#endregion
-
-
-#region DEFORMATION STRUCTS
-public enum DEFORMATION_TYPE
-{
-    CASTLE = 0,
-    DESTRUCTION = 1,
-    BUILDING = 2,
-    CASTLE_UPGRADE = 3,
-}
-
 public struct Deformation
 {
     //Informatation
     public bool noAnimation;
-    public bool runtime;
+    public bool flattenFirst;
 
     public DEFORMATION_TYPE deformationType;
     public OWNER_ID ownerID;
@@ -108,6 +99,17 @@ public struct Deformation
     public int[,] uvBasisRemaps;
     public bool[,] triangleFlips;
 
+    public Deformation(bool noA, bool flatFirst, DEFORMATION_TYPE defType, OWNER_ID ownID, float[,] heights, int[,]uvs, bool[,] triFlips)
+    {
+        noAnimation = noA;
+        flattenFirst = flatFirst;
+        deformationType = defType;
+        ownerID = ownID;
+        heightOffsets = heights;
+        uvBasisRemaps = uvs;
+        triangleFlips = triFlips;
+    }
+
     public override string ToString()
     {
         return $"Deformation(\n" +
@@ -118,4 +120,3 @@ public struct Deformation
     }
 }
 
-#endregion

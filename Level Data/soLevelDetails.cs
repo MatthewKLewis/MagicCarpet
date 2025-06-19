@@ -8,9 +8,8 @@ public class soLevelDetails : ScriptableObject
     [Header("Geography")]
     public Texture2D heightTexture;
     public Texture2D ownershipTexture;
-    public Texture2D uvBasisTexture;
-    public Texture2D triFlipsTexture;
-    public float heightMapMultiplier;
+    public Texture2D uvIndexTexture;
+    public Texture2D triFlipTexture;
 
     [Header("Material")]
     public Material chunkMaterial;

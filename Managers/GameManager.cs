@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 
 /*
  * TODO - write new summary
+ * TODO - Improve the level editor, make the images (height, ownership, uvbasis, triangleflips) saveable.
+ * TODO - Give enemies health bars, fix projectile striking terrain and enemies.
  */
 
 public class GameManager : MonoBehaviour
@@ -26,9 +28,9 @@ public class GameManager : MonoBehaviour
     private Queue<GameObject> manaPool = new Queue<GameObject>();
 
     //Height map should always be a power-of-two plus one (e.g. 513 1025 or 2049) square
-    public sTerrainChunk[,] chunks;
-    public Square[,] squareMap;
     public Vertex[,] vertexMap;
+    public Square[,] squareMap;
+    public sTerrainChunk[,] chunks;
 
     public Castle[] castleInfo = new Castle[8] {
         new Castle(0, 0, 0, 0, OWNER_ID.PLAYER, 10, 10),
@@ -94,6 +96,8 @@ public class GameManager : MonoBehaviour
             instance = this;
         }
 
+        Actions.OnLevelEditorImageSave += HandleLevelEditorSave;
+
         // Set vSyncCount to 0 so that using .targetFrameRate is enabled.
         //QualitySettings.vSyncCount = 1;
 
@@ -104,6 +108,11 @@ public class GameManager : MonoBehaviour
         RenderSettings.ambientLight = Color.white;
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Exponential;
+    }
+
+    private void OnDestroy()
+    {
+        Actions.OnLevelEditorImageSave -= HandleLevelEditorSave;
     }
 
     void Start()
@@ -147,10 +156,10 @@ public class GameManager : MonoBehaviour
 
 
         //Then enemies
-        Instantiate(beeEnemyPrefab, new Vector3(1200, 100, 1200), transform.rotation, null);
-        Instantiate(beeEnemyPrefab, new Vector3(800, 100, 900), transform.rotation, null);
-        Instantiate(beeEnemyPrefab, new Vector3(1100, 100, 700), transform.rotation, null);
-        Instantiate(beeEnemyPrefab, new Vector3(400, 100, 1100), transform.rotation, null);
+        //Instantiate(beeEnemyPrefab, new Vector3(1200, 100, 1200), transform.rotation, null);
+        //Instantiate(beeEnemyPrefab, new Vector3(800, 100, 900), transform.rotation, null);
+        //Instantiate(beeEnemyPrefab, new Vector3(1100, 100, 700), transform.rotation, null);
+        //Instantiate(beeEnemyPrefab, new Vector3(400, 100, 1100), transform.rotation, null);
 
         //Instantiate(nemesisPrefab, new Vector3(800, 100, 800), transform.rotation, null);
         //Instantiate(nemesisPrefab, new Vector3(600, 100, 800), transform.rotation, null);
@@ -171,20 +180,20 @@ public class GameManager : MonoBehaviour
         chunks = new sTerrainChunk[(levelDetails.heightTexture.width - 1) / Constants.CHUNK_WIDTH, (levelDetails.heightTexture.width - 1) / Constants.CHUNK_WIDTH]; // 32,32 or 16,16
 
         //Extract Pixels
-        Color32[] heightPixels = levelDetails.heightTexture.GetPixels32();
-        Color32[] ownershipPixels = levelDetails.ownershipTexture.GetPixels32();
-        Color32[] uvBasisPixels = levelDetails.uvBasisTexture.GetPixels32();
+        //Color32[] heightPixels = levelDetails.heightTexture.GetPixels32();
+        //Color32[] ownershipPixels = levelDetails.ownershipTexture.GetPixels32();
+        //Color32[] uvIndexPixels = levelDetails.uvIndexTexture.GetPixels32();
 
         //VERTEX - FENCE POST
         for (int z = 0; z < levelDetails.heightTexture.width; z++)
         {
             for (int x = 0; x < levelDetails.heightTexture.width; x++)
             {
-                int height = heightPixels[x + (z * levelDetails.heightTexture.width)].r;
-                int ownerID = ownershipPixels[x + (z * levelDetails.ownershipTexture.width)].r;
+                float height = levelDetails.heightTexture.GetPixel(x,z).r * 256f;
+                int ownerID = (int)(levelDetails.ownershipTexture.GetPixel(x, z).r * 256f);
 
                 //The height
-                vertexMap[x, z].height = height * levelDetails.heightMapMultiplier;
+                vertexMap[x, z].height = height * Constants.HEIGHT_MAP_MULTIPLIER; //TODO - replace with a standard.
 
                 //The vertex colors control whether the square is UV or Triplanar rendered, so Black (triplanar) if the owner is 0, White otherwise
                 vertexMap[x, z].color = ownerID == 0 ? Color.black : Color.white;
@@ -196,11 +205,10 @@ public class GameManager : MonoBehaviour
         }
 
         //SQUARE - FENCE SPAN
-        for (int z = 0; z < levelDetails.heightTexture.width - 1; z++)
+        for (int z = 0; z < levelDetails.heightTexture.width-1; z++)
         {
-            for (int x = 0; x < levelDetails.heightTexture.width - 1; x++)
+            for (int x = 0; x < levelDetails.heightTexture.width-1; x++)
             {
-
                 Square sq = new Square();
                 sq.triangleFlipped = false;
 
@@ -216,8 +224,12 @@ public class GameManager : MonoBehaviour
                 vertexMap[x, z].normal = averageNormal;
 
                 //The UV index of the square is determined from another texture
-                int uv = uvBasisPixels[x + (z * levelDetails.uvBasisTexture.width)].r;
-                sq.uvBasis = uv;
+                int uvIndex = (int)(levelDetails.uvIndexTexture.GetPixel(x, z).r * 256f); //TODO - wrong?
+                //if (uvIndex != 0)
+                //{
+                //    print(x + ", " + z + ": " + uvIndex);
+                //}
+                sq.uvBasis = uvIndex;
 
                 squareMap[x, z] = sq;
             }
@@ -297,92 +309,23 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        Castle playerCastle;
+        if (NearACastle(hitX, hitZ)) { return; }
+        if (AtBorderChunk(hitX, hitZ)) { return; }
 
-        switch (deformation.deformationType)
-        {
-            case DEFORMATION_TYPE.CASTLE:
-
-                //castle early returns
-                playerCastle = castleInfo[(int)deformation.ownerID];
-
-                //No new castles if one exists
-                if (playerCastle.level > 0) { Actions.OnHUDWarning.Invoke("ONLY ONE CASTLE PERMITTED"); return; }
-
-                if (NearAnotherBuilding(hitX, hitZ)) { return; }
-                if (AtBorderChunk(hitX, hitZ)) { return; }
-
-                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
-                float castleBaseHeight = vertexMap[hitX, hitZ].height;
-                castleInfo[(int)deformation.ownerID].level = 1;
-                castleInfo[(int)deformation.ownerID].ownerID = deformation.ownerID;
-                castleInfo[(int)deformation.ownerID].xOrigin = hitX;
-                castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
-                castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
-
-                AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
-                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
-                break;
-
-            case DEFORMATION_TYPE.CASTLE_UPGRADE:
-
-                //castle early returns
-                playerCastle = castleInfo[(int)deformation.ownerID];
-
-                //not close enough to owner's castle origin MAGIC NUMBER - 
-                if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(playerCastle.xOrigin, 0, playerCastle.zOrigin)) > 20f)
-                {
-                    print(hitPoint);
-                    print(playerCastle.ToString());
-                    Actions.OnHUDWarning.Invoke("TOO FAR AWAY FROM CASTLE"); 
-                    return;
-                }
-
-                //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
-                castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
-
-                AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
-                StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
-                break;
-
-            case DEFORMATION_TYPE.DESTRUCTION:
-                
-                if (NearAnotherBuilding(hitX, hitZ)) { return; }
-                if (AtBorderChunk(hitX, hitZ)) { return; }
-
-                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
-                break;
-
-            case DEFORMATION_TYPE.BUILDING:
-
-                if (NearAnotherBuilding(hitX, hitZ)) { return; }
-                if (AtBorderChunk(hitX, hitZ)) { return; }
-
-                StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
-                break;
-
-            default:
-                Debug.LogError("deformation type not given!");
-                break;
-        }
+        StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
     }
 
     private IEnumerator AlterTerrainCoroutine(int hitX, int hitZ, int chunkX, int chunkZ, Deformation deformation)
     {
         //TEST - IS IT DANGEROUS TO CALL ONE ARRAY'S LENGTH FOR ALL SQUARE MODIFICATIONS?
-        int offsetX = deformation.heightOffsets.GetLength(0) / 2; //ALWAYS EVEN
-        int offsetZ = deformation.heightOffsets.GetLength(1) / 2; //ALWAYS EVEN
-
-        //if (offsetX % 2 != 0) { Debug.LogWarning("Building vertex offset not even!");}
+        int offsetX = deformation.uvBasisRemaps.GetLength(0) / 2; //ALWAYS EVEN
+        int offsetZ = deformation.uvBasisRemaps.GetLength(1) / 2; //ALWAYS EVEN
 
         //SQUARE MAP MODIFICATIONS - UVs and TRI-FLIPs
         for (int i = -offsetZ; i < deformation.uvBasisRemaps.GetLength(0) - offsetZ; i++)
         {
             for (int j = -offsetX; j < deformation.uvBasisRemaps.GetLength(1) - offsetX; j++)
-            {
-                //info
-                
-
+            {               
                 //texture and geometry
                 squareMap[hitX + j, hitZ + i].uvBasis = deformation.uvBasisRemaps[j+offsetX, i+offsetZ];
                 squareMap[hitX + j, hitZ + i].triangleFlipped = deformation.triangleFlips[j + offsetX, i + offsetZ];
@@ -394,17 +337,12 @@ public class GameManager : MonoBehaviour
         {
             for (int j = -offsetX; j < deformation.heightOffsets.GetLength(0) - offsetX; j++)
             {
-                //TODO - test pre-build height averaging.
-                if (deformation.deformationType == DEFORMATION_TYPE.CASTLE)
+                if (deformation.flattenFirst)
                 {
                     vertexMap[hitX + j, hitZ + i].height = vertexMap[hitX, hitZ].height;
                 }
-                else if (deformation.deformationType == DEFORMATION_TYPE.CASTLE_UPGRADE)
-                {
-                    vertexMap[hitX + j, hitZ + i].height = castleInfo[(int)deformation.ownerID].yOrigin;
-                }
 
-                //change vertex color
+                //change vertex color and ownerid TODO - change to allow color array in deform struct?
                 vertexMap[hitX + j, hitZ + i].ownerID = deformation.ownerID;
                 vertexMap[hitX + j, hitZ + i].color = 
                     (deformation.deformationType == DEFORMATION_TYPE.DESTRUCTION) ? Color.black : Color.white;
@@ -556,7 +494,7 @@ public class GameManager : MonoBehaviour
         return Mathf.Pow(2, logValue) == n;
     }
 
-    private bool NearAnotherBuilding(int hitX, int hitZ)
+    private bool NearACastle(int hitX, int hitZ)
     {
         //No Castles near other castles
         foreach (Castle castle in castleInfo)
@@ -609,4 +547,77 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void HandleLevelEditorSave()
+    {
+        print("Saving...");
+        ImageSaver.SaveImageFromHeights(vertexMap, squareMap);
+    }
 }
+
+//Castle playerCastle;
+//switch (deformation.deformationType)
+//{
+//    case DEFORMATION_TYPE.CASTLE:
+
+//        //castle early returns
+//        playerCastle = castleInfo[(int)deformation.ownerID];
+
+//        //No new castles if one exists
+//        if (playerCastle.level > 0) { Actions.OnHUDWarning.Invoke("ONLY ONE CASTLE PERMITTED"); return; }
+
+//        if (NearACastle(hitX, hitZ)) { return; }
+//        if (AtBorderChunk(hitX, hitZ)) { return; }
+
+//        //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+//        float castleBaseHeight = vertexMap[hitX, hitZ].height;
+//        castleInfo[(int)deformation.ownerID].level = 1;
+//        castleInfo[(int)deformation.ownerID].ownerID = deformation.ownerID;
+//        castleInfo[(int)deformation.ownerID].xOrigin = hitX;
+//        castleInfo[(int)deformation.ownerID].yOrigin = castleBaseHeight;
+//        castleInfo[(int)deformation.ownerID].zOrigin = hitZ;
+
+//        AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
+//        StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+//        break;
+
+//    case DEFORMATION_TYPE.CASTLE_UPGRADE:
+
+//        //castle early returns
+//        playerCastle = castleInfo[(int)deformation.ownerID];
+
+//        //not close enough to owner's castle origin MAGIC NUMBER - 
+//        if (Vector3.Distance(new Vector3(hitX, 0, hitZ), new Vector3(playerCastle.xOrigin, 0, playerCastle.zOrigin)) > 20f)
+//        {
+//            print(hitPoint);
+//            print(playerCastle.ToString());
+//            Actions.OnHUDWarning.Invoke("TOO FAR AWAY FROM CASTLE"); 
+//            return;
+//        }
+
+//        //PASSED ALL CHECKS - INFORM THE CHARACTER THAT HE WILL HAVE HIS CASTLE
+//        castleInfo[(int)deformation.ownerID].level = castleInfo[(int)deformation.ownerID].level + 1;
+
+//        AudioSource.PlayClipAtPoint(stoneScrapeClip, hitPoint, 1f);
+//        StartCoroutine(AlterTerrainCoroutine(playerCastle.xOrigin, playerCastle.zOrigin, chunkX, chunkZ, deformation));
+//        break;
+
+//    case DEFORMATION_TYPE.DESTRUCTION:
+
+//        if (NearACastle(hitX, hitZ)) { return; }
+//        if (AtBorderChunk(hitX, hitZ)) { return; }
+
+//        StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+//        break;
+
+//    case DEFORMATION_TYPE.BUILDING:
+
+//        if (NearACastle(hitX, hitZ)) { return; }
+//        if (AtBorderChunk(hitX, hitZ)) { return; }
+
+//        StartCoroutine(AlterTerrainCoroutine(hitX, hitZ, chunkX, chunkZ, deformation));
+//        break;
+
+//    default:
+//        Debug.LogError("deformation type not given!");
+//        break;
+//}

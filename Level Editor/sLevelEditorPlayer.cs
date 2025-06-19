@@ -25,12 +25,31 @@ public class sLevelEditorPlayer : MonoBehaviour
     [Space(4)]
     [Header("Cursor")]
     [SerializeField] private Transform cursorPlane;
-    private int cursorPlaneScale = 1;
+
+    [Space(4)]
+    [Header("Draw Mode Properties")]
+    private int drawRadius = 1;
+    private int drawHeight = 3;
+    private int uvIndex = 0;
+    private bool flattenFirst = true;
 
     private void Awake()
     {
         gM = GameManager.instance;
         cC = GetComponent<CharacterController>();
+
+        Actions.OnLevelEditorDrawStructureModeEntered += HandleStructureMode;
+        Actions.OnLevelEditorDrawTerrainModeEntered += HandleTerrainMode;
+        Actions.OnLevelEditorUVIndexChange += HandleUVIndexChange;
+        Actions.OnLevelEditorHeightChange += HandleHeightChange;
+    }
+
+    private void OnDestroy()
+    {
+        Actions.OnLevelEditorDrawStructureModeEntered -= HandleStructureMode;
+        Actions.OnLevelEditorDrawTerrainModeEntered -= HandleTerrainMode;
+        Actions.OnLevelEditorUVIndexChange -= HandleUVIndexChange;
+        Actions.OnLevelEditorHeightChange -= HandleHeightChange;
     }
 
     void Start()
@@ -88,16 +107,18 @@ public class sLevelEditorPlayer : MonoBehaviour
         if (!freelookFrozen)
         {
             //Move 3D Cursor
+            int hitX = 0;
+            int hitZ = 0;
             if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
             {
                 //Find the square based on the hit
-                int hitX = Mathf.FloorToInt(groundHit.point.x / Constants.TILE_WIDTH);
-                int hitZ = Mathf.FloorToInt(groundHit.point.z / Constants.TILE_WIDTH);
+                hitX = Mathf.FloorToInt(groundHit.point.x / Constants.TILE_WIDTH);
+                hitZ = Mathf.FloorToInt(groundHit.point.z / Constants.TILE_WIDTH);
 
                 cursorPlane.position = new Vector3(
-                    hitX * Constants.TILE_WIDTH,
+                    (hitX * Constants.TILE_WIDTH) + 1,
                     groundHit.point.y + 0.25f,
-                    hitZ * Constants.TILE_WIDTH
+                    (hitZ * Constants.TILE_WIDTH) + 1
                 );
             }
 
@@ -106,29 +127,74 @@ public class sLevelEditorPlayer : MonoBehaviour
             {
                 if (Physics.Raycast(lECamera.transform.position, lECamera.transform.forward, out groundHit, Mathf.Infinity, terrainMask))
                 {
-                    print(groundHit.point);
-                    gM.AlterTerrain(groundHit.point, Deformations.Lodge());
-                }                
+                    gM.AlterTerrain(groundHit.point, MakeCustomDeformation(drawRadius + 1, drawHeight, uvIndex, flattenFirst));                      
+                }                             
             }
 
             //Right Click
             if (Input.GetMouseButtonDown(1))
             {
-                //
+                Actions.OnHUDWarning(hitX + "," + hitZ); //show permanent
             }
 
             //Scroll Wheel
             if (Input.mouseScrollDelta.magnitude > 0.1f)
             {
-                if (Input.mouseScrollDelta.y > 0.5f) { cursorPlaneScale++; }
-                else if (Input.mouseScrollDelta.y < 0.5f) { cursorPlaneScale--; }
+                if (Input.mouseScrollDelta.y > 0.5f) { drawRadius += 2; }
+                else if (Input.mouseScrollDelta.y < 0.5f) { drawRadius -= 2; }
                 else { return; }
 
-                cursorPlaneScale = Mathf.Clamp(cursorPlaneScale, 1, 20);
-                cursorPlane.localScale = Vector3.one * cursorPlaneScale;
+                drawRadius = Mathf.Clamp(drawRadius, 1, 21);
+                cursorPlane.localScale = Vector3.one * drawRadius;
             }
         }
     }
+
+    private Deformation MakeCustomDeformation(int w, int hs, int uvIndex, bool flatFirst)
+    {
+        Deformation retDef = new Deformation();
+
+        retDef.noAnimation = true;
+        retDef.flattenFirst = flatFirst;
+        retDef.deformationType = DEFORMATION_TYPE.BUILDING;
+        retDef.ownerID = OWNER_ID.CITIZENS;
+
+        //Fill Heights Array
+        float[,] heights = new float[w,w];
+        heights = Constants.FillArray<float>(heights, hs);
+        retDef.heightOffsets = heights;
+
+        int[,] uvs = new int[w - 1, w - 1];
+        uvs = Constants.FillArray<int>(uvs, uvIndex);
+        retDef.uvBasisRemaps = uvs;
+
+        bool[,] triFlips = new bool[w - 1, w - 1];
+        triFlips = Constants.FillArray<bool>(triFlips, false);
+        retDef.triangleFlips = triFlips;
+
+        return retDef;
+    }
+
+    private void HandleStructureMode() 
+    {
+        flattenFirst = true;
+    }
+
+    private void HandleTerrainMode() 
+    {
+        flattenFirst = false;
+    }
+
+    private void HandleUVIndexChange(int newIndex)
+    {
+        uvIndex = newIndex;
+    }
+
+    private void HandleHeightChange(int newHeight)
+    {
+        drawHeight = newHeight;
+    }
+
 
     private void OnDrawGizmos()
     {
