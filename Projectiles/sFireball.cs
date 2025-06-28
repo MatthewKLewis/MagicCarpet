@@ -52,13 +52,6 @@ public class sFireball : MonoBehaviour, IProjectile
                 victimScript.TakeDamage(damage);
             }
 
-            //Optional terrain destruction - only within the first second of life.
-            if (Time.time < spawnTime + 1f && other.GetComponent<sTerrainChunk>())
-            {
-                //print("Fireball hit a terrain chunk!");
-                gM.AlterTerrain(transform.position, Deformations.PockMark(), damage);
-            }
-
             //Needed due to double hits
             hasHit = true;
             Instantiate(GameManager.instance.smallExplosionEffectPrefab, transform.position, transform.rotation, null);

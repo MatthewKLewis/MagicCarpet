@@ -29,7 +29,6 @@ public class sHUD : MonoBehaviour
     [SerializeField] private RectTransform playerIndicator;
     [SerializeField] private RectTransform miniMapTransform;
     [SerializeField] private RawImage miniMapImage;
-    [SerializeField] private GameObject enemyIndicatorPrefab;
     private List<GameObject> enemyIndicatorList;
 
     [Space(10)]
@@ -38,31 +37,27 @@ public class sHUD : MonoBehaviour
     [SerializeField] private RectTransform manaBar;
     [SerializeField] private Transform damageFrame;
 
-    [Space(10)]
-    [Header("Castle")]
-    [SerializeField] private Transform castleBarsParent;
-
-
     private void Awake()
     {
         gM = GameManager.instance;
 
+        //Actions.OnCastleHealthChange += HandleCastleHealthChange;
+
         Actions.OnHealthChange += HandleHealthChange;
-        Actions.OnCastleHealthChange += HandleCastleHealthChange;
         Actions.OnManaChange += HandleManaChange;
         Actions.OnSpellPanelToggle += HandleSpellPanelToggle;
         Actions.OnEnemyDeath += HandleEnemyDeath;
         Actions.OnHUDWarning += HandleWarning;
         Actions.OnPlayerWarp += HandleWarp; 
-        Actions.OnPlayerDeath += HandlePlayerDeath; 
-
+        Actions.OnPlayerDeath += HandlePlayerDeath;
         Actions.OnLevelExit += FadeInLoadingScreen; 
     }
 
     private void OnDestroy()
     {
+        //Actions.OnCastleHealthChange -= HandleCastleHealthChange;
+
         Actions.OnHealthChange -= HandleHealthChange;
-        Actions.OnCastleHealthChange -= HandleCastleHealthChange;
         Actions.OnManaChange -= HandleManaChange;
         Actions.OnManaChange -= HandleManaChange;
         Actions.OnSpellPanelToggle -= HandleSpellPanelToggle;
@@ -70,24 +65,14 @@ public class sHUD : MonoBehaviour
         Actions.OnHUDWarning -= HandleWarning;
         Actions.OnPlayerWarp -= HandleWarp;
         Actions.OnPlayerDeath -= HandlePlayerDeath;
-
         Actions.OnLevelExit -= FadeInLoadingScreen;
     }
 
     private void Start()
     {
-        enemyIndicatorList = new List<GameObject>();
-        for (int i = 0; i < 12; i++)
-        {
-            GameObject gO = Instantiate(enemyIndicatorPrefab, miniMapTransform);
-            gO.SetActive(false);
-            enemyIndicatorList.Add(gO);
-        }
-
         spellPanel.localScale = Vector3.zero;
         damageFrame.localScale = Vector3.zero;
         warningTextPanel.localScale = Vector3.zero;
-
         FadeOutLoadingScreen(0);
     }
 
@@ -147,19 +132,6 @@ public class sHUD : MonoBehaviour
     }
 
     private void HandleWarning(string text) { StartCoroutine(HandleWarningCoroutine(text)); }
-
-    private void HandleCastleHealthChange(OWNER_ID ownerID, int health, int maxHealth)
-    {
-        int index = 0;
-        foreach (Transform cB in castleBarsParent)
-        {
-            if (index == (int)ownerID)
-            {
-                cB.localScale = new Vector3(1, ((float)health / (float)maxHealth), 1);
-;           }
-            index++;
-        }
-    }
 
     private IEnumerator HandleWarningCoroutine(string text)
     {

@@ -53,7 +53,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
     //Clamps 
     private float viewLimits = 80;
     private float speed = 0.6f; //between zero and one!
-    private float wrapAt;
 
     //Health
     public int currentHealth { get; set; } = 3;
@@ -97,7 +96,6 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         windAudioSource.Play();
         guidanceLine.useWorldSpace = true;
 
-        wrapAt = gM.chunks.GetLength(0) * (Constants.CHUNK_WIDTH - 1) * Constants.TILE_WIDTH;
         Actions.OnHealthChange.Invoke(currentHealth, maxHealth, false);
         Actions.OnManaChange.Invoke(currentMana, maxMana);
     }
@@ -110,34 +108,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
             sM.LoadLevel(0);
         }  
 
-        if (isDead) return;
-
-        //TODO - Optimize this with || 
-        if (transform.position.x < 0f)
-        {
-            cC.enabled = false;
-            Actions.OnPlayerWarp(transform.position);
-            transform.position = new Vector3(wrapAt, transform.position.y, transform.position.z);
-        }
-        if (transform.position.x > wrapAt)
-        {
-            cC.enabled = false;
-            Actions.OnPlayerWarp(transform.position);
-            transform.position = new Vector3(0f, transform.position.y, transform.position.z);
-        }
-        if (transform.position.z < 0f)
-        {
-            cC.enabled = false;
-            Actions.OnPlayerWarp(transform.position);
-            transform.position = new Vector3(transform.position.x, transform.position.y, wrapAt);
-        }
-        if (transform.position.z > wrapAt)
-        {
-            cC.enabled = false;
-            Actions.OnPlayerWarp(transform.position);
-            transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
-        }
-
+        if (isDead) return;        
 
         //Spell Panel
         if (Input.GetKeyDown(KeyCode.LeftControl))
@@ -294,9 +265,7 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         {
             if (DecrementManaIfEnough(1))
             {
-                //Mark projectile with ownerName!
-                Instantiate(gM.castleSeedPrefab, cameraTransform.position, cameraTransform.rotation, null)
-                    .GetComponent<IProjectile>().ownerID = ownerID;
+                print("Some other spell");
             }
         }
     }
@@ -416,12 +385,13 @@ public class sPlayer : MonoBehaviour, IKillable, IProjectileSpawner
         //
     }
 
-    //private void OnControllerColliderHit(ControllerColliderHit hit)
-    //{
-    //    if (hit.gameObject.CompareTag("Obstacle"))
-    //    {
-    //        xComponentOfMovement = -xComponentOfMovement * 0.5f;
-    //        zComponentOfMovement = -zComponentOfMovement * 0.5f;
-    //    }
-    //}
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.layer != 9) return;
+
+        Vector3 newPlayerMovement = Vector3.Reflect(cC.velocity * Time.deltaTime, hit.normal);
+        Debug.DrawRay(hit.point, newPlayerMovement * 10f, Color.yellow, 2f);
+        xComponentOfMovement = newPlayerMovement.x;
+        zComponentOfMovement = newPlayerMovement.z;
+    }
 }

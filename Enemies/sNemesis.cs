@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public enum AI_STATE
@@ -13,7 +12,6 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 {
     public OWNER_ID ownerID { get; set; } = OWNER_ID.NPC_1;
 
-    private GameManager tM;
     private GameManager gM = GameManager.instance;
 
     //Unity
@@ -58,7 +56,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
     void Start()
     {
-        tM = GameManager.instance;
+        gM = GameManager.instance;
         cC = GetComponent<CharacterController>();
 
         homeBase = transform.position;
@@ -287,7 +285,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
         // TO THE AI ARE IN UPDATE
         // TODO - Change AI state based on Castle Damage
 
-        while (tM.player)
+        while (gM.player)
         {
             yield return waitThree;
             float healthPercent = currentHealth / maxHealth;
@@ -308,7 +306,7 @@ public class sNemesis : MonoBehaviour, IKillable, IProjectileSpawner
 
                 if (huntingTarget)
                 {
-                    print(huntingTarget.name + " is his hunting target");
+                    Debug.Log(huntingTarget.name + " is his hunting target", gameObject);
                 }
                 if (manaTarget)
                 {

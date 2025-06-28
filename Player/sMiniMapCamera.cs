@@ -16,7 +16,7 @@ public class sMiniMapCamera : MonoBehaviour
         if (playerTransform)
         {
             transform.SetPositionAndRotation(
-                new Vector3(playerTransform.position.x, 300, playerTransform.position.z),
+                new Vector3(playerTransform.position.x, 256, playerTransform.position.z),
                 Quaternion.Euler(new Vector3(90f, playerTransform.rotation.eulerAngles.y, 0f))
             );
         }

@@ -55,10 +55,10 @@ public static class Actions
     public static Action<int> OnLevelExit;
 
     //LEVEL EDITOR ------------------------------
-    public static Action<int> OnLevelEditorUVIndexChange;
-    public static Action<int> OnLevelEditorHeightChange;
+    //public static Action<int> OnLevelEditorUVIndexChange;
+    //public static Action<int> OnLevelEditorHeightChange;
 
-    public static Action OnLevelEditorImageSave;
-    public static Action OnLevelEditorDrawTerrainModeEntered;
-    public static Action OnLevelEditorDrawStructureModeEntered;
+    //public static Action OnLevelEditorImageSave;
+    //public static Action OnLevelEditorDrawTerrainModeEntered;
+    //public static Action OnLevelEditorDrawStructureModeEntered;
 }

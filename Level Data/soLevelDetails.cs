@@ -5,15 +5,6 @@ public class soLevelDetails : ScriptableObject
 {
     public string levelName;
 
-    [Header("Geography")]
-    public Texture2D heightTexture;
-    public Texture2D ownershipTexture;
-    public Texture2D uvIndexTexture;
-    public Texture2D triFlipTexture;
-
-    [Header("Material")]
-    public Material chunkMaterial;
-
     [Header("Fog")]
     public Color fogColor;
     public float fogIntensity;

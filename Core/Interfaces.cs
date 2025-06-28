@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum OWNER_ID
+{
+    PLAYER,
+    NPC_1,
+}
+
 public interface IKillable
 {
     int currentHealth { get; set; }
